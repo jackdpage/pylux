@@ -1,6 +1,6 @@
-# OpenLighting Documentation
+# OpenLightingDocumentation
 
-The OpenLighting Documentation (OLDoc) is a standard for the definition of XML lighting plots and fixtures. It also provides a reference software implementation written in Python.
+The OpenLightingDocumentation (OLDoc) ~~is~~ will be a program for the management of lighting fixtures.
 
 ## File Types
 
@@ -17,3 +17,7 @@ Plots are defined by an OpenLighting Plot file (extension .olp). This is an XML 
 1. Metadata - project data such as venue, background image, scaling, etc.
 2. Fixtures - a list of fixtures and their locations in the plot. This is the entire fixture, with all its constants and variables included.
 3. DMX registry - a list of DMX channels and their functions
+
+## License
+
+This project is licensed under the GNU GPL v3.0 license.
