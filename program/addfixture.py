@@ -83,6 +83,7 @@ for channel in dmxRegistryXml.findall('channel'):
 	dmxRegistryUuid[address] = channel.find('fixture_uuid').text
 	dmxRegistryFunction[address] = channel.find('function').text
 print('The following DMX channels are populated in the registry:')
+populatedAddresses.sort()
 print(populatedAddresses)
 
 # Load the DMX info for this fixture

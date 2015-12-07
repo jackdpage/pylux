@@ -1,0 +1,24 @@
+<?xml
+	version="1.0"
+	encoding="UTF-8"
+?>
+<!DOCTYPE olfixture>
+<olfixture>
+	<olid>showtecpar56</olid>
+	<uri>http://docs.oldoc.org/fixture/showtecpar56.olf</uri>
+	<name>PAR64 MFL</name>
+	<constants>
+		<image_uri>http://docs.oldoc.org/image/showtecpar56.svg</image_uri>
+	</constants>
+	<variables>
+	</variables>
+	<dmx_channels>
+		<red></red>
+		<green></green>
+		<blue></blue>
+		<colour_macro></colour_macro>
+		<strobe></strobe>
+		<function></function>		
+	</dmx_channels>
+</olfixture>
+
