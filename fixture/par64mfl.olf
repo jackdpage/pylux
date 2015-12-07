@@ -1,0 +1,24 @@
+<?xml
+	version="1.0"
+	encoding="UTF-8"
+?>
+<!DOCTYPE olfixture>
+<olfixture>
+	<olid>par64mfl</olid>
+	<uri>http://docs.oldoc.org/fixture/par64mfl.olf</uri>
+	<name>PAR64 MFL</name>
+	<constants>
+		<image_uri>http://docs.oldoc.org/image/par64mfl.svg</image_uri>
+	</constants>
+	<variables>
+		<power></power>
+		<gel></gel>
+		<gobo></gobo>
+		<barn_doors></barn_doors>
+		<lamp_axis_rotation></lamp_axis_rotation>
+	</variables>
+	<dmx_channels>
+		<intensity></intensity>
+	</dmx_channels>
+</olfixture>
+

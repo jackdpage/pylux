@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<olplot>
+	<metadata>
+	</metadata>
+	<fixtures>
+	<fixture olid="par64mfl" uuid="e8ab9559-fcd0-41d2-a5c8-d2fbbd698ebf"><image_uri>http://docs.oldoc.org/image/par64mfl.svg</image_uri><gel>Primary Red</gel><barn_doors>none</barn_doors><lamp_axis_rotation>y</lamp_axis_rotation><power>500</power><gobo>none</gobo></fixture><fixture olid="par64mfl" uuid="d79905bb-0045-4058-b1c1-73edf0a0fdcb"><gel>Twickenham Green</gel><power>500</power><image_uri>http://docs.oldoc.org/image/par64mfl.svg</image_uri><gobo>none</gobo><barn_doors>none</barn_doors><lamp_axis_rotation>y</lamp_axis_rotation></fixture><fixture olid="par64mfl" uuid="b775882d-4829-4d60-8191-e4b97b0f0d50"><gel>Sunrise Gold</gel><image_uri>http://docs.oldoc.org/image/par64mfl.svg</image_uri><barn_doors>nonee</barn_doors><gobo>sun</gobo><lamp_axis_rotation>x</lamp_axis_rotation><power>400</power></fixture><fixture olid="par64mfl" uuid="f759548f-9819-45ba-b93d-149914ac3c79"><gobo>window</gobo><gel>none</gel><barn_doors>none</barn_doors><lamp_axis_rotation>x</lamp_axis_rotation><image_uri>http://docs.oldoc.org/image/par64mfl.svg</image_uri><power>550</power></fixture></fixtures>
+	<dmx_registry>
+	<channel address="1"><fixture_uuid>e8ab9559-fcd0-41d2-a5c8-d2fbbd698ebf</fixture_uuid><function>intensity</function></channel><channel address="2"><fixture_uuid>d79905bb-0045-4058-b1c1-73edf0a0fdcb</fixture_uuid><function>intensity</function></channel><channel address="7"><fixture_uuid>b775882d-4829-4d60-8191-e4b97b0f0d50</fixture_uuid><function>intensity</function></channel><channel address="3"><fixture_uuid>f759548f-9819-45ba-b93d-149914ac3c79</fixture_uuid><function>intensity</function></channel></dmx_registry>
+</olplot>
