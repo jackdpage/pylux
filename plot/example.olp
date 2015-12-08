@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE olplot>
+<olplot>
+<fixtures>
+</fixtures>
+<dmx_registry>
+	<channel address="1"><fixture_uuid>example</fixture_uuid><function>example</function></channel>
+</dmx_registry>
+</olplot>
