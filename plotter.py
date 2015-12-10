@@ -18,6 +18,9 @@ import xml.etree.ElementTree as ET
 import uuid
 import argparse
 import logging
+import itertools
+from itertools import groupby
+from itertools import itemgetter
 
 # Initiate the argument parser
 Parser = argparse.ArgumentParser(prog='OLPlotter',
@@ -72,13 +75,17 @@ class DmxRegistry:
             dmx_registry_function[address] = channel.find('function').text
         return dmx_registry_function
     
-    # Find the next run of n free DMX entries
-    def get_free_channels(registry, required_channels):
+    # Get a list of free DMX channels
+    def get_free_channels(registry):
         occupied = DmxRegistry.get_populated_list(registry)
         free = DmxRegistry.get_all_dmx()
         for i in occupied:
             free.remove(i)
         return(free)
+        
+    # Get the next free run of n DMX channels
+    def get_n_free_channels(registry, n)
+        free = DmxRegistry.get_free_channels(registry)
 
 root = get_file_root(PROJECT_FILE)
 registry = DmxRegistry.get_dmx_registry(root)
