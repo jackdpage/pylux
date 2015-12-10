@@ -39,12 +39,21 @@ def get_file_root(file):
     return(file_root)
 
 class DmxRegistry:
+    # Create a new registry
+    def __init__(self, file_root, load_from) # load_from is the value of the universe attr in the XML file
+        registry = {}
+        for i in range(1, 512):
+            registry[i] = ()
+        if load_from != None:
+            xml_registry = 
+    
     # Get a list of all DMX channels (a list with 1:512)
     def get_all_dmx():
         all_dmx = []
         for i in range(1,512):
             all_dmx.append(i)
         return(all_dmx)
+    
     # Get the DMX registry from the root
     def get_dmx_registry(file_root):
         dmx_registry = file_root.find('dmx_registry')
@@ -88,6 +97,6 @@ class DmxRegistry:
         free = DmxRegistry.get_free_channels(registry)
 
 root = get_file_root(PROJECT_FILE)
-registry = DmxRegistry.get_dmx_registry(root)
-freechans = DmxRegistry.get_free_channels(registry, 1)
+registry = DmxRegistry()
+freechans = registry.get_free_chans()
 print(freechans)
