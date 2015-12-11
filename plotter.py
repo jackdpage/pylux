@@ -18,9 +18,6 @@ import xml.etree.ElementTree as ET
 import uuid
 import argparse
 import logging
-import itertools
-from itertools import groupby
-from itertools import itemgetter
 
 # Initiate the argument parser
 Parser = argparse.ArgumentParser(prog='OLPlotter',
@@ -39,25 +36,25 @@ def get_file_root(file):
     return(file_root)
 
 class DmxRegistry:
-    # Create a new registry
-    def __init__(self, file_root, load_from) # load_from is the value of the universe attr in the XML file
-        registry = {}
-        for i in range(1, 512):
-            registry[i] = ()
-        if load_from != None:
-            xml_registry = 
-    
-    # Get a list of all DMX channels (a list with 1:512)
-    def get_all_dmx():
-        all_dmx = []
-        for i in range(1,512):
-            all_dmx.append(i)
-        return(all_dmx)
-    
-    # Get the DMX registry from the root
-    def get_dmx_registry(file_root):
-        dmx_registry = file_root.find('dmx_registry')
+    # Create an empty DMX registry
+    def create():
+        dmx_registry = {}
+        for i in range(1,513):
+            dmx_registry[i] = ()
         return dmx_registry
+    
+    # Populate registry with the contents of universe_id
+    def populate(registry, universe_id):
+        xml_registries = file_root.findall('dmx_registry')
+        for xml_registry in xml_registries:
+            universe = xml_registry.get('universe')
+            if universe == universe_id:
+                using_registry = xml_registry
+        for channel in using_registry:
+            address = int(channel.get('address'))
+            function = channel.find('function').text
+            uuid = channel.find('fixture_uuid').text
+            registry[address] = (uuid, function)
 
     # Get a list of all the used DMX channels
     def get_populated_list(registry):
@@ -93,10 +90,5 @@ class DmxRegistry:
         return(free)
         
     # Get the next free run of n DMX channels
-    def get_n_free_channels(registry, n)
-        free = DmxRegistry.get_free_channels(registry)
-
-root = get_file_root(PROJECT_FILE)
-registry = DmxRegistry()
-freechans = registry.get_free_chans()
-print(freechans)
+#    def get_n_free_channels(registry, n)
+#        free = DmxRegistry.get_free_channels(registry)

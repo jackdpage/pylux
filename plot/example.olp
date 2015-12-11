@@ -3,7 +3,9 @@
 <olplot>
 <fixtures>
 </fixtures>
-<dmx_registry>
+<dmx_registry universe="IWB">
 	<channel address="1"><fixture_uuid>example</fixture_uuid><function>example</function></channel>
+</dmx_registry>
+<dmx_registry universe="LED">
 </dmx_registry>
 </olplot>
