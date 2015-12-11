@@ -1,0 +1,21 @@
+<?xml
+	version="1.0"
+	encoding="UTF-8"
+?>
+<!DOCTYPE olfixture>
+<olfixture>
+	<olid>patt23</olid>
+	<uri>http://docs.oldoc.org/fixture/patt23.olf</uri>
+	<name>Patt23</name>
+	<constants>
+		<image_uri>http://docs.oldoc.org/image/patt23.svg</image_uri>
+	</constants>
+	<variables>
+		<power></power>
+		<gel></gel>
+	</variables>
+	<dmx_channels>
+		<intensity></intensity>
+	</dmx_channels>
+</olfixture>
+

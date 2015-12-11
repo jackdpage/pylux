@@ -1,0 +1,24 @@
+<?xml
+	version="1.0"
+	encoding="UTF-8"
+?>
+<!DOCTYPE olfixture>
+<olfixture>
+	<olid>ledjrgbpar</olid>
+	<uri>http://docs.oldoc.org/fixture/ledjrgbpar.olf</uri>
+	<name>LEDJ RGB PAR</name>
+	<constants>
+		<image_uri>http://docs.oldoc.org/image/ledjrgbpar.svg</image_uri>
+	</constants>
+	<variables>
+	</variables>
+	<dmx_channels>
+		<red></red>
+		<green></green>
+		<blue></blue>
+		<colour_wheel></colour_wheel>
+		<strobe></strobe>
+		<function></function>
+	</dmx_channels>
+</olfixture>
+

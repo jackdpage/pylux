@@ -1,0 +1,22 @@
+<?xml
+	version="1.0"
+	encoding="UTF-8"
+?>
+<!DOCTYPE olfixture>
+<olfixture>
+	<olid>p650</olid>
+	<uri>http://docs.oldoc.org/fixture/p650.olf</uri>
+	<name>P650</name>
+	<constants>
+		<image_uri>http://docs.oldoc.org/image/p650.svg</image_uri>
+		<power>650</power>
+	</constants>
+	<variables>
+		<gel></gel>
+		<gobo></gobo>
+	</variables>
+	<dmx_channels>
+		<intensity></intensity>
+	</dmx_channels>
+</olfixture>
+
