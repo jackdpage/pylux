@@ -1,3 +1,0 @@
-+ Add GUI using PyJS
-+ Plotting using HTML5 canvas
-+ Report creation using LaTeX (pandoc?)
