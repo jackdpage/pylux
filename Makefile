@@ -10,7 +10,7 @@ install:
 	@install -Cdv "$(destdir)"
 	@install -Cv $(filestoinstall) "$(destdir)"
 	@install -Cdv "$(HOME)/.openlighting/"
-	@cp -r fixture/ $(HOME)/.openlighting/
+	@cp -rv fixture/ $(HOME)/.openlighting/
 
 uninstall:
 	@-rm -rfv "$(HOME)/.openlighting/"
