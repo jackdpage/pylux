@@ -17,7 +17,6 @@
 import xml.etree.ElementTree as ET
 import uuid
 import argparse
-import logging
 import os
 import configparser
 import os.path
@@ -32,7 +31,7 @@ parser = argparse.ArgumentParser(prog='OLPlotter',
 parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.1')
 parser.add_argument('file')
 parser.add_argument('action', choices=['add'])
-launch_args = parser.parse_args()
+LAUNCH_ARGS = parser.parse_args()
 
 # Initiate the config parser
 config_file = os.path.expanduser('~/.config/oldoc/OLDoc.conf')
@@ -40,13 +39,27 @@ config = configparser.ConfigParser()
 config.read(config_file)
 print('Using config file '+config_file)
 
-PROJECT_FILE = launch_args.file
-PROJECT_FILE_TREE = ET.parse(PROJECT_FILE)
-PROJECT_FILE_ROOT = PROJECT_FILE_TREE.getroot()
 OL_FIXTURES_DIR = os.path.expanduser(config['Fixtures']['dir'])
-PROGRAM_ACTION = launch_args.action
+PROGRAM_ACTION = LAUNCH_ARGS.action
+
+class FileManager:
+
+    def load(self, path):
+        self.file = path
+        self.tree = ET.parse(self.file)
+        self.root = self.tree.getroot()
+
+    def save(self):
+        self.tree.write(self.file, encoding='UTF-8', 
+            xml_declaration=True)
 
 
+class ConfigHelper:
+    
+    def __init__(self):
+        self = self
+
+    
 class DmxRegistry:
     
     # Create a new registry and populate it from the XML file, if it doesn't
@@ -55,7 +68,7 @@ class DmxRegistry:
         self.registry = {}
         self.universe = universe
         # Search for this universe in the XML file
-        xml_registries = PROJECT_FILE_ROOT.findall('dmx_registry')
+        xml_registries = PROJECT_FILE.root.findall('dmx_registry')
         for xml_registry in xml_registries: 
             testing_universe = xml_registry.get('universe')
             if testing_universe == self.universe:
@@ -67,7 +80,7 @@ class DmxRegistry:
         if xml_registry == False:
             xml_registry = ET.Element('dmx_registry')
             xml_registry.set('universe', self.universe)
-            PROJECT_FILE_ROOT.append(xml_registry)
+            PROJECT_FILE.root.append(xml_registry)
             self.xml_registry = xml_registry
         # Populate the Python registry if an XML registry was found
         else:            
@@ -77,33 +90,48 @@ class DmxRegistry:
                 function = channel.find('function').text
                 self.registry[address] = (uuid, function)
 
-    # Add a channel to the registry
-    def add(self, address, uuid, function):
-        self.registry[address] = (uuid, function)
-        new_channel = ET.Element('channel')
-        new_channel.set('address', str(address))
-        new_uuid = ET.SubElement(new_channel, 'fixture_uuid')
-        new_uuid.text = uuid
-        new_function = ET.SubElement(new_channel, 'function')
-        new_function.text = function
-        self.xml_registry.append(new_channel)
-    
-    # Edit an existing DMX channel
-    def edit(self, address, new_uuid, new_function):
-        self.registry[address] = (new_uuid, new_function)
-        channel = self.get_xml_channel(address)
-        channel.find('fixture_uuid').text = new_uuid
-        channel.find('function').text = function
+    def save(self):
 
-    # Search a channel with address in XML
-    def get_xml_channel(self, address):
+        # Add a new XML entry
+        def add_xml_entry(self, address, uuid, function):
+            self.registry[address] = (uuid, function)
+            new_channel = ET.Element('channel')
+            new_channel.set('address', str(address))
+            new_uuid = ET.SubElement(new_channel, 'fixture_uuid')
+            new_uuid.text = uuid
+            new_function = ET.SubElement(new_channel, 'function')
+            new_function.text = function
+            self.xml_registry.append(new_channel)
+    
+        # Edit an existing XML entry
+        def edit_xml_entry(self, xml_channel, new_uuid, new_function):
+            xml_channel.find('fixture_uuid').text = new_uuid
+            xml_channel.find('function').text = function
+
+        # Search a channel with address in XML
+        def get_xml_channel(self, address):
+            for channel in self.xml_registry:
+                found_address = channel.get('address')
+                if found_address == str(address):
+                    return channel
+                    break
+                else:
+                    return False
+
+        # Iterate over the Python registry
+        for address in self.registry:
+            uuid = self.registry[address][0]
+            function = self.registry[address][1]
+            xml_channel = get_xml_channel(self, address)
+            if xml_channel == False:
+                add_xml_entry(self, address, uuid, function)
+            else:
+                edit_xml_entry(self, xml_channel, uuid, function)
+        # Iterate over the XML registry to remove any now empty channels
         for channel in self.xml_registry:
-            found_address = channel.get('address')
-            if found_address == str(address):
-                break
-                return channel
-        else:
-            return False
+            address = channel.get('address')
+            if self.registry[address] is ():
+                self.xml_registry.remove(channel)
 
     # Get a list of free DMX channels
     def get_free_channels(self):
@@ -115,8 +143,8 @@ class DmxRegistry:
         groups = []
         keys = []
         free.sort()
-       # for k, g in groupby(enumerate(data), lambda(i, x): i-x):
-       #     print(map(itemgetter(1), g))
+        #for k, g in groupby(enumerate(data), lambda(i, x): i-x):
+        #    print(map(itemgetter(1), g))
         
 
 class Fixture:
@@ -146,7 +174,7 @@ class Fixture:
     # Create an XML object from the information in this fixture and add it to
     # the tree
     def add(self):
-        fixture_list = PROJECT_FILE_ROOT.find('fixtures')
+        fixture_list = PROJECT_FILE.root.find('fixtures')
         new_fixture = ET.Element('fixture')
         new_fixture.set('olid', self.olid)
         new_fixture.set('uuid', self.uuid)
@@ -169,6 +197,7 @@ class Fixture:
             args = parser.parse_args(value.split())
             self.variables[variable] = value
     
+
 # Return a list of the OLF files in the directory
 def get_olf_library():
     library = os.listdir(OL_FIXTURES_DIR)
@@ -176,6 +205,7 @@ def get_olf_library():
         olid = olf.split('.')[0]
         library[library.index(olf)] = olid
     return library
+
 
 # Add a new fixture to the plot
 def add_fixture():
@@ -198,16 +228,20 @@ def add_fixture():
         registry.add(address, new_fixture.uuid, function)
         address = int(address)+1
 
-# Main function to allow imports
+
+# The program itself
 def main():
-    iwb_reg = DmxRegistry('IWB')
-    print(iwb_reg.registry)
-    if PROGRAM_ACTION == 'add':
-        add_fixture()
-    print(iwb_reg.registry)
+    manager = FileManager()
+    manager.load(LAUNCH_ARGS.file)
+    global PROJECT_FILE 
+    PROJECT_FILE = manager
+    iwb = DmxRegistry('IWB')
+    print(iwb.registry)
+    iwb.registry[101] = ('uuidkeke', 'functiones')
+    print(iwb.registry)
+    manager.save()
     print('doing main stuff')
-    PROJECT_FILE_TREE.write(PROJECT_FILE, encoding='UTF-8', 
-        xml_declaration=True)
+
 
 # Check that the program isn't imported, then run main
 if __name__ == '__main__':
