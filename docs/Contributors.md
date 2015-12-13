@@ -1,8 +1,8 @@
-# OLDoc Documentation for Contributors
+# pylux Documentation for Contributors
 
 ## Concepts
 
-At its most basic level, OLDoc reads information from an XML file (the plot file) into Python objects, performs actions on those Python objects, then writes the changes back to the XML file. 
+At its most basic level, pylux reads information from an XML file (the plot file) into Python objects, performs actions on those Python objects, then writes the changes back to the XML file. 
 The OL Plot file contains all the information for a single lighting project. 
 The plot file consists of three primary structures:
 

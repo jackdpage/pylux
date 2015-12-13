@@ -1,6 +1,6 @@
-# OpenLightingDocumentation
+# pylux 
 
-The OpenLightingDocumentation (OLDoc) ~~is~~ will be a program for the management of lighting fixtures.
+pylux will be a program for the management of lighting fixtures.
 
 ## File Types
 

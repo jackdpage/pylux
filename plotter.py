@@ -1,4 +1,4 @@
-# OLDoc is a suite for the management of lighting documentation
+# pylux is a program for the management of lighting documentation
 # Copyright 2015 Jack Page
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ from itertools import groupby
 from operator import itemgetter
 
 # Initiate the argument parser
-parser = argparse.ArgumentParser(prog='OLPlotter',
+parser = argparse.ArgumentParser(prog='pylux Plotter',
     description='Create and modify OpenLighting Plot files')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.1')
 parser.add_argument('file')
@@ -34,7 +34,7 @@ parser.add_argument('action', choices=['add'])
 LAUNCH_ARGS = parser.parse_args()
 
 # Initiate the config parser
-config_file = os.path.expanduser('~/.config/oldoc/OLDoc.conf')
+config_file = os.path.expanduser('~/.config/pylux.conf')
 config = configparser.ConfigParser()
 config.read(config_file)
 print('Using config file '+config_file)
