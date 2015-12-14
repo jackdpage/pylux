@@ -130,10 +130,24 @@ class DmxRegistry:
                 self.xml_registry.remove(channel)
 
     # Get a list of free DMX channels
-    def get_free_channels(self):
+    def get_start_address(self, n):
         occupied = []
         for address in self.registry:
             occupied.append(address)
+        occupied.sort()
+        print('Occupied channels: '+str(occupied))
+        for i in occupied:
+            free_from = i+1
+            if occupied[-1] == i:
+                next_test = 513
+            else:
+                next_test = occupied[occupied.index(i)+1]
+            free_until = next_test-1
+            if free_until-free_from >= 0:
+                print('Found free channels in the range '+str(free_from)+':'
+                    +str(free_until))
+            if free_until-free_from+1 >= n:
+                return free_from
         
 
 class Fixture:
@@ -159,6 +173,7 @@ class Fixture:
         self.dmx = []
         for channel in dmx_xml:
             self.dmx.append(channel.tag)
+        self.dmx_num = len(self.dmx)
 
     # Create an XML object from the information in this fixture and add it to
     # the tree
@@ -209,25 +224,31 @@ def add_fixture():
     parser.add_argument('universe')
     universe = input('DMX universe to use: ')
     parser.add_argument('start_address')
-    address = input('DMX start address: ')
-    registry = DmxRegistry(universe)
+    address = input('DMX start address or auto: ')
+    registry = iwb
+    if address == 'auto':
+        address = registry.get_start_address(new_fixture.dmx_num)
     print(universe)
     print(address)
     for function in new_fixture.dmx: 
-        registry.add(address, new_fixture.uuid, function)
+        registry.registry[address] = (new_fixture.uuid, function)
         address = int(address)+1
 
 
 # The program itself
 def main():
-    manager = FileManager()
-    manager.load(LAUNCH_ARGS.file)
-    global PROJECT_FILE 
-    PROJECT_FILE = manager
+    global PROJECT_FILE
+    PROJECT_FILE = FileManager()
+    PROJECT_FILE.load(LAUNCH_ARGS.file)
+    global iwb
     iwb = DmxRegistry('IWB')
+    iwb.registry[1] = ('uuid', 'func')
+    iwb.registry[2] = ('uui', 'fu')
+    iwb.registry[4] = ('ua', 'ni')
+    iwb.registry[7] = ('a', 'b')
     print(iwb.registry)
-    iwb.save()
-    manager.save()
+    add_fixture()
+    print(iwb.registry)
     print('doing main stuff')
 
 
