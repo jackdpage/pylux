@@ -67,6 +67,7 @@ class DmxRegistry:
     def __init__(self, universe):
         self.registry = {}
         self.universe = universe
+        self.xml_registry = False
         # Search for this universe in the XML file
         xml_registries = PROJECT_FILE.root.findall('dmx_registry')
         for xml_registry in xml_registries: 
@@ -74,14 +75,11 @@ class DmxRegistry:
             if testing_universe == self.universe:
                 self.xml_registry = xml_registry
                 break # Return XML registry if it exists
-            else:
-                xml_registry = False # Return false if no XML registry exists
         # Create a new XML registry if one doesn't exist
-        if xml_registry == False:
-            xml_registry = ET.Element('dmx_registry')
-            xml_registry.set('universe', self.universe)
-            PROJECT_FILE.root.append(xml_registry)
-            self.xml_registry = xml_registry
+        if self.xml_registry == False:
+            self.xml_registry = ET.Element('dmx_registry')
+            self.xml_registry.set('universe', self.universe)
+            PROJECT_FILE.root.append(self.xml_registry)
         # Populate the Python registry if an XML registry was found
         else:            
             for channel in xml_registry:
@@ -115,36 +113,27 @@ class DmxRegistry:
                 if found_address == str(address):
                     return channel
                     break
-                else:
-                    return False
 
         # Iterate over the Python registry
         for address in self.registry:
             uuid = self.registry[address][0]
             function = self.registry[address][1]
             xml_channel = get_xml_channel(self, address)
-            if xml_channel == False:
+            if xml_channel == None:
                 add_xml_entry(self, address, uuid, function)
             else:
                 edit_xml_entry(self, xml_channel, uuid, function)
         # Iterate over the XML registry to remove any now empty channels
         for channel in self.xml_registry:
-            address = channel.get('address')
-            if self.registry[address] is ():
+            address = int(channel.get('address'))
+            if address not in self.registry:
                 self.xml_registry.remove(channel)
 
     # Get a list of free DMX channels
     def get_free_channels(self):
-        free = []
-        for i in range(1, 512):
-            free.append(i)
+        occupied = []
         for address in self.registry:
-            free.remove(address) 
-        groups = []
-        keys = []
-        free.sort()
-        #for k, g in groupby(enumerate(data), lambda(i, x): i-x):
-        #    print(map(itemgetter(1), g))
+            occupied.append(address)
         
 
 class Fixture:
@@ -237,8 +226,7 @@ def main():
     PROJECT_FILE = manager
     iwb = DmxRegistry('IWB')
     print(iwb.registry)
-    iwb.registry[101] = ('uuidkeke', 'functiones')
-    print(iwb.registry)
+    iwb.save()
     manager.save()
     print('doing main stuff')
 
