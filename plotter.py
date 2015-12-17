@@ -20,17 +20,12 @@ import argparse
 import os
 import configparser
 import os.path
-import itertools
-import operator
-from itertools import groupby
-from operator import itemgetter
 
 # Initiate the argument parser
 parser = argparse.ArgumentParser(prog='pylux Plotter',
     description='Create and modify OpenLighting Plot files')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.1')
 parser.add_argument('file')
-parser.add_argument('action', choices=['add'])
 LAUNCH_ARGS = parser.parse_args()
 
 # Initiate the config parser
@@ -40,7 +35,8 @@ config.read(config_file)
 print('Using config file '+config_file)
 
 OL_FIXTURES_DIR = os.path.expanduser(config['Fixtures']['dir'])
-PROGRAM_ACTION = LAUNCH_ARGS.action
+
+AVAILABLE_ACTIONS = ['add']
 
 class FileManager:
 
@@ -147,6 +143,7 @@ class DmxRegistry:
                 print('Found free channels in the range '+str(free_from)+':'
                     +str(free_until))
             if free_until-free_from+1 >= n:
+                print('Automatically chose start address '+str(free_from))
                 return free_from
         
 
@@ -214,7 +211,7 @@ def get_olf_library():
 # Add a new fixture to the plot
 def add_fixture():
     parser = argparse.ArgumentParser()
-    parser.add_argument('fixture', choices=get_olf_library())
+    parser.add_argument('fixture')
     print('The following fixture types were found: '+str(get_olf_library()))
     fixture_type = input('OLID of fixture to add: ')
     new_fixture = Fixture(fixture_type)
@@ -223,13 +220,14 @@ def add_fixture():
     parser = argparse.ArgumentParser()
     parser.add_argument('universe')
     universe = input('DMX universe to use: ')
+    print('Need '+str(new_fixture.dmx_num)+' DMX channels')
     parser.add_argument('start_address')
     address = input('DMX start address or auto: ')
     registry = iwb
     if address == 'auto':
         address = registry.get_start_address(new_fixture.dmx_num)
-    print(universe)
-    print(address)
+    else:
+        address = int(address)
     for function in new_fixture.dmx: 
         registry.registry[address] = (new_fixture.uuid, function)
         address = int(address)+1
@@ -237,18 +235,16 @@ def add_fixture():
 
 # The program itself
 def main():
-    global PROJECT_FILE
-    PROJECT_FILE = FileManager()
-    PROJECT_FILE.load(LAUNCH_ARGS.file)
-    global iwb
-    iwb = DmxRegistry('IWB')
-    iwb.registry[1] = ('uuid', 'func')
-    iwb.registry[2] = ('uui', 'fu')
-    iwb.registry[4] = ('ua', 'ni')
-    iwb.registry[7] = ('a', 'b')
-    print(iwb.registry)
-    add_fixture()
-    print(iwb.registry)
+#    global PROJECT_FILE
+#    PROJECT_FILE = FileManager()
+#    PROJECT_FILE.load(LAUNCH_ARGS.file)
+#    global iwb
+#    iwb = DmxRegistry('IWB')
+    print('This is pylux, version 0.1')
+    while True:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('action')
+        action = input('Enter an action, choices: '+str(AVAILABLE_ACTIONS)+'\n')
     print('doing main stuff')
 
 

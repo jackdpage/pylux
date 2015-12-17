@@ -1,8 +1,10 @@
-(A) 2015-12-12 Automatic DMX start address assignment +Base
-(A) 2015-12-13 DmxRegistry save deletes empty channels +Base
-(B) 2015-12-12 Remove fixture action +Base
+(A) 2015-12-17 Fix the global variable workaround +Base
+(A) 2015-12-17 User input on DMX registries +Base
 (B) 2015-12-12 List information action +Base
+(B) 2015-12-12 Remove fixture action +Base
 (B) 2015-12-13 File management support +Base
 (C) 2015-12-12 Add GUI using PyJS +UI
 (C) 2015-12-12 Plotting using HTML5 canvas +Extensions
 (C) 2015-12-12 Report creation using LaTeX (pandoc?) +Extensions
+x 2015-12-14 2015-12-12 Automatic DMX start address assignment +Base
+x 2015-12-14 2015-12-13 DmxRegistry save deletes empty channels +Base
