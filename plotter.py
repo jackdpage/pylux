@@ -226,7 +226,7 @@ def get_olf_library():
 # Display the help page
 def get_command_list():
     text = ""
-    with open('help.man') as man:
+    with open('help.txt') as man:
         for line in man:
             text = text+line
     print(text)
