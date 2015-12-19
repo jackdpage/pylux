@@ -20,29 +20,33 @@ import argparse
 import os
 import configparser
 import os.path
+import sys
 
 # Initiate the argument parser
-parser = argparse.ArgumentParser(prog='pylux Plotter',
+parser = argparse.ArgumentParser(prog='pylux',
     description='Create and modify OpenLighting Plot files')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.1')
-parser.add_argument('file')
+parser.add_argument('-f', '--file', dest='file', 
+    help='load this project file on launch')
 LAUNCH_ARGS = parser.parse_args()
 
 # Initiate the config parser
 config_file = os.path.expanduser('~/.config/pylux.conf')
 config = configparser.ConfigParser()
 config.read(config_file)
-print('Using config file '+config_file)
 
 OL_FIXTURES_DIR = os.path.expanduser(config['Fixtures']['dir'])
 
-AVAILABLE_ACTIONS = ['add']
+PROMPT = '(pylux) '
 
 class FileManager:
 
     def load(self, path):
         self.file = path
-        self.tree = ET.parse(self.file)
+        try:
+            self.tree = ET.parse(self.file)
+        except FileNotFoundError:
+            print('The file you are trying to load doesn\'t exist!')
         self.root = self.tree.getroot()
 
     def save(self):
@@ -125,13 +129,20 @@ class DmxRegistry:
             if address not in self.registry:
                 self.xml_registry.remove(channel)
 
-    # Get a list of free DMX channels
-    def get_start_address(self, n):
+    # Get a list of the occupied channels
+    def get_occupied(self):
         occupied = []
         for address in self.registry:
             occupied.append(address)
         occupied.sort()
-        print('Occupied channels: '+str(occupied))
+        return occupied
+
+    # Get a start address for a run of n free DMX channels
+    def get_start_address(self, n):
+        occupied = self.get_occupied()
+        if occupied == []:
+            print('All channels are free so choosing start address 1')
+            return 1
         for i in occupied:
             free_from = i+1
             if occupied[-1] == i:
@@ -145,7 +156,12 @@ class DmxRegistry:
             if free_until-free_from+1 >= n:
                 print('Automatically chose start address '+str(free_from))
                 return free_from
-        
+
+    # Print a nice list of the used channels
+    def print(self):
+        for channel in self.registry:
+            print(str(format(channel, '03d'))+' uuid: '+
+                self.registry[channel][0]+', func: '+self.registry[channel][1])
 
 class Fixture:
     
@@ -207,6 +223,17 @@ def get_olf_library():
         library[library.index(olf)] = olid
     return library
 
+# Display the help page
+def get_command_list():
+    text = ""
+    with open('help.man') as man:
+        for line in man:
+            text = text+line
+    print(text)
+
+# Clear the console
+def clear():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 # Add a new fixture to the plot
 def add_fixture():
@@ -220,10 +247,11 @@ def add_fixture():
     parser = argparse.ArgumentParser()
     parser.add_argument('universe')
     universe = input('DMX universe to use: ')
+    registry = DmxRegistry(universe)
     print('Need '+str(new_fixture.dmx_num)+' DMX channels')
-    parser.add_argument('start_address')
+    print('Occupied channels: '+str(registry.get_occupied()))
+    parser.add_argument('address')
     address = input('DMX start address or auto: ')
-    registry = iwb
     if address == 'auto':
         address = registry.get_start_address(new_fixture.dmx_num)
     else:
@@ -231,22 +259,63 @@ def add_fixture():
     for function in new_fixture.dmx: 
         registry.registry[address] = (new_fixture.uuid, function)
         address = int(address)+1
+    registry.save()
 
+# Get a list of all the fixtures
+def list_fixtures():
+    fixture_list = PROJECT_FILE.root.find('fixtures')
+    for fixture in fixture_list:
+        olid = fixture.get('olid')
+        uuid = fixture.get('uuid')
+        print(olid+', id: '+uuid)
 
 # The program itself
 def main():
-#    global PROJECT_FILE
-#    PROJECT_FILE = FileManager()
-#    PROJECT_FILE.load(LAUNCH_ARGS.file)
-#    global iwb
-#    iwb = DmxRegistry('IWB')
-    print('This is pylux, version 0.1')
+    global PROJECT_FILE
+    PROJECT_FILE = FileManager()
+    print('Pylux 0.1')
+    print('Using configuration file '+config_file)
+    # If a project file was given at launch, load it
+    if LAUNCH_ARGS.file != None:
+        PROJECT_FILE.load(os.path.expanduser(LAUNCH_ARGS.file))
+        print('Using project file '+PROJECT_FILE.file) 
+    print('Welcome to Pylux! Type \'help\' to view a list of commands.')
     while True:
         parser = argparse.ArgumentParser()
         parser.add_argument('action')
-        action = input('Enter an action, choices: '+str(AVAILABLE_ACTIONS)+'\n')
-    print('doing main stuff')
-
+        user_input = input(PROMPT)
+        if user_input.find(' ') != -1:
+            action = user_input.split(' ')[0]
+            parameter = user_input.split(' ')[1]
+        else:
+            action = user_input
+        # File actions
+        if action == 'load' or action == 'fl':
+            try:
+                PROJECT_FILE.load(parameter)
+            except UnboundLocalError:
+                print('You need to specify a file path to load')
+        elif action == 'save' or action == 'fs':
+            PROJECT_FILE.save()
+        # Fixture actions
+        elif action == 'add' or action == 'xa':
+            add_fixture()
+        elif action == 'fixlist' or action == 'xl':
+            list_fixtures()
+        # DMX registry actions
+        elif action == 'reglist' or action == 'rl':
+            dmx_registry = DmxRegistry(parameter)
+            dmx_registry.print()
+        # Utility actions
+        elif action == 'help' or action == 'h':
+            get_command_list()
+        elif action == 'clear' or action == 'c':
+            clear()
+        elif action == 'quit' or action == 'q':
+            sys.exit()
+        else:
+            print('The command you typed doesn\'t exist.') 
+            print('Type \'help\' for a list of available commands.')
 
 # Check that the program isn't imported, then run main
 if __name__ == '__main__':

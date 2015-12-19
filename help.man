@@ -1,0 +1,12 @@
+Below is a table of the commands used by Pylux.
+Each command has a memorable one or two letter shortcut.
+Some commands require a parameter (indicated by the capitalised word).
+COMMAND           SHORTCUT  FUNCTION
+help              h         display this message
+clear             c         clear the screen
+quit              q         exit the program
+load FILE         fl        load FILE as the project file
+save              fs        save the current project file
+add               xa        add a new fixture
+fixlist           xl        list the fixtures in the plot
+reglist UNIVERSE  rl        list the used channels in UNIVERSE

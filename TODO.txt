@@ -1,10 +1,14 @@
 (A) 2015-12-17 Fix the global variable workaround +Base
-(A) 2015-12-17 User input on DMX registries +Base
-(B) 2015-12-12 List information action +Base
+(A) 2015-12-19 Multi-word variable support +Bugfix
+(B) 2015-12-19 Create dimmer/circuit infrastructure
+(B) 2015-12-19 Create positioning infrastructure +Base
+(B) 2015-12-19 Better (and more) error handling +Base
 (B) 2015-12-12 Remove fixture action +Base
-(B) 2015-12-13 File management support +Base
-(C) 2015-12-12 Add GUI using PyJS +UI
+(B) 2015-12-13 File management support (save as, new) +Base
 (C) 2015-12-12 Plotting using HTML5 canvas +Extensions
 (C) 2015-12-12 Report creation using LaTeX (pandoc?) +Extensions
 x 2015-12-14 2015-12-12 Automatic DMX start address assignment +Base
 x 2015-12-14 2015-12-13 DmxRegistry save deletes empty channels +Base
+x 2015-12-19 2015-12-12 List information action +Base
+x 2015-12-19 2015-12-17 User input on DMX registries +Base
+x 2015-12-19 2015-12-19 Main user loop +Base
