@@ -53,12 +53,6 @@ class FileManager:
         self.tree.write(self.file, encoding='UTF-8', 
             xml_declaration=True)
 
-
-class ConfigHelper:
-    
-    def __init__(self):
-        self = self
-
     
 class DmxRegistry:
     
@@ -163,6 +157,7 @@ class DmxRegistry:
             print(str(format(channel, '03d'))+' uuid: '+
                 self.registry[channel][0]+', func: '+self.registry[channel][1])
 
+
 class Fixture:
     
     # Initialise the fixture from the OLF file
@@ -209,11 +204,31 @@ class Fixture:
     def edit(self):
         for variable in self.variables:
             parser = argparse.ArgumentParser()
-            parser.add_argument('variable')
+            parser.add_argument('variable', nargs='+')
             value = input('Value for '+variable+': ')
             args = parser.parse_args(value.split())
             self.variables[variable] = value
     
+
+class PositionManager:
+    
+    def get_fixture(uuid):
+        fixture_list = PROJECT_FILE.root.find('fixtures')
+        for fixture in fixture_list:
+            test_uuid = fixture.get('uuid')
+            if test_uuid == uuid:
+                return fixture
+                break
+
+    def position(uuid, position):
+        fixture_list = PROJECT_FILE.root.find('fixtures')
+        fixture = PositionManager.get_fixture(uuid)
+        posX = ET.SubElement(fixture, 'posX')
+        posX.text = position[0]
+        posY = ET.SubElement(fixture, 'posY')
+        posY.text = position[1]
+        posZ = ET.SubElement(fixture, 'posZ')
+        posZ.text = position[2]
 
 # Return a list of the OLF files in the directory
 def get_olf_library():
@@ -223,6 +238,7 @@ def get_olf_library():
         library[library.index(olf)] = olid
     return library
 
+
 # Display the help page
 def get_command_list():
     text = ""
@@ -231,9 +247,11 @@ def get_command_list():
             text = text+line
     print(text)
 
+
 # Clear the console
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
 
 # Add a new fixture to the plot
 def add_fixture():
@@ -260,6 +278,15 @@ def add_fixture():
         registry.registry[address] = (new_fixture.uuid, function)
         address = int(address)+1
     registry.save()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('position')
+    position = input('x,y,z position: ')
+    x = position.split(',')[0]
+    y = position.split(',')[1]
+    z = position.split(',')[2]
+    position = (x,y,z)
+    PositionManager.position(new_fixture.uuid, position)
+
 
 # Get a list of all the fixtures
 def list_fixtures():
@@ -268,6 +295,27 @@ def list_fixtures():
         olid = fixture.get('olid')
         uuid = fixture.get('uuid')
         print(olid+', id: '+uuid)
+
+
+# Filter fixtures based on a property
+def filter_fixtures(key, value):
+    fixture_list = PROJECT_FILE.root.find('fixtures')
+    for fixture in fixture_list:
+        if key == 'olid':
+            test_value = fixture.get('olid')
+            if test_value == value:
+                uuid = fixture.get('uuid')
+                print(test_value+', id: '+uuid)
+        else:        
+            try:
+                test_value = fixture.find(key).text
+                if test_value == value:
+                    olid = fixture.get('olid')
+                    uuid = fixture.get('uuid')
+                    print(olid+', id: '+uuid+', '+key+': '+value)
+            except AttributeError:
+                continue
+
 
 # The program itself
 def main():
@@ -282,17 +330,18 @@ def main():
     print('Welcome to Pylux! Type \'help\' to view a list of commands.')
     while True:
         parser = argparse.ArgumentParser()
-        parser.add_argument('action')
+        parser.add_argument('action', nargs='+')
         user_input = input(PROMPT)
         if user_input.find(' ') != -1:
             action = user_input.split(' ')[0]
-            parameter = user_input.split(' ')[1]
+            key = user_input.split(' ')[1]
+            value = user_input.split(' ')[2]
         else:
             action = user_input
         # File actions
         if action == 'load' or action == 'fl':
             try:
-                PROJECT_FILE.load(parameter)
+                PROJECT_FILE.load(key)
             except UnboundLocalError:
                 print('You need to specify a file path to load')
         elif action == 'save' or action == 'fs':
@@ -302,9 +351,11 @@ def main():
             add_fixture()
         elif action == 'fixlist' or action == 'xl':
             list_fixtures()
+        elif action == 'filter' or action == 'xf':
+            filter_fixtures(key, value)
         # DMX registry actions
         elif action == 'reglist' or action == 'rl':
-            dmx_registry = DmxRegistry(parameter)
+            dmx_registry = DmxRegistry(key)
             dmx_registry.print()
         # Utility actions
         elif action == 'help' or action == 'h':
@@ -316,6 +367,7 @@ def main():
         else:
             print('The command you typed doesn\'t exist.') 
             print('Type \'help\' for a list of available commands.')
+
 
 # Check that the program isn't imported, then run main
 if __name__ == '__main__':

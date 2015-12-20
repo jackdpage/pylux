@@ -9,4 +9,5 @@ load FILE         fl        load FILE as the project file
 save              fs        save the current project file
 add               xa        add a new fixture
 fixlist           xl        list the fixtures in the plot
+filter TAG VALUE  xf        list fixtures whose TAG value is VALUE
 reglist UNIVERSE  rl        list the used channels in UNIVERSE
