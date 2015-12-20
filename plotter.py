@@ -37,7 +37,7 @@ config.read(config_file)
 
 OL_FIXTURES_DIR = os.path.expanduser(config['Fixtures']['dir'])
 
-PROMPT = '(pylux) '
+PROMPT = config['Settings']['prompt']+' '
 
 class FileManager:
 
@@ -332,37 +332,40 @@ def main():
         parser = argparse.ArgumentParser()
         parser.add_argument('action', nargs='+')
         user_input = input(PROMPT)
-        if user_input.find(' ') != -1:
-            action = user_input.split(' ')[0]
-            key = user_input.split(' ')[1]
-            value = user_input.split(' ')[2]
-        else:
-            action = user_input
+        inputs = []
+        for i in user_input.split(' '):
+            inputs.append(i)
         # File actions
-        if action == 'load' or action == 'fl':
+        if inputs[0] == 'load' or inputs[0] == 'fl':
             try:
-                PROJECT_FILE.load(key)
+                PROJECT_FILE.load(inputs[1])
             except UnboundLocalError:
                 print('You need to specify a file path to load')
-        elif action == 'save' or action == 'fs':
+        elif inputs[0] == 'save' or inputs[0] == 'fs':
             PROJECT_FILE.save()
         # Fixture actions
-        elif action == 'add' or action == 'xa':
+        elif inputs[0] == 'add' or inputs[0] == 'xa':
             add_fixture()
-        elif action == 'fixlist' or action == 'xl':
+        elif inputs[0] == 'fixlist' or inputs[0] == 'xl':
             list_fixtures()
-        elif action == 'filter' or action == 'xf':
-            filter_fixtures(key, value)
+        elif inputs[0] == 'filter' or inputs[0] == 'xf':
+            try:
+                filter_fixtures(inputs[1], inputs[2])
+            except IndexError:
+                print('You need to specify a key and value!')
         # DMX registry actions
-        elif action == 'reglist' or action == 'rl':
-            dmx_registry = DmxRegistry(key)
-            dmx_registry.print()
+        elif inputs[0] == 'reglist' or inputs[0] == 'rl':
+            try:
+                dmx_registry = DmxRegistry(inputs[1])
+                dmx_registry.print()
+            except IndexError:
+                print('You need to specify a DMX registry!')
         # Utility actions
-        elif action == 'help' or action == 'h':
+        elif inputs[0] == 'help' or inputs[0] == 'h':
             get_command_list()
-        elif action == 'clear' or action == 'c':
+        elif inputs[0] == 'clear' or inputs[0] == 'c':
             clear()
-        elif action == 'quit' or action == 'q':
+        elif inputs[0] == 'quit' or inputs[0] == 'q':
             sys.exit()
         else:
             print('The command you typed doesn\'t exist.') 
