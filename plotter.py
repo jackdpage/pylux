@@ -50,8 +50,10 @@ class FileManager:
         self.root = self.tree.getroot()
 
     def save(self):
-        self.tree.write(self.file, encoding='UTF-8', 
-            xml_declaration=True)
+        self.tree.write(self.file, encoding='UTF-8', xml_declaration=True)
+
+    def saveas(self, path):
+        self.tree.write(path, encoding='UTF-8', xml_declaration=True)
 
     
 class DmxRegistry:
@@ -343,6 +345,11 @@ def main():
                 print('You need to specify a file path to load')
         elif inputs[0] == 'save' or inputs[0] == 'fs':
             PROJECT_FILE.save()
+        elif inputs[0] == 'saveas' or inputs[0] == 'fS':
+            try:
+                PROJECT_FILE.saveas(inputs[1])
+            except IndexError:
+                print('You need to specify a destination path!')
         # Fixture actions
         elif inputs[0] == 'add' or inputs[0] == 'xa':
             add_fixture()
