@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # pylux is a program for the management of lighting documentation
 # Copyright 2015 Jack Page
 #
@@ -232,6 +234,22 @@ class PositionManager:
         posZ = ET.SubElement(fixture, 'posZ')
         posZ.text = position[2]
 
+
+class InteractiveFixtureManager:
+
+    def __init__(self):
+        self.option_list = {}
+
+    def append(self, ref, fixture):
+        self.option_list[ref] = fixture
+
+    def get(self, ref):
+        return self.option_list[int(ref)]
+
+    def clear(self):
+        self.option_list.clear()
+
+
 # Return a list of the OLF files in the directory
 def get_olf_library():
     library = os.listdir(OL_FIXTURES_DIR)
@@ -290,31 +308,53 @@ def add_fixture():
     PositionManager.position(new_fixture.uuid, position)
 
 
+# Remove a fixture with a given UUID
+def remove_fixture(interactive_ref):
+    fixture = INTERACTIVE_FIXTURE_MANAGER.get(interactive_ref)
+    fixture_list = PROJECT_FILE.root.find('fixtures')
+    fixture_list.remove(fixture)
+    return fixture
+
+
+# Remove a fixture with a given UUID, and remove any DMX channels associated
+def purge_fixture(uuid_part):
+    fixture = remove_fixture(uuid_part)
+
+
 # Get a list of all the fixtures
 def list_fixtures():
     fixture_list = PROJECT_FILE.root.find('fixtures')
+    INTERACTIVE_FIXTURE_MANAGER.clear()
+    i=1
     for fixture in fixture_list:
         olid = fixture.get('olid')
         uuid = fixture.get('uuid')
-        print(olid+', id: '+uuid)
+        print('['+str(i)+'] '+olid+', id: '+uuid)
+        INTERACTIVE_FIXTURE_MANAGER.append(i, fixture)
+        i = i+1
 
 
 # Filter fixtures based on a property
 def filter_fixtures(key, value):
     fixture_list = PROJECT_FILE.root.find('fixtures')
+    INTERACTIVE_FIXTURE_MANAGER.clear()
+    i=1
     for fixture in fixture_list:
         if key == 'olid':
             test_value = fixture.get('olid')
             if test_value == value:
                 uuid = fixture.get('uuid')
-                print(test_value+', id: '+uuid)
+                print('['+str(i)+'] '+test_value+', id: '+uuid)
+                i = i+1
         else:        
             try:
                 test_value = fixture.find(key).text
                 if test_value == value:
                     olid = fixture.get('olid')
                     uuid = fixture.get('uuid')
-                    print(olid+', id: '+uuid+', '+key+': '+value)
+                    print('['+str(i)+'] '+olid+', id: '+uuid+', '+key+': '+value)
+                    INTERACTIVE_FIXTURE_MANAGER.append(i, fixture)
+                    i = i+1
             except AttributeError:
                 continue
 
@@ -323,6 +363,8 @@ def filter_fixtures(key, value):
 def main():
     global PROJECT_FILE
     PROJECT_FILE = FileManager()
+    global INTERACTIVE_FIXTURE_MANAGER
+    INTERACTIVE_FIXTURE_MANAGER = InteractiveFixtureManager()
     print('Pylux 0.1')
     print('Using configuration file '+config_file)
     # If a project file was given at launch, load it
@@ -360,6 +402,8 @@ def main():
                 filter_fixtures(inputs[1], inputs[2])
             except IndexError:
                 print('You need to specify a key and value!')
+        elif inputs[0] == 'fixrem' or inputs[0] == 'xr':
+            remove_fixture(inputs[1])
         # DMX registry actions
         elif inputs[0] == 'reglist' or inputs[0] == 'rl':
             try:

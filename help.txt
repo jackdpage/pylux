@@ -11,4 +11,5 @@ saveas FILE       fS        save the working file to FILE
 add               xa        add a new fixture
 fixlist           xl        list the fixtures in the plot
 filter TAG VALUE  xf        list fixtures whose TAG value is VALUE
+fixrem REF        xr        remove the fixture with temporary id REF
 reglist UNIVERSE  rl        list the used channels in UNIVERSE

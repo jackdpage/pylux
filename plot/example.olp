@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <olplot>
 <fixtures>
-<fixture olid="par64mfl" uuid="05811576-8ad5-4160-89cb-1d94662db31b"><barn_doors>none</barn_doors><power>1000</power><gobo>none</gobo><gel>primary red</gel><lamp_axis_rotation>y</lamp_axis_rotation><image_uri>http://docs.oldoc.org/image/par64mfl.svg</image_uri><posX>6</posX><posY>7</posY><posZ>8</posZ></fixture></fixtures>
-<dmx_registry universe="iwb"><channel address="78"><fixture_uuid>05811576-8ad5-4160-89cb-1d94662db31b</fixture_uuid><function>intensity</function></channel></dmx_registry></olplot>
+<fixture olid="par64mfl" uuid="05811576-8ad5-4160-89cb-1d94662db31b"><barn_doors>none</barn_doors><power>1000</power><gobo>none</gobo><gel>primary red</gel><lamp_axis_rotation>y</lamp_axis_rotation><image_uri>http://docs.oldoc.org/image/par64mfl.svg</image_uri><posX>6</posX><posY>7</posY><posZ>8</posZ></fixture><fixture olid="par64mfl" uuid="d51a8ae6-d016-4f0e-b66e-bec5d2369518"><gobo>none</gobo><gel>red</gel><lamp_axis_rotation>y</lamp_axis_rotation><barn_doors>none</barn_doors><power>1000</power><image_uri>http://docs.oldoc.org/image/par64mfl.svg</image_uri><posX>1</posX><posY>9</posY><posZ>8</posZ></fixture></fixtures>
+<dmx_registry universe="iwb"><channel address="78"><fixture_uuid>05811576-8ad5-4160-89cb-1d94662db31b</fixture_uuid><function>intensity</function></channel><channel address="79"><fixture_uuid>d51a8ae6-d016-4f0e-b66e-bec5d2369518</fixture_uuid><function>intensity</function></channel></dmx_registry></olplot>
