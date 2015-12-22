@@ -235,13 +235,13 @@ class PositionManager:
         posZ.text = position[2]
 
 
-class InteractiveFixtureManager:
+class CliManager:
 
     def __init__(self):
         self.option_list = {}
 
-    def append(self, ref, fixture):
-        self.option_list[ref] = fixture
+    def append(self, ref, object):
+        self.option_list[ref] = object
 
     def get(self, ref):
         return self.option_list[int(ref)]
@@ -298,19 +298,10 @@ def add_fixture():
         registry.registry[address] = (new_fixture.uuid, function)
         address = int(address)+1
     registry.save()
-    parser = argparse.ArgumentParser()
-    parser.add_argument('position')
-    position = input('x,y,z position: ')
-    x = position.split(',')[0]
-    y = position.split(',')[1]
-    z = position.split(',')[2]
-    position = (x,y,z)
-    PositionManager.position(new_fixture.uuid, position)
 
 
 # Remove a fixture with a given UUID
-def remove_fixture(interactive_ref):
-    fixture = INTERACTIVE_FIXTURE_MANAGER.get(interactive_ref)
+def remove_fixture(fixture):
     fixture_list = PROJECT_FILE.root.find('fixtures')
     fixture_list.remove(fixture)
     return fixture
@@ -321,23 +312,28 @@ def purge_fixture(uuid_part):
     fixture = remove_fixture(uuid_part)
 
 
+# Get information about a fixture
+def list_fixture_info(fixture):
+    for variable in fixture:
+        print(variable.tag+': '+variable.text)
+
 # Get a list of all the fixtures
 def list_fixtures():
     fixture_list = PROJECT_FILE.root.find('fixtures')
-    INTERACTIVE_FIXTURE_MANAGER.clear()
+    INTERFACE_MANAGER.clear()
     i=1
     for fixture in fixture_list:
         olid = fixture.get('olid')
         uuid = fixture.get('uuid')
         print('['+str(i)+'] '+olid+', id: '+uuid)
-        INTERACTIVE_FIXTURE_MANAGER.append(i, fixture)
+        INTERFACE_MANAGER.append(i, fixture)
         i = i+1
 
 
 # Filter fixtures based on a property
 def filter_fixtures(key, value):
     fixture_list = PROJECT_FILE.root.find('fixtures')
-    INTERACTIVE_FIXTURE_MANAGER.clear()
+    INTERFACE_MANAGER.clear()
     i=1
     for fixture in fixture_list:
         if key == 'olid':
@@ -345,6 +341,7 @@ def filter_fixtures(key, value):
             if test_value == value:
                 uuid = fixture.get('uuid')
                 print('['+str(i)+'] '+test_value+', id: '+uuid)
+                INTERFACE_MANAGER.append(i, fixture)
                 i = i+1
         else:        
             try:
@@ -353,7 +350,7 @@ def filter_fixtures(key, value):
                     olid = fixture.get('olid')
                     uuid = fixture.get('uuid')
                     print('['+str(i)+'] '+olid+', id: '+uuid+', '+key+': '+value)
-                    INTERACTIVE_FIXTURE_MANAGER.append(i, fixture)
+                    INTERFACE_MANAGER.append(i, fixture)
                     i = i+1
             except AttributeError:
                 continue
@@ -363,8 +360,8 @@ def filter_fixtures(key, value):
 def main():
     global PROJECT_FILE
     PROJECT_FILE = FileManager()
-    global INTERACTIVE_FIXTURE_MANAGER
-    INTERACTIVE_FIXTURE_MANAGER = InteractiveFixtureManager()
+    global INTERFACE_MANAGER
+    INTERFACE_MANAGER = CliManager()
     print('Pylux 0.1')
     print('Using configuration file '+config_file)
     # If a project file was given at launch, load it
@@ -372,6 +369,7 @@ def main():
         PROJECT_FILE.load(os.path.expanduser(LAUNCH_ARGS.file))
         print('Using project file '+PROJECT_FILE.file) 
     print('Welcome to Pylux! Type \'help\' to view a list of commands.')
+    # Begin the main loop
     while True:
         parser = argparse.ArgumentParser()
         parser.add_argument('action', nargs='+')
@@ -380,43 +378,45 @@ def main():
         for i in user_input.split(' '):
             inputs.append(i)
         # File actions
-        if inputs[0] == 'load' or inputs[0] == 'fl':
+        if inputs[0] == 'fl':
             try:
                 PROJECT_FILE.load(inputs[1])
             except UnboundLocalError:
                 print('You need to specify a file path to load')
-        elif inputs[0] == 'save' or inputs[0] == 'fs':
+        elif inputs[0] == 'fs':
             PROJECT_FILE.save()
-        elif inputs[0] == 'saveas' or inputs[0] == 'fS':
+        elif inputs[0] == 'fS':
             try:
                 PROJECT_FILE.saveas(inputs[1])
             except IndexError:
                 print('You need to specify a destination path!')
         # Fixture actions
-        elif inputs[0] == 'add' or inputs[0] == 'xa':
+        elif inputs[0] == 'xa':
             add_fixture()
-        elif inputs[0] == 'fixlist' or inputs[0] == 'xl':
+        elif inputs[0] == 'xl':
             list_fixtures()
-        elif inputs[0] == 'filter' or inputs[0] == 'xf':
+        elif inputs[0] == 'xf':
             try:
                 filter_fixtures(inputs[1], inputs[2])
             except IndexError:
                 print('You need to specify a key and value!')
-        elif inputs[0] == 'fixrem' or inputs[0] == 'xr':
-            remove_fixture(inputs[1])
+        elif inputs[0] == 'xr':
+            remove_fixture(INTERFACE_MANAGER.get(inputs[1]))
+        elif inputs[0] == 'xi':
+            list_fixture_info(INTERFACE_MANAGER.get(inputs[1]))
         # DMX registry actions
-        elif inputs[0] == 'reglist' or inputs[0] == 'rl':
+        elif inputs[0] == 'rl':
             try:
                 dmx_registry = DmxRegistry(inputs[1])
                 dmx_registry.print()
             except IndexError:
                 print('You need to specify a DMX registry!')
         # Utility actions
-        elif inputs[0] == 'help' or inputs[0] == 'h':
+        elif inputs[0] == 'h':
             get_command_list()
-        elif inputs[0] == 'clear' or inputs[0] == 'c':
+        elif inputs[0] == 'c':
             clear()
-        elif inputs[0] == 'quit' or inputs[0] == 'q':
+        elif inputs[0] == 'q':
             sys.exit()
         else:
             print('The command you typed doesn\'t exist.') 
