@@ -1,0 +1,133 @@
+\documentclass[a4paper]{article}
+\usepackage{hyperref}
+\begin{document}
+\title{Pylux User Manual}
+\author{J. Page}
+\date{2015}
+\maketitle
+\newpage
+Copyright (C)  2015 Jack Page \\
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+\newpage
+\tableofcontents
+\newpage
+\section{Introduction}
+Pylux is a program written in Python for the manipulation of OpenLighting Plot
+documents. Pylux currently allows for the basic editing of the OpenLighting
+Plot XML files, including referencing OpenLighting Fixture files to obtain
+additional data.
+
+In the future, Pylux will be extended with modules that allow for the exporting
+of documentation in the \LaTeX{} format, and creating lighting plots in SVG 
+format.
+
+Bugs and feature requests should be submitted to 
+\url{https://github.com/jackdpage/pylux/issues}.
+
+\section{Command-line Options}
+Pylux is invoked simply by running the \texttt{plotter.py} program. Windows 
+operating systems should automatically associate file with the Python 
+interpreter. The program contains a shebang line for compatibility with UNIX
+systems. 
+
+\paragraph{\texttt{--help}, \texttt{-h}}
+Display the usage message of the program then exit.
+
+\paragraph{\texttt{--version}, \texttt{-v}}
+Display the version number of the program then exit.
+
+\paragraph{\texttt{--file \textit{FILE}}, \texttt{-f \textit{FILE}}} 
+Load the file with path \textit{FILE} as the project file on launch.
+
+\section{Basic Concepts}
+Pylux uses the OpenLighting Plot format as its document format. This format 
+specifies three main components of an XML document: the meta section, the 
+fixtures section and the registries section. In its current version, Pylux 
+can only read and write to the latter two sections.
+
+The fixtures section contains multiple fixture elements, each of which has 
+various data associated with it, depending on the fields as defined by the 
+fixture's OpenLighting ID (olid).
+
+The registries section contains one or more DMX registries, each of which 
+contains some channel elements, which contain both the UUID of the fixture 
+they control and their function.
+
+\section{Fundamental Commands}
+When launching Pylux, you are presented with an interactive prompt. This 
+prompt accepts many commands, all of which are one or two characters long and 
+may take one or more arguments. A complete list of commands is included below: 
+
+\subsection{Utility Commands}
+
+\paragraph{\texttt{h}}
+Display a list of the available commands for the interactive prompt. This 
+prints the contents of \texttt{help.txt}  to the output.
+
+\paragraph{\texttt{c}}
+Clears the screen of previous input and output. This uses the system screen 
+clearing command. (\texttt{clear} on UNIX, \texttt{cls} on Windows)
+
+\paragraph{\texttt{q}}
+Exit the program. This is a clean exit, without asking for any confirmation or 
+checking for unsaved buffers.
+
+\subsection{File Commands}
+
+\paragraph{\texttt{fl \textit{FILE}}}
+Load the file with path \textit{FILE} as the project file. This will override 
+any unsaved buffer associated with the previous project file, if there was one.
+
+\paragraph{\texttt{fs}}
+Save the current file buffer to its original location.
+
+\paragraph{\texttt{fS \textit{PATH}}}
+Save the current file buffer to a new file with location \textit{PATH}.
+
+\subsection{Fixture Commands}
+
+\paragraph{\texttt{xa}}
+Add a new fixture. This will initiate an interactive sequence, starting by 
+entering the olid of the new fixture. The program will then ask the user to 
+specify the value of the variables as specified by the associated 
+OpenLighting Fixture file. It will also ask the user to specify a DMX universe 
+to put the channels that this fixture requires in. The user can either 
+specify a start address or allow the program to choose the most appropriate 
+start address by typing \texttt{auto}.
+
+\paragraph{\texttt{xl}}
+List all the fixtures in the plot. This will generate a list of every fixture 
+in the plot, listing an interface reference, the fixture olid, and the fixture 
+UUID.
+
+\paragraph{\texttt{xf \textit{TAG VALUE}}}
+List all the fixtures in the plot which have a tag called \textit{TAG} with a 
+value of \textit{VALUE}. Like the list function, this will list an interface 
+reference, the fixture olid and UUID, and also the value of the tag that was 
+given for verification purposes.
+
+\paragraph{\texttt{xi \textit{REF}}}
+List all the information associated with the fixture with interface reference 
+\textit{REF}. \textit{REF} is the number given to a fixture by either the 
+list or filter commmand. It must be the number given by the most recently run 
+command, as this interface reference buffer is updated each time one of these 
+commands is run.
+
+\paragraph{\texttt{xr \textit{REF}}}
+Remove the fixture with the interface reference \textit{REF}. This fixture 
+will be removed from the plot, but associated DMX channels will not be 
+removed, use the upcoming command \texttt{xp} for that.
+
+\subsection{DMX Registry Commands}
+
+\paragraph{\texttt{rl \textit{UNIVERSE}}}
+List all the used channels in \textit{UNIVERSE}. This will list the DMX 
+address, fixture UUID and function of every channel in the DMX registry with 
+identifier \textit{UNIVERSE}.
+
+\end{document}
