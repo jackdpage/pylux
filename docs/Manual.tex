@@ -74,8 +74,10 @@ Clears the screen of previous input and output. This uses the system screen
 clearing command. (\texttt{clear} on UNIX, \texttt{cls} on Windows)
 
 \paragraph{\texttt{q}}
-Exit the program. This is a clean exit, without asking for any confirmation or 
-checking for unsaved buffers.
+Exit the program and autosave any changes that have been made to the tree.
+
+\paragraph{\texttt{q!}}
+Exit the program without saving any changes to disk.
 
 \subsection{File Commands}
 
@@ -88,6 +90,23 @@ Save the current file buffer to its original location.
 
 \paragraph{\texttt{fS \textit{PATH}}}
 Save the current file buffer to a new file with location \textit{PATH}.
+
+\subsection{Metadata Commands}
+
+\paragraph{\texttt{ml}}
+List all the metadata tags associated with the currently loaded project
+file.
+
+\paragraph{\texttt{ma \textit{TAG VALUE}}}
+Add a new piece of metadata. Adds a new tag with the name \textit{TAG}
+to the metadata section and sets its value to \textit{VALUE}.
+
+\paragraph{\texttt{mr \textit{TAG}}}
+Remove the piece of metadata from the file which has the name \textit{TAG}.
+
+\paragraph{\texttt{mg \textit{TAG}}}
+Get the value of a piece of metadata. Prints the value of the metadata with
+name \textit{TAG} on the screen.
 
 \subsection{Fixture Commands}
 
@@ -129,5 +148,27 @@ removed, use the upcoming command \texttt{xp} for that.
 List all the used channels in \textit{UNIVERSE}. This will list the DMX 
 address, fixture UUID and function of every channel in the DMX registry with 
 identifier \textit{UNIVERSE}.
+
+\section{Extensions}
+In the previous sections, we have discussed the usage of the base program in 
+Pylux: \texttt{plotter}. This is the program that you will use to edit your
+plots, however, beyond that, it doesn't do much. That is why Pylux can be 
+extended with additional Python scripts to provide extra functionality. In 
+the current version, Pylux comes bundled with the \texttt{genlux} script only.
+
+\subsection{genlux}
+genlux is an extension to the base \texttt{plotter} program which allows for 
+the creation of reports in the \LaTeX{} format, which can then be 
+post-processed to create a PDF file, or many other formats through the use of 
+an external tool such as Pandoc.
+
+In its current form, genlux can only create dimmer reports. This will change 
+in the near future. As such, genlux has very little in the way of options. As 
+genlux imports \texttt{plotter} when it is run, it accepts the same command 
+line arguments as \texttt{plotter}. Hence genlux is invoked with 
+\texttt{genlux -f \textit{FILE}} where \textit{FILE} is a Pylux plot file.
+This will generate a \LaTeX{} source in STDOUT, which can be written to a 
+file or piped directly into a \LaTeX{} processing tool such as 
+\texttt{pdflatex}.
 
 \end{document}
