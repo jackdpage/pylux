@@ -1,5 +1,5 @@
-destdir=$(HOME)/.config/
-filestoinstall=pylux.conf
+destdir=$(HOME)/.pylux/
+filestoinstall=pylux.conf genlux.cls
 
 all:
 	@echo "make options:"
@@ -9,8 +9,7 @@ all:
 install:
 	@install -Cdv "$(destdir)"
 	@install -Cv $(filestoinstall) "$(destdir)"
-	@install -Cdv "$(HOME)/.openlighting/"
-	@cp -rv fixture/ $(HOME)/.openlighting/
+	@cp -rv fixture/ $(HOME)/.pylux/
 
 uninstall:
-	@-rm -rfv "$(HOME)/.openlighting/"
+	@-rm -rfv "$(HOME)/.pylux/"

@@ -1,14 +1,16 @@
 #!/usr/bin/python3
 
-# pylux is a program for the management of lighting documentation
+# plotter.py is part of Pylux
+#
+# Pylux is a program for the management of lighting documentation
 # Copyright 2015 Jack Page
 #
-# This program is free software: you can redistribute it and/or modify
+# Pylux is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
+# Pylux is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -27,13 +29,14 @@ import sys
 # Initiate the argument parser
 parser = argparse.ArgumentParser(prog='pylux',
     description='Create and modify OpenLighting Plot files')
-parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.1')
+parser.add_argument('-v', '--version', action='version', 
+    version='%(prog)s 0.1')
 parser.add_argument('-f', '--file', dest='file', 
     help='load this project file on launch')
 LAUNCH_ARGS = parser.parse_args()
 
 # Initiate the config parser
-config_file = os.path.expanduser('~/.config/pylux.conf')
+config_file = os.path.expanduser('~/.pylux/pylux.conf')
 config = configparser.ConfigParser()
 config.read(config_file)
 
@@ -50,6 +53,8 @@ class FileManager:
         except FileNotFoundError:
             print('The file you are trying to load doesn\'t exist!')
         self.root = self.tree.getroot()
+        global META_MANAGER
+        META_MANAGER = MetaManager(self)
 
     def save(self):
         self.tree.write(self.file, encoding='UTF-8', xml_declaration=True)
@@ -212,7 +217,38 @@ class Fixture:
             value = input('Value for '+variable+': ')
             args = parser.parse_args(value.split())
             self.variables[variable] = value
-    
+
+
+class MetaManager:
+
+    def __init__(self, project_file):
+        self.meta_values = project_file.root.find('metadata')
+
+    # Print all metadata on the CLI
+    def list_meta(self):
+        for metaitem in self.meta_values:
+            print(metaitem.tag+': '+metaitem.text)
+
+    # Add a new piece of metadata
+    def add_meta(self, tag, value):
+        new_meta = ET.Element(tag)
+        new_meta.text = value
+        self.meta_values.append(new_meta)
+
+    # Remove metadata with tag
+    def remove_meta(self, tag):
+        for metaitem in self.meta_values:
+            test_tag = metaitem.tag
+            if test_tag == tag:
+                self.meta_values.remove(metaitem)
+
+    # Return a metadata value
+    def get(self, tag):
+        for metaitem in self.meta_values:
+            test_tag = metaitem.tag
+            if test_tag == tag:
+                return metaitem.text
+                break
 
 class PositionManager:
     
@@ -349,7 +385,8 @@ def filter_fixtures(key, value):
                 if test_value == value:
                     olid = fixture.get('olid')
                     uuid = fixture.get('uuid')
-                    print('['+str(i)+'] '+olid+', id: '+uuid+', '+key+': '+value)
+                    print('['+str(i)+'] '+olid+', id: '+uuid+', '+key+': '+
+                        value)
                     INTERFACE_MANAGER.append(i, fixture)
                     i = i+1
             except AttributeError:
@@ -368,7 +405,7 @@ def main():
     if LAUNCH_ARGS.file != None:
         PROJECT_FILE.load(os.path.expanduser(LAUNCH_ARGS.file))
         print('Using project file '+PROJECT_FILE.file) 
-    print('Welcome to Pylux! Type \'help\' to view a list of commands.')
+    print('Welcome to Pylux! Type \'h\' to view a list of commands.')
     # Begin the main loop
     while True:
         parser = argparse.ArgumentParser()
@@ -390,6 +427,15 @@ def main():
                 PROJECT_FILE.saveas(inputs[1])
             except IndexError:
                 print('You need to specify a destination path!')
+        # Metadata actions
+        elif inputs[0] == 'ml':
+            META_MANAGER.list_meta()
+        elif inputs[0] == 'ma':
+            META_MANAGER.add_meta(inputs[1], inputs[2])
+        elif inputs[0] == 'mr':
+            META_MANAGER.remove_meta(inputs[1])
+        elif inputs[0] == 'mg':
+            print(META_MANAGER.get(inputs[1]))
         # Fixture actions
         elif inputs[0] == 'xa':
             add_fixture()
@@ -401,7 +447,11 @@ def main():
             except IndexError:
                 print('You need to specify a key and value!')
         elif inputs[0] == 'xr':
-            remove_fixture(INTERFACE_MANAGER.get(inputs[1]))
+            try:
+                remove_fixture(INTERFACE_MANAGER.get(inputs[1]))
+            except IndexError:
+                print('You need to run either xl or xf then specify the'
+                      ' interface id of the fixture you wish to remove')
         elif inputs[0] == 'xi':
             list_fixture_info(INTERFACE_MANAGER.get(inputs[1]))
         # DMX registry actions
@@ -417,6 +467,11 @@ def main():
         elif inputs[0] == 'c':
             clear()
         elif inputs[0] == 'q':
+            print('Autosaving changes...')
+            PROJECT_FILE.save()
+            sys.exit()
+        elif inputs[0] == 'q!':
+            print('Ignoring changes and exiting...')
             sys.exit()
         else:
             print('The command you typed doesn\'t exist.') 

@@ -8,6 +8,10 @@ q             exit the program
 fl FILE       load FILE as the project file
 fs            save the current project file
 fS FILE       save the working file to FILE
+ml            list all the meta tags in the file
+ma TAG VALUE  add a piece of metadata with TAG value VALUE
+mr TAG        remove the piece of metadata with tag TAG
+mg TAG        print the value of the metadata with tag TAG
 xa            add a new fixture
 xl            list the fixtures in the plot
 xf TAG VALUE  list fixtures whose TAG value is VALUE
