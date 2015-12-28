@@ -26,27 +26,47 @@ import configparser
 import os.path
 import sys
 
-# Initiate the argument parser
-parser = argparse.ArgumentParser(prog='pylux',
-    description='Create and modify OpenLighting Plot files')
-parser.add_argument('-v', '--version', action='version', 
-    version='%(prog)s 0.1')
-parser.add_argument('-f', '--file', dest='file', 
-    help='load this project file on launch')
-LAUNCH_ARGS = parser.parse_args()
 
-# Initiate the config parser
-config_file = os.path.expanduser('~/.pylux/pylux.conf')
-config = configparser.ConfigParser()
-config.read(config_file)
+def init():
+    """Initialise the argument and config parsers."""
+    # Initiate the argument parser
+    parser = argparse.ArgumentParser(prog='pylux',
+       description='Create and modify OpenLighting Plot files')
+    parser.add_argument('-v', '--version', action='version', 
+        version='%(prog)s 0.1')
+    parser.add_argument('-f', '--file', dest='file', 
+        help='load this project file on launch')
+    global LAUNCH_ARGS
+    LAUNCH_ARGS = parser.parse_args()
 
-OL_FIXTURES_DIR = os.path.expanduser(config['Fixtures']['dir'])
+    # Initiate the config parser
+    global config_file
+    config_file = os.path.expanduser('~/.pylux/pylux.conf')
+    config = configparser.ConfigParser()
+    config.read(config_file)
 
-PROMPT = config['Settings']['prompt']+' '
+    global OL_FIXTURES_DIR
+    OL_FIXTURES_DIR = os.path.expanduser(config['Fixtures']['dir'])
+
+    global PROMPT
+    PROMPT = config['Settings']['prompt']+' '
+
 
 class FileManager:
+    """Manage the Pylux plot project file.
+
+    Attributes:
+        file: the path of the project file.
+        tree: the parsed XML tree.
+        root: the root element of the XML tree.
+    """
 
     def load(self, path):
+        """Load a project file.
+
+        Args:
+            path: the location of the file to load.
+        """
         self.file = path
         try:
             self.tree = ET.parse(self.file)
@@ -57,17 +77,40 @@ class FileManager:
         META_MANAGER = MetaManager(self)
 
     def save(self):
+        """Save the project file to its original location."""
         self.tree.write(self.file, encoding='UTF-8', xml_declaration=True)
 
     def saveas(self, path):
+        """Save the project file to a new location.
+
+        Args:
+            path: the location to save the file to.
+        """
         self.tree.write(path, encoding='UTF-8', xml_declaration=True)
 
     
 class DmxRegistry:
-    
-    # Create a new registry and populate it from the XML file, if it doesn't
-    # exist in the XML file, create an empty XML registry with id universe
+    """Manages DMX registries.
+
+    Attributes:
+        registry: the registry as a Python dictionary.
+        universe: the universe id of the registry.
+        xml_registry: the XML tree of the registry. Is False if the 
+            registry doesn't exist in XML.
+    """
+
     def __init__(self, universe):
+        """Create a new Python registry.
+
+        Creates a new Python registry with the id universe. Then 
+        searches the project file for a registry with the same id. If 
+        one is found, loads that data into the Python registry, if 
+        the registry doesn't exist in XML, creates one and adds it to 
+        the tree.
+
+        Args:
+            universe: the universe id of the registry to be created.
+        """
         self.registry = {}
         self.universe = universe
         self.xml_registry = False
@@ -92,7 +135,12 @@ class DmxRegistry:
                 self.registry[address] = (uuid, function)
 
     def save(self):
+        """Saves the Python registry to the XML tree.
 
+        Saves the contents of the Python DMX registry to the registry in 
+        XML and deletes any XML channels that no longer exist in the 
+        Python registry.
+        """
         # Add a new XML entry
         def add_xml_entry(self, address, uuid, function):
             self.registry[address] = (uuid, function)
@@ -132,16 +180,31 @@ class DmxRegistry:
             if address not in self.registry:
                 self.xml_registry.remove(channel)
 
-    # Get a list of the occupied channels
     def get_occupied(self):
+        """Returns a list of occupied DMX channels.
+
+        Returns:
+            A list containing the addresses of the occupied channels 
+            in the Python registry.
+        """
         occupied = []
         for address in self.registry:
             occupied.append(address)
         occupied.sort()
         return occupied
 
-    # Get a start address for a run of n free DMX channels
     def get_start_address(self, n):
+        """Returns a recommended start address for a new fixture.
+
+        Finds the next run of n free DMX channels in the Python 
+        registry or returns 1 if no channels are occupied.
+
+        Args:
+            n: the number of DMX channels required by the new fixture.
+
+        Returns:
+            An integer giving the ideal DMX start address.
+        """
         occupied = self.get_occupied()
         if occupied == []:
             print('All channels are free so choosing start address 1')
@@ -160,17 +223,43 @@ class DmxRegistry:
                 print('Automatically chose start address '+str(free_from))
                 return free_from
 
-    # Print a nice list of the used channels
     def print(self):
+        """Print a list of the used channels in the registry.
+
+        Print a list of the used channels in the registry, along with 
+        the UUID of the fixture they control and their function.
+        """
         for channel in self.registry:
             print(str(format(channel, '03d'))+' uuid: '+
                 self.registry[channel][0]+', func: '+self.registry[channel][1])
 
 
 class Fixture:
-    
-    # Initialise the fixture from the OLF file
+    """Manage the addition of fixtures to the plot file.
+
+    Attributes:
+        olid: the OLID of the fixture.
+        uuid: the UUID of the fixture.
+        variables: a dictionary containing the user-defined values 
+            for this fixture.
+        constants: a dictionary containing the constant values for 
+            this fixture.
+        dmx: a list of the functions of the DMX channels used by this 
+            fixture.
+        dmx_num: the number of DMX channels required by this fixture.
+    """
+
     def __init__(self, olid):
+        """Create a new fixture and initialise the attributes.
+
+        Given an OLID, create a new fixture, assign a UUID and load 
+        the variables from the OLF file into an empty dictionary, 
+        populate another dictionary with the constants and create a 
+        list with the DMX requirements.
+
+        Args:
+            olid: the OLID of the new fixture.
+        """
         tree = ET.parse(OL_FIXTURES_DIR+olid+'.olf')
         root = tree.getroot()
         self.olid = olid # OLID was specified on creation
@@ -192,9 +281,13 @@ class Fixture:
             self.dmx.append(channel.tag)
         self.dmx_num = len(self.dmx)
 
-    # Create an XML object from the information in this fixture and add it to
-    # the tree
     def add(self):
+        """Create an XML object for the fixture and add to the tree.
+
+        Generate a fixture XML object and populate it with the 
+        contents of the two dictionaries, then add the newly created 
+        fixture to the XML tree.
+        """
         fixture_list = PROJECT_FILE.root.find('fixtures')
         new_fixture = ET.Element('fixture')
         new_fixture.set('olid', self.olid)
@@ -209,8 +302,12 @@ class Fixture:
             new_detail.text = self.constants[constant]
         fixture_list.append(new_fixture)
 
-    # Edit the data associated with this fixture
     def edit(self):
+        """Edit the variables dictionary.
+
+        Takes user input to change the value of the variables in 
+        the variables dictionary.
+        """
         for variable in self.variables:
             parser = argparse.ArgumentParser()
             parser.add_argument('variable', nargs='+')
@@ -220,30 +317,56 @@ class Fixture:
 
 
 class MetaManager:
+    """Manages the metadata section of the XML file.
+
+    Attributes:
+        meta_values: the XML object containing a the metadata.
+    """
 
     def __init__(self, project_file):
+        """Find the metadata in XML and add to the attribute.
+
+        Args:
+            project_file: the FileManager object of the project file.
+        """
         self.meta_values = project_file.root.find('metadata')
 
-    # Print all metadata on the CLI
     def list_meta(self):
+        """Print the values of all metadata."""
         for metaitem in self.meta_values:
             print(metaitem.tag+': '+metaitem.text)
 
-    # Add a new piece of metadata
     def add_meta(self, tag, value):
+        """Add a new piece of metadata.
+
+        Args:
+            tag: the XML tag of the new metadata.
+            value: the value of the new metadata.
+        """
         new_meta = ET.Element(tag)
         new_meta.text = value
         self.meta_values.append(new_meta)
 
-    # Remove metadata with tag
     def remove_meta(self, tag):
+        """Remove a piece of metadata from XML.
+
+        Args:
+            tag: the XML tag of the metadata to remove.
+        """
         for metaitem in self.meta_values:
             test_tag = metaitem.tag
             if test_tag == tag:
                 self.meta_values.remove(metaitem)
 
-    # Return a metadata value
     def get(self, tag):
+        """Return the value of a piece of metadata.
+
+        Args:
+            tag: the XML tag of the metadata to return.
+
+        Returns:
+            A string containing the XML text of the metadata.
+        """
         for metaitem in self.meta_values:
             test_tag = metaitem.tag
             if test_tag == tag:
@@ -251,7 +374,7 @@ class MetaManager:
                 break
 
 class PositionManager:
-    
+    """NYI"""
     def get_fixture(uuid):
         fixture_list = PROJECT_FILE.root.find('fixtures')
         for fixture in fixture_list:
@@ -272,22 +395,85 @@ class PositionManager:
 
 
 class CliManager:
+    """Manage some CLI interactivity and other functionality.
+
+    Manage the interactive CLI lists, whereby a unique key which is 
+    presented to the user on the CLI returns an object, without the 
+    user having to specify the object itself. Also parse user input
+    containing multi-word arguments.
+
+    Attributes:
+        option_list: a dictionary of the options presented to the 
+            user on the CLI.
+    """
 
     def __init__(self):
+        """Create an empty dictionary for the options."""
         self.option_list = {}
 
     def append(self, ref, object):
+        """Add an object to the option list.
+
+        Args:
+            ref: the unique CLI identifier of the option being added.
+            object: the object that should be returned if the user 
+                selects this option.
+        """
         self.option_list[ref] = object
 
     def get(self, ref):
+        """Return the object of a user selection.
+
+        Args:
+            ref: the unique CLI identifier that the user selected.
+
+        Returns:
+            The object (which could be of any form) that is 
+            associated with the reference in the option list.
+        """
         return self.option_list[int(ref)]
 
     def clear(self):
+        """Clear the option list."""
         self.option_list.clear()
 
+    def resolve_input(inputs_list, number_args):
+        """Parse user input that contains a multi-word argument.
 
-# Return a list of the OLF files in the directory
+        From a list of user arguments which have already been split, 
+        return a new list containing a set number of arguments, where 
+        the last argument is a multi-word argument is a multi-word
+        argument.
+
+        Args:
+            inputs_list: a list containing strings which have been 
+                split from the user input using split(' ').
+            number_args: the number of arguments the input should 
+                contain, excluding the action itself. For example, 
+                the add metadata action takes two arguments: the tag 
+                and value.
+
+        Returns:
+            A list containing a list of the arguments, where the last 
+            argument is a concatenation of any arguments that were 
+            left after processing the rest of the inputs list. For 
+            example, the metadata example above would return 
+            ['ma', 'tag', 'value which can be many words long'].
+        """
+        i = 0
+        parsed_input = []
+        multiword_input = ""
+        while i < number_args:
+            parsed_input.append(inputs_list[i])
+            i = i+1
+        while number_args <= i <= len(inputs_list)-1:
+            multiword_input = multiword_input+' '+inputs_list[i]
+            i = i+1
+        parsed_input.append(multiword_input)
+        return parsed_input
+
 def get_olf_library():
+    """Return a list of the installed OLF files."""
     library = os.listdir(OL_FIXTURES_DIR)
     for olf in library:
         olid = olf.split('.')[0]
@@ -295,8 +481,8 @@ def get_olf_library():
     return library
 
 
-# Display the help page
 def get_command_list():
+    """Display the help page."""
     text = ""
     with open('help.txt') as man:
         for line in man:
@@ -304,13 +490,17 @@ def get_command_list():
     print(text)
 
 
-# Clear the console
 def clear():
+    """Clear the console."""
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
-# Add a new fixture to the plot
 def add_fixture():
+    """Add a new fixture to the plot.
+
+    Takes interactive user input to create and then add a fixture to 
+    the plot, including assigning a DMX address.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('fixture')
     print('The following fixture types were found: '+str(get_olf_library()))
@@ -336,25 +526,38 @@ def add_fixture():
     registry.save()
 
 
-# Remove a fixture with a given UUID
 def remove_fixture(fixture):
+    """Remove a fixture from the plot.
+
+    Args:
+        fixture: the XML object of the fixture to be removed.
+    """
     fixture_list = PROJECT_FILE.root.find('fixtures')
     fixture_list.remove(fixture)
     return fixture
 
 
-# Remove a fixture with a given UUID, and remove any DMX channels associated
 def purge_fixture(uuid_part):
+    """NYI"""
     fixture = remove_fixture(uuid_part)
 
 
-# Get information about a fixture
 def list_fixture_info(fixture):
+    """Print the user-defined values of a fixture.
+
+    Args:
+        fixture: the XML object of the fixture.
+    """
     for variable in fixture:
         print(variable.tag+': '+variable.text)
 
-# Get a list of all the fixtures
 def list_fixtures():
+    """Print a list of all fixtures.
+
+    Print a list of all the fixtures in the plot and assign a unique 
+    CLI identifier to each one, so that the user can pass them into 
+    further commands.
+    """
     fixture_list = PROJECT_FILE.root.find('fixtures')
     INTERFACE_MANAGER.clear()
     i=1
@@ -366,8 +569,17 @@ def list_fixtures():
         i = i+1
 
 
-# Filter fixtures based on a property
 def filter_fixtures(key, value):
+    """Display a list of fixtures with a certain property.
+
+    Print a list of fixtures which have a certain value for a key 
+    and assign a unique CLI identifier to each one, so that the user 
+    can pass them into further commands.
+
+    Args:
+        key: the XML tag to test.
+        value: the XML value of the fixtures that should be returned.
+    """
     fixture_list = PROJECT_FILE.root.find('fixtures')
     INTERFACE_MANAGER.clear()
     i=1
@@ -393,8 +605,9 @@ def filter_fixtures(key, value):
                 continue
 
 
-# The program itself
 def main():
+    """The main user loop."""
+    init()
     global PROJECT_FILE
     PROJECT_FILE = FileManager()
     global INTERFACE_MANAGER
@@ -431,7 +644,8 @@ def main():
         elif inputs[0] == 'ml':
             META_MANAGER.list_meta()
         elif inputs[0] == 'ma':
-            META_MANAGER.add_meta(inputs[1], inputs[2])
+            META_MANAGER.add_meta(inputs[1],
+                CliManager.resolve_input(inputs, 2)[-1])
         elif inputs[0] == 'mr':
             META_MANAGER.remove_meta(inputs[1])
         elif inputs[0] == 'mg':

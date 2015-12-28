@@ -72,17 +72,17 @@ def main():
             dmx = fixture.find('dmx_start_address').text
         except AttributeError:
             dmx = None
-            print('Couldn\'t get DMX start address for '+uuid)
+            print('% Couldn\'t get DMX start address for '+uuid)
         try:
             circuit = fixture.find('circuit').text
         except AttributeError:
             circuit = None
-            print('Couldn\'t get circuit number for '+uuid)
+            print('% Couldn\'t get circuit number for '+uuid)
         try:
             power = fixture.find('power').text
         except AttributeError:
             power = '0'
-            print('Couldn\'t get power for '+uuid+', using zero instead')
+            print('% Couldn\'t get power for '+uuid+', using zero instead')
         dimmer_report = (dimmer_report+'\\fixture{'+olid+'}{'+str(dmx)+
                          '}{'+str(circuit)+'}{'+power+'}\n')
     # LaTeX stuff that ends it all off
