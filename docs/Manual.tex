@@ -110,14 +110,12 @@ name \textit{TAG} on the screen.
 
 \subsection{Fixture Commands}
 
-\paragraph{\texttt{xa}}
-Add a new fixture. This will initiate an interactive sequence, starting by 
-entering the olid of the new fixture. The program will then ask the user to 
-specify the value of the variables as specified by the associated 
-OpenLighting Fixture file. It will also ask the user to specify a DMX universe 
-to put the channels that this fixture requires in. The user can either 
-specify a start address or allow the program to choose the most appropriate 
-start address by typing \texttt{auto}.
+\paragraph{\texttt{xa \textit{OLID}}}
+Add a new fixture to the plot. This will add a fixture to the plot with olid 
+\textit{OLID}. It will also automatically assign a UUID and search the OLF 
+file associated with this olid for any constants that this fixture has and 
+add them to the fixture. This will not assign DMX addresses to the fixture,
+use \texttt{xA} for that.
 
 \paragraph{\texttt{xl}}
 List all the fixtures in the plot. This will generate a list of every fixture 
@@ -141,6 +139,16 @@ commands is run.
 Remove the fixture with the interface reference \textit{REF}. This fixture 
 will be removed from the plot, but associated DMX channels will not be 
 removed, use the upcoming command \texttt{xp} for that.
+
+\paragraph{\texttt{xs \textit{REF TAG VALUE}}}
+Set the value of \textit{TAG} in fixture with interface reference \textit{REF} 
+to \textit{VALUE}.
+
+\paragraph{\texttt{xA \textit{REF UNIVERSE ADDR}}}
+Assign DMX addresses to the fixture with interface reference \textit{REF}.
+This will add the fixture to the universe \textit{UNIVERSE}, beginning at the 
+start address \textit{ADDR}. \textit{ADDR} can either be a user-assigned 
+number or auto to allow Pylux to choose the most appropriate start address.
 
 \subsection{DMX Registry Commands}
 

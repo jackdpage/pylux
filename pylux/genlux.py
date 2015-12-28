@@ -28,9 +28,21 @@ import sys
 import plotter
 
 
+def init():
+    """Initialise the argument and config parsers."""
+    # Initiate the argument parser
+    parser = argparse.ArgumentParser(prog='genlux',
+       description='Generate LaTeX reports from Pylux plots')
+    parser.add_argument('-v', '--version', action='version', 
+        version='%(prog)s 0.1')
+    parser.add_argument('file') 
+    global LAUNCH_ARGS
+    LAUNCH_ARGS = parser.parse_args()
+
 def main():
+    init()
     PROJECT_FILE = plotter.FileManager()
-    PROJECT_FILE.load(plotter.LAUNCH_ARGS.file)
+    PROJECT_FILE.load(LAUNCH_ARGS.file)
     META = plotter.MetaManager(PROJECT_FILE)
     FIXTURES = PROJECT_FILE.root.find('fixtures')
     

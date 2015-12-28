@@ -240,81 +240,115 @@ class Fixture:
     Attributes:
         olid: the OLID of the fixture.
         uuid: the UUID of the fixture.
-        variables: a dictionary containing the user-defined values 
-            for this fixture.
-        constants: a dictionary containing the constant values for 
-            this fixture.
+        data: a dictionary containing all other data for the fixture.
         dmx: a list of the functions of the DMX channels used by this 
             fixture.
         dmx_num: the number of DMX channels required by this fixture.
     """
 
-    def __init__(self, olid):
-        """Create a new fixture and initialise the attributes.
+    def __init__(self):
+        """Create a new fixture in Python."""
+        self.data = {}
+        self.dmx = []
+
+    def new(self, olid):
+        """Make this fixture as a new fixture.
 
         Given an OLID, create a new fixture, assign a UUID and load 
-        the variables from the OLF file into an empty dictionary, 
-        populate another dictionary with the constants and create a 
-        list with the DMX requirements.
+        the constants from the OLF file into the data dictionary.
 
         Args:
             olid: the OLID of the new fixture.
         """
-        tree = ET.parse(OL_FIXTURES_DIR+olid+'.olf')
-        root = tree.getroot()
+        olf_tree = ET.parse(OL_FIXTURES_DIR+olid+'.olf')
+        olf_root = olf_tree.getroot()
         self.olid = olid # OLID was specified on creation
         self.uuid = str(uuid.uuid4()) # Random UUID assigned
-        # Add variables from OLF file
-        variables_xml = root.find('variables')
-        self.variables = {}
-        for variable in variables_xml:
-            self.variables[variable.tag] = None
+        constants_xml = olf_root.find('constants')
         # Add constants from OLF file
-        constants_xml = root.find('constants')
-        self.constants = {}
         for constant in constants_xml:
-            self.constants[constant.tag] = constant.text
-        # Add DMX channels from OLF file
-        dmx_xml = root.find('dmx_channels')
-        self.dmx = []
-        for channel in dmx_xml:
-            self.dmx.append(channel.tag)
-        self.dmx_num = len(self.dmx)
+            self.data[constant.tag] = constant.text
 
     def add(self):
         """Create an XML object for the fixture and add to the tree.
 
         Generate a fixture XML object and populate it with the 
-        contents of the two dictionaries, then add the newly created 
+        contents of the data dictionary, then add the newly created 
         fixture to the XML tree.
         """
         fixture_list = PROJECT_FILE.root.find('fixtures')
         new_fixture = ET.Element('fixture')
         new_fixture.set('olid', self.olid)
         new_fixture.set('uuid', self.uuid)
-        # Iterate over variables
-        for variable in self.variables:
-            new_detail = ET.SubElement(new_fixture, variable)
-            new_detail.text = self.variables[variable]
-        # Iterate over constants
-        for constant in self.constants:
-            new_detail = ET.SubElement(new_fixture, constant)
-            new_detail.text = self.constants[constant]
+        # Iterate over data 
+        for data_item in self.data:
+            new_detail = ET.SubElement(new_fixture, data_item)
+            new_detail.text = self.data[data_item]
         fixture_list.append(new_fixture)
+        self.xml_fixture = new_fixture
 
-    def edit(self):
-        """Edit the variables dictionary.
+    def load(self, fixture):
+        """Load existing fixture data from XML.
 
-        Takes user input to change the value of the variables in 
-        the variables dictionary.
+        Load the contents of an existing fixture in the XML document 
+        into this Python fixture object.
+
+        Args:
+            fixture: the XML fixture object to load.
         """
-        for variable in self.variables:
-            parser = argparse.ArgumentParser()
-            parser.add_argument('variable', nargs='+')
-            value = input('Value for '+variable+': ')
-            args = parser.parse_args(value.split())
-            self.variables[variable] = value
+        self.xml_fixture = fixture
+        self.olid = fixture.get('olid')
+        self.uuid = fixture.get('uuid')
+        for data_item in fixture:
+            self.data[data_item.tag] = data_item.text
+        # Load DMX info from OLF file
+        olf_tree = ET.parse(OL_FIXTURES_DIR+self.olid+'.olf')
+        olf_root = olf_tree.getroot()
+        dmx_xml = olf_root.find('dmx_channels')
+        for channel in dmx_xml:
+            self.dmx.append(channel.tag)
+        self.dmx_num = len(self.dmx)
 
+    def edit(self, tag, value):
+        """Edit a piece of data in the fixture.
+
+        Args:
+            tag: the data value to edit.
+            value: the new value to set.
+        """
+        self.data[tag] = value
+
+    def save(self):
+        """Save the Python fixture object to XML."""
+        # Add a new data item
+        def add_xml_data(self, tag, value):
+            new_data_item = ET.Element(tag)    
+            new_data_item.text = value
+            self.xml_fixture.append(new_data_item)
+
+        # Edit an existing data item
+        def edit_xml_data(self, tag, new_value):
+            self.xml_fixture.find(tag).text = new_value
+
+        # Search for data in XML
+        def get_xml_data(self, tag):
+            try:
+                return self.xml_fixture.find(tag)
+            except AttributeError:
+                return None
+
+        # Iterate over the data dictionary
+        for data_item in self.data:
+            xml_data = get_xml_data(self, data_item)
+            if xml_data == None:
+                add_xml_data(self, data_item, self.data[data_item])
+            else:
+                edit_xml_data(self, data_item, self.data[data_item])
+        # Iterate over XML fixture to remove empty data
+        for data_item in self.xml_fixture:
+            data_name = data_item.tag
+            if data_name not in self.data:
+                self.xml_fixture.remove(data_item)
 
 class MetaManager:
     """Manages the metadata section of the XML file.
@@ -467,7 +501,10 @@ class CliManager:
             parsed_input.append(inputs_list[i])
             i = i+1
         while number_args <= i <= len(inputs_list)-1:
-            multiword_input = multiword_input+' '+inputs_list[i]
+            if multiword_input == "":
+                multiword_input = multiword_input+inputs_list[i]
+            else:
+                multiword_input = multiword_input+' '+inputs_list[i]
             i = i+1
         parsed_input.append(multiword_input)
         return parsed_input
@@ -493,37 +530,6 @@ def get_command_list():
 def clear():
     """Clear the console."""
     os.system('cls' if os.name == 'nt' else 'clear')
-
-
-def add_fixture():
-    """Add a new fixture to the plot.
-
-    Takes interactive user input to create and then add a fixture to 
-    the plot, including assigning a DMX address.
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('fixture')
-    print('The following fixture types were found: '+str(get_olf_library()))
-    fixture_type = input('OLID of fixture to add: ')
-    new_fixture = Fixture(fixture_type)
-    new_fixture.edit()
-    new_fixture.add()
-    parser = argparse.ArgumentParser()
-    parser.add_argument('universe')
-    universe = input('DMX universe to use: ')
-    registry = DmxRegistry(universe)
-    print('Need '+str(new_fixture.dmx_num)+' DMX channels')
-    print('Occupied channels: '+str(registry.get_occupied()))
-    parser.add_argument('address')
-    address = input('DMX start address or auto: ')
-    if address == 'auto':
-        address = registry.get_start_address(new_fixture.dmx_num)
-    else:
-        address = int(address)
-    for function in new_fixture.dmx: 
-        registry.registry[address] = (new_fixture.uuid, function)
-        address = int(address)+1
-    registry.save()
 
 
 def remove_fixture(fixture):
@@ -652,7 +658,10 @@ def main():
             print(META_MANAGER.get(inputs[1]))
         # Fixture actions
         elif inputs[0] == 'xa':
-            add_fixture()
+            fixture = Fixture()
+            fixture.new(inputs[1])
+            fixture.add()
+            fixture.save()
         elif inputs[0] == 'xl':
             list_fixtures()
         elif inputs[0] == 'xf':
@@ -668,6 +677,23 @@ def main():
                       ' interface id of the fixture you wish to remove')
         elif inputs[0] == 'xi':
             list_fixture_info(INTERFACE_MANAGER.get(inputs[1]))
+        elif inputs[0] == 'xs':
+            fixture = Fixture()
+            fixture.load(INTERFACE_MANAGER.get(inputs[1]))
+            fixture.edit(inputs[2], CliManager.resolve_input(inputs, 3)[-1])
+            fixture.save()
+        elif inputs[0] == 'xA':
+            fixture = Fixture()
+            fixture.load(INTERFACE_MANAGER.get(inputs[1]))
+            registry = DmxRegistry(inputs[2])
+            if inputs[3] == 'auto':
+                address = registry.get_start_address(fixture.dmx_num)
+            else:
+                address = int(inputs[3])
+            for function in fixture.dmx:
+                registry.registry[address] = (fixture.uuid, function)
+                address = int(address)+1
+            registry.save()
         # DMX registry actions
         elif inputs[0] == 'rl':
             try:
