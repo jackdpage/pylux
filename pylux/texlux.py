@@ -26,6 +26,7 @@ import configparser
 import os.path
 import sys
 import plotter
+from __init__ import __version__
 
 
 def init():
@@ -34,7 +35,7 @@ def init():
     parser = argparse.ArgumentParser(prog='texlux',
        description='Generate LaTeX reports from Pylux plots')
     parser.add_argument('-v', '--version', action='version', 
-        version='%(prog)s 0.1')
+        version='%(prog)s '+__version__)
     parser.add_argument('file', help='Pylux plot file to process') 
     parser.add_argument('template', help='LaTeX template to use')
     parser.add_argument('-t', '--title', dest='title', 

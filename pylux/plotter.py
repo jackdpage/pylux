@@ -25,6 +25,7 @@ import configparser
 import os.path
 import sys
 import gui
+from __init__ import __version__
 
 
 def init():
@@ -33,7 +34,7 @@ def init():
     parser = argparse.ArgumentParser(prog='pylux',
        description='Create and modify OpenLighting Plot files')
     parser.add_argument('-v', '--version', action='version', 
-        version='%(prog)s 0.1')
+        version='%(prog)s '+__version__)
     parser.add_argument('-f', '--file', dest='file', 
         help='load this project file on launch')
     parser.add_argument('-i', '--interface', dest='interface', 
