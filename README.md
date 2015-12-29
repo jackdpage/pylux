@@ -1,28 +1,41 @@
-# pylux 
+# Pylux
 
-pylux will be a program for the management of lighting fixtures.
+Pylux is a suite for the management of lighting documentation. Currently, the 
+package includes two programs: ``plotter``, for the manipulation of Pylux's 
+XML formatted plot files and ``texlux``, for the production of LaTeX reports 
+from Pylux plot files.
 
-## File Types
+``plotter`` currently is only functional on the CLI, but a GUI is in 
+development.
 
-### Fixtures
+## Installation and Dependencies
 
-Fixtures are defined by an OpenLighting Fixture file (extension .olf). This is an XML file with three components:
-1. Constants definition - a list of specifications that do not change for this fixture
-2. Variables definition - a list of specifications that may change dependent on usage
-3. DMX address definition - a list of DMX addresses associated with the fixture, and their function
+Pylux is written in Python 3, so Python 3 must be installed. Run the setup 
+script to install the necessary Python binaries and also additional files 
+which are packaged with Pylux: ``sudo python setup.py install``.
 
-### Plots
+TeXlux does not require LaTeX to be installed to produce the reports, as they 
+are produced as LaTeX source, however, you will need a LaTeX distribution, such 
+as TeX Live, installed in order to build PDF files from this source.
 
-Plots are defined by an OpenLighting Plot file (extension .olp). This is an XML file with three components:
-1. Metadata - project data such as venue, background image, scaling, etc.
-2. Fixtures - a list of fixtures and their locations in the plot. This is the entire fixture, with all its constants and variables included.
-3. DMX registry - a list of DMX channels and their functions
+## Contributing
 
-## Dependencies
+If you know Python, XML, LaTeX or English, you can contribute by:
 
-The TeXlux extension requires the PIP-installable ``latex`` package, as well as 
-a LaTeX processor such as ``texlive``
++ Writing code (in Python);
++ Making new fixture files (in XML);
++ Writing documentation (in LaTeX);
++ Submitting bug reports and feature requests (in English).
+
+Pylux is (almost) fully documented using docstrings, meaning you can find most 
+of the documentation you will need by running ``pydoc``. Refer to ``TODO.txt`` 
+to see what needs to be done.
+
+Please submit any bug reports or feature requests to the GitHub issues tracker. 
+
+Anything else should be edited on a fork then a pull request submitted.
 
 ## License
 
-This project is licensed under the GNU GPL v3.0 license.
+Pylux is licensed under the GNU GPL v3.0. A full copy of the license is 
+available in the file ``COPYING``.
