@@ -4,7 +4,6 @@
 #
 # Pylux is a program for the management of lighting documentation
 # Copyright 2015 Jack Page
-#
 # Pylux is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -25,6 +24,7 @@ import os
 import configparser
 import os.path
 import sys
+import gui
 
 
 def init():
@@ -36,6 +36,8 @@ def init():
         version='%(prog)s 0.1')
     parser.add_argument('-f', '--file', dest='file', 
         help='load this project file on launch')
+    parser.add_argument('-i', '--interface', dest='interface', 
+        choices=['cli','gui'], default='cli', help='user interface to use')
     global LAUNCH_ARGS
     LAUNCH_ARGS = parser.parse_args()
 
@@ -461,7 +463,7 @@ class CliManager:
 
     def __init__(self):
         """Create an empty dictionary for the options."""
-        self.option_list = {}
+        self.option_list = {'this': None}
 
     def append(self, ref, object):
         """Add an object to the option list.
@@ -483,11 +485,15 @@ class CliManager:
             The object (which could be of any form) that is 
             associated with the reference in the option list.
         """
-        return self.option_list[int(ref)]
+        try:
+            ref = int(ref)
+        finally:
+            return self.option_list[ref]
 
     def clear(self):
         """Clear the option list."""
         self.option_list.clear()
+        self.option_list['this'] = None
 
     def resolve_input(inputs_list, number_args):
         """Parse user input that contains a multi-word argument.
@@ -661,7 +667,7 @@ def get_data_list(project_file, data_name):
     data_values.sort()
     return data_values
 
-def main():
+def cli_loop():
     """The main user loop."""
     init()
     global PROJECT_FILE
@@ -716,6 +722,7 @@ def main():
             else:
                 fixture.add()
                 fixture.save()
+                INTERFACE_MANAGER.option_list['this'] = fixture.xml_fixture
         elif inputs[0] == 'xc':
             src_fixture = Fixture()
             src_fixture.load(INTERFACE_MANAGER.get(inputs[1]))
@@ -738,7 +745,9 @@ def main():
                 print('Error: You need to run either xl or xf then specify the'
                       ' interface id of the fixture you wish to remove')
         elif inputs[0] == 'xi':
-            list_fixture_info(INTERFACE_MANAGER.get(inputs[1]))
+            fixture = INTERFACE_MANAGER.get(inputs[1])
+            list_fixture_info(fixture)
+            INTERFACE_MANAGER.option_list['this'] = fixture
         elif inputs[0] == 'xs':
             fixture = Fixture()
             fixture.load(INTERFACE_MANAGER.get(inputs[1]))
@@ -752,13 +761,25 @@ def main():
                 address = registry.get_start_address(fixture.dmx_num)
             else:
                 address = int(inputs[3])
-            fixture.edit('dmx_start_address', str(address))
-            fixture.edit('universe', inputs[2])
-            for function in fixture.dmx:
-                registry.registry[address] = (fixture.uuid, function)
-                address = int(address)+1
-            fixture.save()
-            registry.save()
+            try:
+                fixture.data['universe']
+            except KeyError:
+                continue
+            else:
+                old_start_addr = int(fixture.data['dmx_start_address'])
+                i = old_start_addr
+                while i < old_start_addr+int(fixture.data['dmx_channels']):
+                    registry.registry[i] = None
+                    i=i+1
+            finally:
+                fixture.edit('dmx_start_address', str(address))
+                fixture.edit('universe', inputs[2])
+                for function in fixture.dmx:
+                    registry.registry[address] = (fixture.uuid, function)
+                    address = int(address)+1
+                fixture.save()
+                registry.save()
+                INTERFACE_MANAGER.option_list['this'] = fixture.xml_fixture
         elif inputs[0] == 'xp':
             purge_fixture(INTERFACE_MANAGER.get(inputs[1]))
         # DMX registry actions
@@ -784,6 +805,13 @@ def main():
             print('Error: Command doesn\'t exist.') 
             print('Type \'h\' for a list of available commands.')
 
+
+def main():
+    init()
+    if LAUNCH_ARGS.interface == 'cli':
+        cli_loop()
+    elif LAUNCH_ARGS.interface == 'gui':
+        gui.main()
 
 # Check that the program isn't imported, then run main
 if __name__ == '__main__':
