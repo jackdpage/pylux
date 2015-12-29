@@ -5,7 +5,7 @@
 \author{J. Page}
 \date{2015}
 \maketitle
-\newpage
+\tableofcontents
 Copyright (C)  2015 Jack Page \\
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -13,8 +13,6 @@ or any later version published by the Free Software Foundation;
 with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 A copy of the license is included in the section entitled "GNU
 Free Documentation License".
-\newpage
-\tableofcontents
 \newpage
 \section{Introduction}
 Pylux is a program written in Python for the manipulation of OpenLighting Plot
@@ -42,7 +40,14 @@ Display the usage message of the program then exit.
 Display the version number of the program then exit.
 
 \paragraph{\texttt{--file \textit{FILE}}, \texttt{-f \textit{FILE}}} 
-Load the file with path \textit{FILE} as the project file on launch.
+Load the file with path \texttt{\textit{FILE}} as the project file on launch.
+
+\paragraph{\texttt{--interface \textit{INTERFACE}}, \texttt{-i 
+\textit{INTERFACE}}}
+Launch Pylux with the interface with identifier \texttt{\textit{INTERFACE}}.
+\texttt{\textit{INTERFACE}} is either \texttt{cli} or \texttt{gui} depending on 
+whether you want to launch the command line interface or graphical user 
+interface respectively. The default is \texttt{cli}.
 
 \section{Basic Concepts}
 Pylux uses the OpenLighting Plot format as its document format. This format 
@@ -58,10 +63,15 @@ The registries section contains one or more DMX registries, each of which
 contains some channel elements, which contain both the UUID of the fixture 
 they control and their function.
 
-\section{Fundamental Commands}
-When launching Pylux, you are presented with an interactive prompt. This 
-prompt accepts many commands, all of which are one or two characters long and 
-may take one or more arguments. A complete list of commands is included below: 
+\section{Using the Command Line Interface}
+Pylux ships with two interface modes: a command line interface (CLI) and a 
+graphical user interface (GUI). The interface that is loaded on launch is 
+specified by the interface flag when the program is run. However, the 
+default interface is the CLI. When the CLI launches, you are presented with an 
+interactive prompt, which accepts commands which may also have arguments. Each 
+command is two letters long (apart from the utility commands), where the first 
+letter represents the aspect that the command affects and the second letter 
+represents the action of the command.
 
 \subsection{Utility Commands}
 
@@ -82,14 +92,15 @@ Exit the program without saving any changes to disk.
 \subsection{File Commands}
 
 \paragraph{\texttt{fl \textit{FILE}}}
-Load the file with path \textit{FILE} as the project file. This will override 
-any unsaved buffer associated with the previous project file, if there was one.
+Load the file with path \texttt{\textit{FILE}} as the project file. This will 
+override any unsaved buffer associated with the previous project file, if there 
+was one.
 
 \paragraph{\texttt{fs}}
 Save the current file buffer to its original location.
 
 \paragraph{\texttt{fS \textit{PATH}}}
-Save the current file buffer to a new file with location \textit{PATH}.
+Save the current file buffer to a new file with location \texttt{\textit{PATH}}.
 
 \subsection{Metadata Commands}
 
@@ -98,22 +109,23 @@ List all the metadata tags associated with the currently loaded project
 file.
 
 \paragraph{\texttt{ma \textit{TAG VALUE}}}
-Add a new piece of metadata. Adds a new tag with the name \textit{TAG}
-to the metadata section and sets its value to \textit{VALUE}.
+Add a new piece of metadata. Adds a new tag with the name \texttt{\textit{TAG}}
+to the metadata section and sets its value to \texttt{\textit{VALUE}}.
 
 \paragraph{\texttt{mr \textit{TAG}}}
-Remove the piece of metadata from the file which has the name \textit{TAG}.
+Remove the piece of metadata from the file which has the name 
+\texttt{\textit{TAG}}.
 
 \paragraph{\texttt{mg \textit{TAG}}}
 Get the value of a piece of metadata. Prints the value of the metadata with
-name \textit{TAG} on the screen.
+name \texttt{\textit{TAG}} on the screen.
 
 \subsection{Fixture Commands}
 
 \paragraph{\texttt{xa \textit{OLID}}}
 Add a new fixture to the plot. This will add a fixture to the plot with olid 
-\textit{OLID}. It will also automatically assign a UUID and search the OLF 
-file associated with this olid for any constants that this fixture has and 
+\texttt{\textit{OLID}}. It will also automatically assign a UUID and search the 
+OLF file associated with this olid for any constants that this fixture has and 
 add them to the fixture. This will not assign DMX addresses to the fixture,
 use \texttt{xA} for that.
 
@@ -123,39 +135,44 @@ in the plot, listing an interface reference, the fixture olid, and the fixture
 UUID.
 
 \paragraph{\texttt{xf \textit{TAG VALUE}}}
-List all the fixtures in the plot which have a tag called \textit{TAG} with a 
-value of \textit{VALUE}. Like the list function, this will list an interface 
-reference, the fixture olid and UUID, and also the value of the tag that was 
-given for verification purposes.
+List all the fixtures in the plot which have a tag called \texttt{\textit{TAG}} 
+with a value of \texttt{\textit{VALUE}}. Like the list function, this will list 
+an interface reference, the fixture olid and UUID, and also the value of the 
+tag that was given for verification purposes.
 
 \paragraph{\texttt{xi \textit{REF}}}
 List all the information associated with the fixture with interface reference 
-\textit{REF}. \textit{REF} is the number given to a fixture by either the 
-list or filter commmand. It must be the number given by the most recently run 
-command, as this interface reference buffer is updated each time one of these 
-commands is run.
+\texttt{\textit{REF}}. \texttt{\textit{REF}} is the number given to a fixture 
+by either the list or filter commmand. It must be the number given by the most 
+recently run command, as this interface reference buffer is updated each time 
+one of these commands is run.
 
 \paragraph{\texttt{xr \textit{REF}}}
-Remove the fixture with the interface reference \textit{REF}. This fixture 
-will be removed from the plot, but associated DMX channels will not be 
-removed, use the upcoming command \texttt{xp} for that.
+Remove the fixture with the interface reference \texttt{\textit{REF}}. This 
+fixture will be removed from the plot, but associated DMX channels will not be 
+removed, use \texttt{xp} for that.
 
 \paragraph{\texttt{xs \textit{REF TAG VALUE}}}
-Set the value of \textit{TAG} in fixture with interface reference \textit{REF} 
-to \textit{VALUE}.
+Set the value of \texttt{\textit{TAG}} in fixture with interface reference 
+\texttt{\textit{REF}} to \texttt{\textit{VALUE}}.
 
 \paragraph{\texttt{xA \textit{REF UNIVERSE ADDR}}}
-Assign DMX addresses to the fixture with interface reference \textit{REF}.
-This will add the fixture to the universe \textit{UNIVERSE}, beginning at the 
-start address \textit{ADDR}. \textit{ADDR} can either be a user-assigned 
+Assign DMX addresses to the fixture with interface reference 
+\texttt{\textit{REF}}. This will add the fixture to the universe 
+\texttt{\textit{UNIVERSE}}, beginning at the start address 
+\texttt{\textit{ADDR}}. \texttt{\textit{ADDR}} can either be a user-assigned 
 number or auto to allow Pylux to choose the most appropriate start address.
 
 \subsection{DMX Registry Commands}
 
 \paragraph{\texttt{rl \textit{UNIVERSE}}}
-List all the used channels in \textit{UNIVERSE}. This will list the DMX 
-address, fixture UUID and function of every channel in the DMX registry with 
-identifier \textit{UNIVERSE}.
+List all the used channels in \texttt{\textit{UNIVERSE}}. This will list the 
+DMX address, fixture UUID and function of every channel in the DMX registry 
+with identifier \texttt{\textit{UNIVERSE}}.
+
+\section{Using the Graphical User Interface}
+You may instead choose to launch Pylux using its GUI. This is NYI so please 
+don't.
 
 \section{Extensions}
 In the previous sections, we have discussed the usage of the base program in 
@@ -164,19 +181,42 @@ plots, however, beyond that, it doesn't do much. That is why Pylux can be
 extended with additional Python scripts to provide extra functionality. In 
 the current version, Pylux comes bundled with the \texttt{genlux} script only.
 
-\subsection{genlux}
-genlux is an extension to the base \texttt{plotter} program which allows for 
+\subsection{TeXlux}
+TeXlux is an extension to the base \texttt{plotter} program which allows for 
 the creation of reports in the \LaTeX{} format, which can then be 
 post-processed to create a PDF file, or many other formats through the use of 
 an external tool such as Pandoc.
 
-In its current form, genlux can only create dimmer reports. This will change 
-in the near future. As such, genlux has very little in the way of options. As 
-genlux imports \texttt{plotter} when it is run, it accepts the same command 
-line arguments as \texttt{plotter}. Hence genlux is invoked with 
-\texttt{genlux -f \textit{FILE}} where \textit{FILE} is a Pylux plot file.
-This will generate a \LaTeX{} source in STDOUT, which can be written to a 
+\subsubsection{Invoking}
+TeXlux is invoked as a separate program, although it does require 
+\texttt{plotter} to be present as it is imported when TeXlux is run. TeXlux is 
+invoked using: \texttt{texlux \textit{FILE} \textit{TEMPLATE}}, where 
+\texttt{\textit{FILE}} is the Pylux plot file to process and 
+\texttt{\textit{TEMPLATE}} is the built-in function to create the report from.
+
+\subsubsection{Command-line Options}
+TeXlux has very little in the way of command-line options.
+
+\paragraph{\texttt{--title \textit{TITLE}}, \texttt{-t \textit{TITLE}}}
+Sets the title of the report to be \texttt{\textit{TITLE}}. If this is not 
+specified, a generic title such as 'Dimmer Report' will be used.
+
+\subsubsection{Processing}
+
+TeXlux uses built-in functions to generate \LaTeX{} docments with pre-defined 
+structures. Each built-in function has a corresponding \LaTeX{} style file 
+installed in \texttt{~/.pylux/tex/} which is required to build the PDF report. 
+Currently the only built-in function is \texttt{dimmer}, which produces a 
+report categorised by dimmer and containing power draw totals.
+
+\subsubsection{Output}
+
+TeXlux generates the \LaTeX{} source in STDOUT, which can be written to a 
 file or piped directly into a \LaTeX{} processing tool such as 
-\texttt{pdflatex}.
+\texttt{pdflatex}. Any errors that were encountered during processing are 
+written as \LaTeX{} compatible comments at the top of the source.
+
+\section{GNU Free Documentation License}
+\input{fdl}
 
 \end{document}
