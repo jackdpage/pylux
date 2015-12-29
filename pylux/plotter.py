@@ -167,18 +167,16 @@ class DmxRegistry:
 
         # Iterate over the Python registry
         for address in self.registry:
-            uuid = self.registry[address][0]
-            function = self.registry[address][1]
-            xml_channel = get_xml_channel(self, address)
-            if xml_channel == None:
-                add_xml_entry(self, address, uuid, function)
+            if self.registry[address] != None:
+                uuid = self.registry[address][0]
+                function = self.registry[address][1]
+                xml_channel = get_xml_channel(self, address)
+                if xml_channel == None:
+                    add_xml_entry(self, address, uuid, function)
+                else:
+                    edit_xml_entry(self, xml_channel, uuid, function)
             else:
-                edit_xml_entry(self, xml_channel, uuid, function)
-        # Iterate over the XML registry to remove any now empty channels
-        for channel in self.xml_registry:
-            address = int(channel.get('address'))
-            if address not in self.registry:
-                self.xml_registry.remove(channel)
+                self.xml_registry.remove(get_xml_channel(self, address))
 
     def get_occupied(self):
         """Returns a list of occupied DMX channels.
@@ -265,9 +263,15 @@ class Fixture:
         self.olid = olid # OLID was specified on creation
         self.uuid = str(uuid.uuid4()) # Random UUID assigned
         constants_xml = olf_root.find('constants')
+        dmx_xml = olf_root.find('dmx_channels')
+        dmx_chans = []
+        for channel in dmx_xml:
+            dmx_chans.append(channel.tag)
+        dmx_num = len(dmx_chans)
         # Add constants from OLF file
         for constant in constants_xml:
             self.data[constant.tag] = constant.text
+        self.data['dmx_channels'] = str(dmx_num)
 
     def add(self):
         """Create an XML object for the fixture and add to the tree.
@@ -317,6 +321,20 @@ class Fixture:
             value: the new value to set.
         """
         self.data[tag] = value
+
+    def clone(self, src_fixture):
+        """Clone a fixture.
+
+         an exact copy of a fixture in XML, but assign a new 
+        UUID.
+
+        Args:
+            src_fixture: source Python fixture object to copy.
+        """
+        self.uuid = str(uuid.uuid4())
+        self.olid = src_fixture.olid
+        for data_item in src_fixture.data:
+            self.data[data_item] = src_fixture.data[data_item]
 
     def save(self):
         """Save the Python fixture object to XML."""
@@ -543,9 +561,20 @@ def remove_fixture(fixture):
     return fixture
 
 
-def purge_fixture(uuid_part):
-    """NYI"""
-    fixture = remove_fixture(uuid_part)
+def purge_fixture(fixture):
+    """Remove a fixture and all its DMX channels.
+
+    Args:
+        fixture: the XML object of the fixture to be purged.
+    """
+    registry = DmxRegistry(fixture.find('universe').text)
+    start_addr = int(fixture.find('dmx_start_address').text)
+    i = start_addr
+    while i < start_addr+int(fixture.find('dmx_channels').text):
+        registry.registry[i] = None
+        i=i+1
+    registry.save()
+    remove_fixture(fixture)
 
 
 def list_fixture_info(fixture):
@@ -611,6 +640,27 @@ def filter_fixtures(key, value):
                 continue
 
 
+def get_data_list(project_file, data_name):
+    """Search through the fixtures list and return every value of data_name.
+
+    Args:
+        project_file: the Pylux plot file to search.
+        data_name: the XML tag of the data.
+
+    Returns:
+        A list containing every value present for this XML tag.
+    """
+    fixture_list = project_file.root.find('fixtures')
+    data_values = []
+    for fixture in fixture_list:
+        try:
+            data_values.append(fixture.find(data_name).text)
+        except AttributeError:
+            continue
+    data_values = list(set(data_values))
+    data_values.sort()
+    return data_values
+
 def main():
     """The main user loop."""
     init()
@@ -638,14 +688,14 @@ def main():
             try:
                 PROJECT_FILE.load(inputs[1])
             except UnboundLocalError:
-                print('You need to specify a file path to load')
+                print('Error: You need to specify a file path to load')
         elif inputs[0] == 'fs':
             PROJECT_FILE.save()
         elif inputs[0] == 'fS':
             try:
                 PROJECT_FILE.saveas(inputs[1])
             except IndexError:
-                print('You need to specify a destination path!')
+                print('Error: You need to specify a destination path!')
         # Metadata actions
         elif inputs[0] == 'ml':
             META_MANAGER.list_meta()
@@ -659,21 +709,33 @@ def main():
         # Fixture actions
         elif inputs[0] == 'xa':
             fixture = Fixture()
-            fixture.new(inputs[1])
-            fixture.add()
-            fixture.save()
+            try:
+                fixture.new(inputs[1])
+            except FileNotFoundError:
+                print('Error: Couldn\'t find an OLF file with OLID '+inputs[1])
+            else:
+                fixture.add()
+                fixture.save()
+        elif inputs[0] == 'xc':
+            src_fixture = Fixture()
+            src_fixture.load(INTERFACE_MANAGER.get(inputs[1]))
+            new_fixture = Fixture()
+            new_fixture.clone(src_fixture)
+            new_fixture.add()
+            new_fixture.save()
         elif inputs[0] == 'xl':
             list_fixtures()
         elif inputs[0] == 'xf':
             try:
-                filter_fixtures(inputs[1], inputs[2])
+                filter_fixtures(inputs[1], 
+                    CliManager.resolve_input(inputs, 2)[-1])
             except IndexError:
-                print('You need to specify a key and value!')
+                print('Error: You need to specify a key and value!')
         elif inputs[0] == 'xr':
             try:
                 remove_fixture(INTERFACE_MANAGER.get(inputs[1]))
             except IndexError:
-                print('You need to run either xl or xf then specify the'
+                print('Error: You need to run either xl or xf then specify the'
                       ' interface id of the fixture you wish to remove')
         elif inputs[0] == 'xi':
             list_fixture_info(INTERFACE_MANAGER.get(inputs[1]))
@@ -690,10 +752,15 @@ def main():
                 address = registry.get_start_address(fixture.dmx_num)
             else:
                 address = int(inputs[3])
+            fixture.edit('dmx_start_address', str(address))
+            fixture.edit('universe', inputs[2])
             for function in fixture.dmx:
                 registry.registry[address] = (fixture.uuid, function)
                 address = int(address)+1
+            fixture.save()
             registry.save()
+        elif inputs[0] == 'xp':
+            purge_fixture(INTERFACE_MANAGER.get(inputs[1]))
         # DMX registry actions
         elif inputs[0] == 'rl':
             try:
@@ -714,8 +781,8 @@ def main():
             print('Ignoring changes and exiting...')
             sys.exit()
         else:
-            print('The command you typed doesn\'t exist.') 
-            print('Type \'help\' for a list of available commands.')
+            print('Error: Command doesn\'t exist.') 
+            print('Type \'h\' for a list of available commands.')
 
 
 # Check that the program isn't imported, then run main

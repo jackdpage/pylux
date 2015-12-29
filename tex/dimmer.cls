@@ -23,7 +23,7 @@
 %                                                                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\ProvidesClass{genlux}
+\ProvidesClass{dimmer}
 
 \LoadClass[12pt]{article}
 
