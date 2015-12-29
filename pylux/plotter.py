@@ -24,7 +24,7 @@ import os
 import configparser
 import os.path
 import sys
-import gui
+import gplotter
 from __init__ import __version__
 
 

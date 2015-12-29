@@ -1,7 +1,7 @@
 (A) 2015-12-29 DMX start address assigner doesn't check DMX001 +Bugfix
+(A) 2015-12-29 Separate code into __main__ and plotter +Base
 (B) 2015-12-13 File management support (save as, new) +Base
 (B) 2015-12-19 Better (and more) error handling +Base
-x 2015-12-29 2015-12-19 Create dimmer/circuit infrastructure
 (B) 2015-12-19 Create positioning infrastructure +Base
 (B) 2015-12-20 Auto completion
 (C) 2015-12-12 Plotting to SVG +Extensions
@@ -14,3 +14,4 @@ x 2015-12-19 2015-12-19 Main user loop +Base
 x 2015-12-21 2015-12-12 Remove fixture action +Base
 x 2015-12-28  2015-12-19 Multi-word variable support +Bugfix
 x 2015-12-28 2015-12-28 Make plotter importable +Bugfix
+x 2015-12-29 2015-12-19 Create dimmer/circuit infrastructure
