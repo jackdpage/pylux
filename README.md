@@ -18,6 +18,11 @@ Plots are defined by an OpenLighting Plot file (extension .olp). This is an XML 
 2. Fixtures - a list of fixtures and their locations in the plot. This is the entire fixture, with all its constants and variables included.
 3. DMX registry - a list of DMX channels and their functions
 
+## Dependencies
+
+The TeXlux extension requires the PIP-installable ``latex`` package, as well as 
+a LaTeX processor such as ``texlive``
+
 ## License
 
 This project is licensed under the GNU GPL v3.0 license.

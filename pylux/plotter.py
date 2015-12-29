@@ -223,7 +223,7 @@ class DmxRegistry:
                 print('Automatically chose start address '+str(free_from))
                 return free_from
 
-    def print(self):
+    def list(self):
         """Print a list of the used channels in the registry.
 
         Print a list of the used channels in the registry, along with 
@@ -786,7 +786,7 @@ def cli_loop():
         elif inputs[0] == 'rl':
             try:
                 dmx_registry = DmxRegistry(inputs[1])
-                dmx_registry.print()
+                dmx_registry.list()
             except IndexError:
                 print('You need to specify a DMX registry!')
         # Utility actions
