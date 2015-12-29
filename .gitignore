@@ -4,4 +4,9 @@
 *.pdf
 *.toc
 *.swp
-__pycache__
+__pycache__/
+x.tex
+build/
+dist/
+MANIFEST
+*.pyc
