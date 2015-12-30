@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# gui.py is part of Pylux
+# gplotter.py is part of Pylux
 #
 # Pylux is a program for the management of lighting documentation
 # Copyright 2015 Jack Page

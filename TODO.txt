@@ -1,5 +1,6 @@
 (A) 2015-12-29 DMX start address assigner doesn't check DMX001 +Bugfix
-(A) 2015-12-29 Separate code into __main__ and plotter +Base
+(A) 2015-12-30 add() in Fixture shouldn't exist +Clean
+(A) 2015-12-29 Separate code into __main__ and plotter +Clean
 (B) 2015-12-13 File management support (save as, new) +Base
 (B) 2015-12-19 Better (and more) error handling +Base
 (B) 2015-12-19 Create positioning infrastructure +Base

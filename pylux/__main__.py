@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The __main__ module takes options and does stuff."""
+
 import argparse
 import os
 import configparser
@@ -42,25 +44,25 @@ def init():
     LAUNCH_ARGS = parser.parse_args()
 
     # Initiate the config parser
-    global config_file
     config_file = os.path.expanduser('~/.pylux/pylux.conf')
-    config = configparser.ConfigParser()
-    config.read(config_file)
+    global CONFIG
+    CONFIG = configparser.ConfigParser()
+    CONFIG.read(config_file)
 
     global OL_FIXTURES_DIR
-    OL_FIXTURES_DIR = os.path.expanduser(config['Fixtures']['dir'])
+    OL_FIXTURES_DIR = os.path.expanduser(CONFIG['Fixtures']['dir'])
 
     global PROMPT
-    PROMPT = config['Settings']['prompt']+' '
+    PROMPT = CONFIG['Settings']['prompt']+' '
 
 
 def main():
     init()
     if LAUNCH_ARGS.interface == 'cli':
-        plotter.cli_loop()
+        plotter.main()
     elif LAUNCH_ARGS.interface == 'gui':
         gplotter.main()
 
-# Check that the program isn't imported, then run main
+
 if __name__ == '__main__':
     main()
