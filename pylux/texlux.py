@@ -25,7 +25,7 @@ import os
 import configparser
 import os.path
 import sys
-import plotter
+import plot
 from __init__ import __version__
 
 
@@ -47,10 +47,10 @@ def init():
 class Report:
     """Create a LaTeX report."""
 
-    def __init__(self, title, project_file, template):
-        self.file = project_file
-        self.meta = plotter.MetaManager(self.file)
-        self.fixtures = self.file.root.find('fixtures')
+    def __init__(self, title, plot_file, template):
+        self.plot_file = plot_file
+        self.meta = plot.Metadata(self.plot_file)
+        self.fixtures = plot.FixtureList(self.plot_file)
         self.title = title
         self.template = template
 
@@ -58,7 +58,7 @@ class Report:
         self.header = ('\\documentclass{'+self.template+'}\n'
             '\\def\\tab{\\hspace*{3ex}}\n'
             '\\begin{document}\n'
-            '\\hfil{\\Huge\\bf '+LAUNCH_ARGS.title+'}\\hfill\n'
+            '\\hfil{\\Huge\\bf '+self.title+'}\\hfill\n'
             '\\bigskip\\break\n'
             '\\hrule\n')
         document_header_items = [('Production', 'production'),
@@ -69,9 +69,9 @@ class Report:
                                  ('Followspot Operator', 'spot_operator')]
         side = True
         for header_item in document_header_items:
-            if self.meta.get(header_item[1]) != None:
+            if self.meta.meta[header_item[1]] != None:
                 self.header = (self.header+'{\\bf '+
-                    header_item[0]+': } '+self.meta.get(header_item[1]))
+                    header_item[0]+': } '+self.meta.meta[header_item[1]])
                 if side == True:
                     self.header = self.header+' \\hfill '
                 elif side == False:
@@ -83,36 +83,36 @@ class Report:
         no_dimmer = []
 
         def add_fixture(fixture):
-            uuid = fixture.get('uuid')
-            olid = fixture.get('olid')
+            uuid = fixture.uuid
+            olid = fixture.olid
             try:
-                dmx = fixture.find('dmx_start_address').text
-            except AttributeError:
+                dmx = fixture.data['dmx_start_address']
+            except KeyError:
                 dmx = None
                 print('% Couldn\'t get DMX start address for '+uuid)
             try:
-                circuit = fixture.find('circuit').text
-            except AttributeError:
+                circuit = fixture.data['circuit']
+            except KeyError:
                 circuit = None
                 print('% Couldn\'t get circuit number for '+uuid)
             try:
-                power = fixture.find('power').text
-            except AttributeError:
+                power = fixture.data['power']
+            except KeyError:
                 power = '0'
                 print('% Couldn\'t get power for '+uuid+', using zero instead')
             self.report = (self.report+'\\fixture{'+olid+'}{'+str(dmx)+'}{'+
                 str(circuit)+'}{'+power+'}\n')
 
-        dimmer_list = plotter.get_data_list(self.file, 'dimmer')
+        dimmer_list = self.fixtures.get_all_values_for_data_type('dimmer')
         if len(dimmer_list) == 0:
             print('You\'re not using any dimmers, why are you trying to '
                 'create a dimmer report?')
             sys.exit()
-        for dimmer in plotter.get_data_list(self.file, 'dimmer'):
+        for dimmer in dimmer_list:
             self.report = self.report+'\\dimmer{'+dimmer+'}\n\n'
-            for fixture in self.fixtures:
+            for fixture in self.fixtures.fixtures:
                 try:
-                    if fixture.find('dimmer').text == dimmer:
+                    if fixture.data['dimmer'] == dimmer:
                         add_fixture(fixture)
                 except AttributeError:
                     no_dimmer.append(fixture)
@@ -127,10 +127,7 @@ class Report:
     def generate_footer(self):
         self.footer = '\\end{reportTable}\n\\end{document}'
 
-def main():
-    init()
-    PROJECT_FILE = plotter.FileManager()
-    PROJECT_FILE.load(LAUNCH_ARGS.file)
+def main(plot_file):
     output = Report(LAUNCH_ARGS.title, PROJECT_FILE, LAUNCH_ARGS.template)
     output.generate_header()
     report_templates = {'dimmer': output.generate_dimmer_report}
@@ -143,4 +140,4 @@ def main():
     print(output.header+output.report+output.footer)
 
 if __name__ == '__main__':
-    main()
+    init()

@@ -17,43 +17,66 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import plotter
+import plot
 from tkinter import *
 from tkinter.ttk import *
+from tkinter import tix
+from tkinter import constants
+from tkinter import filedialog
 
 class GuiApp(Frame):
 
-    def __init__(self, master=None):
+    def __init__(self, plot_file, config,  master=None):
         Frame.__init__(self, master)
         self.pack()
-        self.create_interface()
+        self.master = master
+        self.plot_file = plot_file
+        self.config = config
+        self.create_menubar()
+        try:
+            self.create_fixtures_list()
+        except AttributeError:
+            print('no plot file')
+    
+    def create_menubar(self):
+        self.menubar = Menu(self)
+        self.master.config(menu=self.menubar)
+        self.file_menu = Menu(self.menubar)
+        self.menubar.add_cascade(label='File', menu=self.file_menu)
+        self.file_menu.add_command(label='Open...', 
+            command=self.command_load_file)
+        self.debug_menu = Menu(self.menubar)
+        self.menubar.add_cascade(label='Debug', menu=self.debug_menu)
+        self.debug_menu.add_command(label='GenFixList',
+            command=self.create_fixtures_list)
 
-    def create_interface(self):
-        self.fixture_list_tree = Treeview(self, selectmode='browse', 
+    def create_fixtures_list(self):
+        self.gfixtures_tree = Treeview(self, selectmode='browse', 
             columns=['tag', 'value'])
-        self.fixture_list_tree.pack()
-        xml_fixture_list = PROJECT_FILE.root.find('fixtures')
-        for fixture in xml_fixture_list:
-            uuid = fixture.get('uuid')
-            olid = fixture.get('olid')
-            self.fixture_list_tree.insert('', 'end', uuid, text=uuid, 
+        fixtures = plot.FixtureList(self.plot_file)
+        for fixture in fixtures.fixtures:
+            uuid = fixture.uuid
+            olid = fixture.olid
+            try:
+                name = fixture.data['name']
+            except IndexError:
+                name = uuid
+            self.gfixtures_tree.insert('', 'end', uuid, text=name, 
                 values=[olid])
-            data = []
-            for data_item in fixture:
-                name = data_item.tag
-                value = data_item.text
-                self.fixture_list_tree.insert(uuid, 'end', values=[name, value])
-                data.append(data_item.text)
+            for data_item in fixture.data:
+                name = data_item
+                value = fixture.data[data_item]
+                self.gfixtures_tree.insert(uuid, 'end', values=[name, value])
+        self.gfixtures_tree.pack()
 
-def main():
-    plotter.init()
-    global PROJECT_FILE
-    PROJECT_FILE = plotter.FileManager()
-    if plotter.LAUNCH_ARGS.file != None:
-        PROJECT_FILE.load(plotter.LAUNCH_ARGS.file)
-        print('Using project file '+PROJECT_FILE.file) 
-    root = Tk()
-    app = GuiApp(master=root)
+    def command_load_file(self):
+        gfile_dialog = filedialog.askopenfile()
+        self.plot_file.load(gfile_dialog.name)
+
+
+def main(plot_file, config):
+    root = tix.Tk()
+    app = GuiApp(plot_file, config, master=root)
     app.mainloop()
 
 if __name__ == '__main__':

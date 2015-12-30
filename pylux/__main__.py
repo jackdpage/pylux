@@ -25,43 +25,41 @@ import configparser
 import sys
 import gplotter
 import plotter
+import plot
 
 from __init__ import __version__
 
 
-def init():
+def main():
     """Initialise the argument and config parsers."""
-    # Initiate the argument parser
+    print('This is Pylux, version '+__version__)
+    # Initiate the argument parser and get launch arguments
     parser = argparse.ArgumentParser(prog='pylux',
        description='Create and modify OpenLighting Plot files')
     parser.add_argument('-v', '--version', action='version', 
-        version='%(prog)s '+__version__)
+        version='%(prog`)s '+__version__)
     parser.add_argument('-f', '--file', dest='file', 
         help='load this project file on launch')
-    parser.add_argument('-i', '--interface', dest='interface', 
-        choices=['cli','gui'], default='cli', help='user interface to use')
-    global LAUNCH_ARGS
-    LAUNCH_ARGS = parser.parse_args()
-
-    # Initiate the config parser
+    parser.add_argument('-g', '--gui', action='store_true', 
+        help='launch Pylux with a GUI')
+    launch_args = parser.parse_args()
+    # Load configuration
     config_file = os.path.expanduser('~/.pylux/pylux.conf')
-    global CONFIG
-    CONFIG = configparser.ConfigParser()
-    CONFIG.read(config_file)
-
-    global OL_FIXTURES_DIR
-    OL_FIXTURES_DIR = os.path.expanduser(CONFIG['Fixtures']['dir'])
-
-    global PROMPT
-    PROMPT = CONFIG['Settings']['prompt']+' '
-
-
-def main():
-    init()
-    if LAUNCH_ARGS.interface == 'cli':
-        plotter.main()
-    elif LAUNCH_ARGS.interface == 'gui':
-        gplotter.main()
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    print('Using configuration file '+config_file)
+    plot_file = plot.PlotFile()
+    if launch_args.file != None:
+        plot_file.load(launch_args.file)
+        print('Using plot file '+plot_file.file)
+    else:
+        print('No plot file loaded')
+    if launch_args.gui == True:
+        print('Running in GUI mode\n')
+        gplotter.main(plot_file, config)
+    else:
+        print('Running in CLI mode\n')
+        plotter.main(plot_file, config)
 
 
 if __name__ == '__main__':

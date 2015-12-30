@@ -17,9 +17,41 @@
 
 import xml.etree.ElementTree as ET
 import uuid
-import sys
-from __init__ import __version__
-import __main__
+
+
+class PlotFile:
+    """Manage the Pylux plot project file.
+
+    Attributes:
+        file: the path of the project file.
+        tree: the parsed XML tree.
+        root: the root element of the XML tree.
+    """
+
+    def load(self, path):
+        """Load a project file.
+
+        Args:
+            path: the location of the file to load.
+        """
+        self.file = path
+        try:
+            self.tree = ET.parse(self.file)
+        except FileNotFoundError:
+            print('The file you are trying to load doesn\'t exist!')
+        self.root = self.tree.getroot()
+
+    def save(self):
+        """Save the project file to its original location."""
+        self.tree.write(self.file, encoding='UTF-8', xml_declaration=True)
+
+    def saveas(self, path):
+        """Save the project file to a new location.
+
+        Args:
+            path: the location to save the file to.
+        """
+        self.tree.write(path, encoding='UTF-8', xml_declaration=True)
 
 
 class DmxRegistry:
@@ -32,7 +64,7 @@ class DmxRegistry:
             registry doesn't exist in XML.
     """
 
-    def __init__(self, universe):
+    def __init__(self, plot_file, universe):
         """Create a new Python registry.
 
         Creates a new Python registry with the id universe. Then 
@@ -44,11 +76,12 @@ class DmxRegistry:
         Args:
             universe: the universe id of the registry to be created.
         """
+        self.plot_file = plot_file
         self.registry = {}
         self.universe = universe
         self.xml_registry = False
         # Search for this universe in the XML file
-        xml_registries = PROJECT_FILE.root.findall('dmx_registry')
+        xml_registries = self.plot_file.root.findall('dmx_registry')
         for xml_registry in xml_registries: 
             testing_universe = xml_registry.get('universe')
             if testing_universe == self.universe:
@@ -58,7 +91,7 @@ class DmxRegistry:
         if self.xml_registry == False:
             self.xml_registry = ET.Element('dmx_registry')
             self.xml_registry.set('universe', self.universe)
-            PROJECT_FILE.root.append(self.xml_registry)
+            self.plot_file.root.append(self.xml_registry)
         # Populate the Python registry if an XML registry was found
         else:            
             for channel in xml_registry:
@@ -154,9 +187,70 @@ class DmxRegistry:
                 print('Automatically chose start address '+str(free_from))
                 return free_from
 
+    def address(self, fixture, start_address):
+        """Address a fixture."""
+        required_channels = int(fixture.data['dmx_channels'])
+        if start_address == 'auto':
+            address = self.get_start_address(required_channels)
+        else:
+            address = int(start_address)
+        try:
+            fixture.data['universe']
+        except KeyError:
+            pass
+        else:
+            old_start_addr = int(fixture.data['dmx_start_address'])
+            i = old_start_addr
+            while i < old_start_addr+required_channels:
+                self.registry[i] = None
+                i = i+1
+        fixture.data['dmx_start_address'] = str(address)
+        fixture.data['universe'] = self.universe
+        for function in fixture.dmx_functions:
+            self.registry[address] = (fixture.uuid, function)
+            address = int(address)+1
+        fixture.save()
+        self.save()
+
+    def unaddress(self, fixture):
+        """Remove a fixture from the registry"""
+        start_address = int(fixture.data['dmx_start_address'])
+        i = start_address
+        while i < start_address+int(fixture.data['dmx_channels']):
+            self.registry[i] = None
+            i = i+1
+        self.save()
+
+
+class FixtureList:
+    """Manage all the fixtures in a plot."""
+    def __init__(self, plot_file):
+        """Creates fixture objects for all the fixtures in the plot."""
+        self.xml_fixture_list = plot_file.root.find('fixtures')
+        self.fixtures = []
+        for i in self.xml_fixture_list:
+            fixture = Fixture(plot_file)
+            fixture.load(i)
+            self.fixtures.append(fixture)
+
+    def remove(self, fixture):
+        """Remove a fixture from the plot."""
+        self.xml_fixture_list.remove(fixture.xml_fixture)
+
+    def get_all_values_for_data_type(self, data_type):
+        """Returns a list containing the values of data...etc""" 
+        data_values = []
+        for fixture in self.fixtures:
+            try:
+                data_values.append(fixture.data[data_type])
+            except KeyError:
+                pass
+        data_values = list(set(data_values))
+        data_values.sort()
+        return data_values
 
 class Fixture:
-    """Manage the addition of fixtures to the plot file.
+    """Manage individual fixtures.
 
     Attributes:
         olid: the OLID of the fixture.
@@ -167,13 +261,19 @@ class Fixture:
         dmx_num: the number of DMX channels required by this fixture.
     """
 
-    def __init__(self):
-        """Create a new fixture in Python."""
+    def __init__(self, plot_file, uuid=None):
+        """Create a new fixture in Python and load data based on UUID."""
+        self.plot_file = plot_file
         self.data = {}
-        self.dmx = []
+        self.dmx_functions = []
+        if uuid != None:
+            xml_fixtures_list = plot_file.root.find('fixtures')
+            for xml_fixture in xml_fixtures_list:
+                if uuid == xml_fixture.get('uuid'):
+                    self.load(xml_fixture)
 
-    def new(self, olid):
-        """Make this fixture as a new fixture.
+    def new(self, olid, fixtures_dir):
+        """Make this fixture as a brand new fixture.
 
         Given an OLID, assign a UUID and load the constants from the 
         OLF file into the data dictionary.
@@ -181,16 +281,15 @@ class Fixture:
         Args:
             olid: the OLID of the new fixture.
         """
-        olf_tree = ET.parse(OL_FIXTURES_DIR+olid+'.olf')
-        olf_root = olf_tree.getroot()
         self.olid = olid # OLID was specified on creation
         self.uuid = str(uuid.uuid4()) # Random UUID assigned
-        constants_xml = olf_root.find('constants')
-        dmx_xml = olf_root.find('dmx_channels')
-        dmx_chans = []
+        src_tree = ET.parse(fixtures_dir+self.olid+'.olf')
+        self.src_root = src_tree.getroot()
+        constants_xml = self.src_root.find('constants')
+        dmx_xml = self.src_root.find('dmx_channels')
         for channel in dmx_xml:
-            dmx_chans.append(channel.tag)
-        dmx_num = len(dmx_chans)
+            self.dmx_functions.append(channel.tag)
+        dmx_num = len(self.dmx_functions)
         # Add constants from OLF file
         for constant in constants_xml:
             self.data[constant.tag] = constant.text
@@ -203,7 +302,7 @@ class Fixture:
         contents of the data dictionary, then add the newly created 
         fixture to the XML tree.
         """
-        fixture_list = PROJECT_FILE.root.find('fixtures')
+        fixture_list = self.plot_file.root.find('fixtures')
         new_fixture = ET.Element('fixture')
         new_fixture.set('olid', self.olid)
         new_fixture.set('uuid', self.uuid)
@@ -211,11 +310,14 @@ class Fixture:
         for data_item in self.data:
             new_detail = ET.SubElement(new_fixture, data_item)
             new_detail.text = self.data[data_item]
+        xml_dmx_functions = ET.SubElement(new_fixture, 'dmx_functions')
+        for dmx_function in self.dmx_functions:
+            new_dmx_function = ET.SubElement(xml_dmx_functions, dmx_function)
         fixture_list.append(new_fixture)
         self.xml_fixture = new_fixture
 
-    def load(self, fixture):
-        """Load existing fixture data from XML.
+    def load(self, xml_fixture):
+        """Make this fixture as an existing fixture in the XML tree.
 
         Load the contents of an existing fixture in the XML document 
         into this Python fixture object.
@@ -223,27 +325,16 @@ class Fixture:
         Args:
             fixture: the XML fixture object to load.
         """
-        self.xml_fixture = fixture
-        self.olid = fixture.get('olid')
-        self.uuid = fixture.get('uuid')
-        for data_item in fixture:
-            self.data[data_item.tag] = data_item.text
-        # Load DMX info from OLF file
-        olf_tree = ET.parse(OL_FIXTURES_DIR+self.olid+'.olf')
-        olf_root = olf_tree.getroot()
-        dmx_xml = olf_root.find('dmx_channels')
-        for channel in dmx_xml:
-            self.dmx.append(channel.tag)
-        self.dmx_num = len(self.dmx)
-
-    def edit(self, tag, value):
-        """Edit a piece of data in the fixture.
-
-        Args:
-            tag: the data value to edit.
-            value: the new value to set.
-        """
-        self.data[tag] = value
+        self.xml_fixture = xml_fixture
+        self.olid = xml_fixture.get('olid')
+        self.uuid = xml_fixture.get('uuid')
+        for data_item in xml_fixture:
+            if data_item.tag != 'dmx_functions':
+                self.data[data_item.tag] = data_item.text
+        xml_dmx_functions = xml_fixture.find('dmx_functions')
+        for dmx_function in xml_dmx_functions:
+            self.dmx_functions.append(dmx_function.tag)
+        self.dmx_num = len(self.dmx_functions)
 
     def clone(self, src_fixture):
         """Clone a fixture.
@@ -288,7 +379,7 @@ class Fixture:
         # Iterate over XML fixture to remove empty data
         for data_item in self.xml_fixture:
             data_name = data_item.tag
-            if data_name not in self.data:
+            if data_name != 'dmx_functions' and self.data[data_name] == "" :
                 self.xml_fixture.remove(data_item)
 
 
@@ -296,51 +387,50 @@ class Metadata:
     """Manages the metadata section of the XML file.
 
     Attributes:
-        meta_values: the XML object containing a the metadata.
+        xml_meta: the XML object containing a the metadata.
+        meta: a dictionary containing the metadata.
     """
 
-    def __init__(self, project_file):
+    def __init__(self, plot_file):
         """Find the metadata in XML and add to the attribute.
 
         Args:
-            project_file: the FileManager object of the project file.
+            plot_file: the FileManager object of the project file.
         """
-        self.meta_values = project_file.root.find('metadata')
+        self.xml_meta = plot_file.root.find('metadata')
+        self.meta = {}
+        for metaitem in self.xml_meta:
+            self.meta[metaitem.tag] = metaitem.text
 
-    def add_meta(self, tag, value):
-        """Add a new piece of metadata.
+    def save(self):
+        """Save the metadata dictionary to XML."""
+        # Add a new meta item
+        def add_xml_meta(self, name, value):
+            new_metadata = ET.Element(name)    
+            new_metadata.text = value
+            self.xml_meta.append(new_metadata)
 
-        Args:
-            tag: the XML tag of the new metadata.
-            value: the value of the new metadata.
-        """
-        new_meta = ET.Element(tag)
-        new_meta.text = value
-        self.meta_values.append(new_meta)
+        # Edit an existing meta item
+        def edit_xml_meta(self, name, new_value):
+            self.xml_meta.find(name).text = new_value
 
-    def remove_meta(self, tag):
-        """Remove a piece of metadata from XML.
+        # Search for meta in XML
+        def get_xml_meta(self, name):
+            try:
+                return self.xml_fixture.find(name)
+            except AttributeError:
+                return None
 
-        Args:
-            tag: the XML tag of the metadata to remove.
-        """
-        for metaitem in self.meta_values:
-            test_tag = metaitem.tag
-            if test_tag == tag:
-                self.meta_values.remove(metaitem)
-
-    def get(self, tag):
-        """Return the value of a piece of metadata.
-
-        Args:
-            tag: the XML tag of the metadata to return.
-
-        Returns:
-            A string containing the XML text of the metadata.
-        """
-        for metaitem in self.meta_values:
-            test_tag = metaitem.tag
-            if test_tag == tag:
-                return metaitem.text
-                break
+        # Iterate over the meta values dictionary
+        for metaitem in self.meta:
+            xml_meta = get_xml_meta(self, metaitem)
+            if xml_meta == None:
+                add_xml_meta(self, metaitem, self.meta[metaitem])
+            else:
+                edit_xml_meta(self, metaitem, self.meta[metaitem])
+        # Iterate over XML meta object to remove empty values
+        for metaitem in self.xml_meta:
+            name = metaitem.tag
+            if self.meta[name] == None:
+                self.xml_meta.remove(metaitem)
 

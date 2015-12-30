@@ -17,91 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import xml.etree.ElementTree as ET
-import uuid
-import argparse
 import os
-import configparser
-import os.path
 import sys
-import gplotter
 from __init__ import __version__
-import __main__
-
-
-class FileManager:
-    """Manage the Pylux plot project file.
-
-    Attributes:
-        file: the path of the project file.
-        tree: the parsed XML tree.
-        root: the root element of the XML tree.
-    """
-
-    def load(self, path):
-        """Load a project file.
-
-        Args:
-            path: the location of the file to load.
-        """
-        self.file = path
-        try:
-            self.tree = ET.parse(self.file)
-        except FileNotFoundError:
-            print('The file you are trying to load doesn\'t exist!')
-        self.root = self.tree.getroot()
-        global META_MANAGER
-        META_MANAGER = MetaManager(self)
-
-    def save(self):
-        """Save the project file to its original location."""
-        self.tree.write(self.file, encoding='UTF-8', xml_declaration=True)
-
-    def saveas(self, path):
-        """Save the project file to a new location.
-
-        Args:
-            path: the location to save the file to.
-        """
-        self.tree.write(path, encoding='UTF-8', xml_declaration=True)
+import plot
+import texlux
 
     
-####def list(self):
-        """Print a list of the used channels in the registry.
-
-        Print a list of the used channels in the registry, along with 
-        the UUID of the fixture they control and their function.
-        """
-        for channel in self.registry:
-            print(str(format(channel, '03d'))+' uuid: '+
-                self.registry[channel][0]+', func: '+self.registry[channel][1])
-
-####def list_meta(self):
-        """Print the values of all metadata."""
-        for metaitem in self.meta_values:
-            print(metaitem.tag+': '+metaitem.text)
-
-class PositionManager:
-    """NYI"""
-    def get_fixture(uuid):
-        fixture_list = PROJECT_FILE.root.find('fixtures')
-        for fixture in fixture_list:
-            test_uuid = fixture.get('uuid')
-            if test_uuid == uuid:
-                return fixture
-                break
-
-    def position(uuid, position):
-        fixture_list = PROJECT_FILE.root.find('fixtures')
-        fixture = PositionManager.get_fixture(uuid)
-        posX = ET.SubElement(fixture, 'posX')
-        posX.text = position[0]
-        posY = ET.SubElement(fixture, 'posY')
-        posY.text = position[1]
-        posZ = ET.SubElement(fixture, 'posZ')
-        posZ.text = position[2]
-
-
 class CliManager:
     """Manage some CLI interactivity and other functionality.
 
@@ -116,7 +38,11 @@ class CliManager:
     """
 
     def __init__(self):
-        """Create an empty dictionary for the options."""
+        """Create a dictionary for the options.
+
+        Create a dictionary ready to populate with options, and add 
+        an entry for the special 'this' with the value None.
+        """
         self.option_list = {'this': None}
 
     def append(self, ref, object):
@@ -207,18 +133,6 @@ def get_command_list():
 
 def clear():
     """Clear the console."""
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-
-def remove_fixture(fixture):
-    """Remove a fixture from the plot.
-
-    Args:
-        fixture: the XML object of the fixture to be removed.
-    """
-    fixture_list = PROJECT_FILE.root.find('fixtures')
-    fixture_list.remove(fixture)
-    return fixture
 
 
 def purge_fixture(fixture):
@@ -237,69 +151,6 @@ def purge_fixture(fixture):
     remove_fixture(fixture)
 
 
-def list_fixture_info(fixture):
-    """Print the user-defined values of a fixture.
-
-    Args:
-        fixture: the XML object of the fixture.
-    """
-    for variable in fixture:
-        print(variable.tag+': '+variable.text)
-
-def list_fixtures():
-    """Print a list of all fixtures.
-
-    Print a list of all the fixtures in the plot and assign a unique 
-    CLI identifier to each one, so that the user can pass them into 
-    further commands.
-    """
-    fixture_list = PROJECT_FILE.root.find('fixtures')
-    INTERFACE_MANAGER.clear()
-    i=1
-    for fixture in fixture_list:
-        olid = fixture.get('olid')
-        uuid = fixture.get('uuid')
-        print('['+str(i)+'] '+olid+', id: '+uuid)
-        INTERFACE_MANAGER.append(i, fixture)
-        i = i+1
-
-
-def filter_fixtures(key, value):
-    """Display a list of fixtures with a certain property.
-
-    Print a list of fixtures which have a certain value for a key 
-    and assign a unique CLI identifier to each one, so that the user 
-    can pass them into further commands.
-
-    Args:
-        key: the XML tag to test.
-        value: the XML value of the fixtures that should be returned.
-    """
-    fixture_list = PROJECT_FILE.root.find('fixtures')
-    INTERFACE_MANAGER.clear()
-    i=1
-    for fixture in fixture_list:
-        if key == 'olid':
-            test_value = fixture.get('olid')
-            if test_value == value:
-                uuid = fixture.get('uuid')
-                print('['+str(i)+'] '+test_value+', id: '+uuid)
-                INTERFACE_MANAGER.append(i, fixture)
-                i = i+1
-        else:        
-            try:
-                test_value = fixture.find(key).text
-                if test_value == value:
-                    olid = fixture.get('olid')
-                    uuid = fixture.get('uuid')
-                    print('['+str(i)+'] '+olid+', id: '+uuid+', '+key+': '+
-                        value)
-                    INTERFACE_MANAGER.append(i, fixture)
-                    i = i+1
-            except AttributeError:
-                continue
-
-
 def get_data_list(project_file, data_name):
     """Search through the fixtures list and return every value of data_name.
 
@@ -312,148 +163,186 @@ def get_data_list(project_file, data_name):
     """
     fixture_list = project_file.root.find('fixtures')
     data_values = []
-    for fixture in fixture_list:
-        try:
-            data_values.append(fixture.find(data_name).text)
-        except AttributeError:
-            continue
-    data_values = list(set(data_values))
-    data_values.sort()
-    return data_values
 
-def main():
+def main(plot_file, config):
     """The main user loop."""
-    global PROJECT_FILE
-    PROJECT_FILE = FileManager()
-    global INTERFACE_MANAGER
-    INTERFACE_MANAGER = CliManager()
-    print('Pylux 0.1')
-    print('Using configuration file '+__main__.config_file)
-    # If a project file was given at launch, load it
-    if LAUNCH_ARGS.file != None:
-        PROJECT_FILE.load(os.path.expanduser(LAUNCH_ARGS.file))
-        print('Using project file '+PROJECT_FILE.file) 
+    interface = CliManager()
+    prompt = config['Settings']['prompt']+' '
+    fixtures_dir = os.path.expanduser(config['Fixtures']['dir'])
     print('Welcome to Pylux! Type \'h\' to view a list of commands.')
     # Begin the main loop
     while True:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('action', nargs='+')
-        user_input = input(PROMPT)
+        user_input = input(config['Settings']['prompt']+' ')
         inputs = []
         for i in user_input.split(' '):
             inputs.append(i)
+
         # File actions
         if inputs[0] == 'fl':
             try:
-                PROJECT_FILE.load(inputs[1])
+                plot_file.load(inputs[1])
             except UnboundLocalError:
                 print('Error: You need to specify a file path to load')
+
         elif inputs[0] == 'fs':
-            PROJECT_FILE.save()
+            plot_file.save()
+
         elif inputs[0] == 'fS':
             try:
-                PROJECT_FILE.saveas(inputs[1])
+                plot_file.saveas(inputs[1])
             except IndexError:
                 print('Error: You need to specify a destination path!')
+
+        elif inputs[0] == 'fg':
+            print('Using plot file '+plot_file.file)
+
         # Metadata actions
         elif inputs[0] == 'ml':
-            META_MANAGER.list_meta()
+            metadata = plot.Metadata(plot_file)
+            for i in metadata.meta:
+                print(i+': '+metadata.meta[i])
+
         elif inputs[0] == 'ma':
-            META_MANAGER.add_meta(inputs[1],
-                CliManager.resolve_input(inputs, 2)[-1])
+            metadata = plot.Metadata(plot_file)
+            metadata.meta[inputs[1]] = CliManager.resolve_input(inputs, 2)[-1]
+            metadata.save()
+
         elif inputs[0] == 'mr':
-            META_MANAGER.remove_meta(inputs[1])
+            metadata = plot.Metadata(plot_file)
+            metadata.meta[inputs[1]] = None
+            metadata.save()
+
         elif inputs[0] == 'mg':
-            print(META_MANAGER.get(inputs[1]))
+            metadata = plot.Metadata(plot_file)
+            print(inputs[1]+': '+metadata.meta[inputs[1]])
+
         # Fixture actions
         elif inputs[0] == 'xa':
-            fixture = Fixture()
+            fixture = plot.Fixture(plot_file)
             try:
-                fixture.new(inputs[1])
+                fixture.new(inputs[1], fixtures_dir)
             except FileNotFoundError:
                 print('Error: Couldn\'t find an OLF file with OLID '+inputs[1])
             else:
                 fixture.add()
                 fixture.save()
-                INTERFACE_MANAGER.option_list['this'] = fixture.xml_fixture
+                interface.option_list['this'] = fixture
+
         elif inputs[0] == 'xc':
-            src_fixture = Fixture()
-            src_fixture.load(INTERFACE_MANAGER.get(inputs[1]))
-            new_fixture = Fixture()
+            src_fixture = interface.get(inputs[1])
+            new_fixture = plot.Fixture(plot_file, fixtures_dir)
             new_fixture.clone(src_fixture)
             new_fixture.add()
             new_fixture.save()
+
         elif inputs[0] == 'xl':
-            list_fixtures()
+            fixtures = plot.FixtureList(plot_file)
+            i = 1
+            interface.clear()
+            for fixture in fixtures.fixtures:
+                print('\033[4m'+str(i)+'\033[0m '+fixture.olid+', id: '+
+                    fixture.uuid)
+                interface.append(i, fixture)
+                i = i+1
+
         elif inputs[0] == 'xf':
             try:
-                filter_fixtures(inputs[1], 
-                    CliManager.resolve_input(inputs, 2)[-1])
+                key = inputs[1]
+                value = CliManager.resolve_input(inputs, 2)[-1]
+                fixtures = plot.FixtureList(plot_file, fixtures_dir)
+                interface.clear()
+                i = 1
+                for fixture in fixtures.fixtures:
+                    if key == 'olid':
+                        test_value = fixture.olid
+                    else:
+                        try:
+                            test_value = fixture.data[key]
+                        except IndexError:
+                            pass
+                    if test_value == value:
+                        print('\033[4m'+str(i)+'\033[0m '+fixture.olid+
+                            ', id: '+fixture.uuid+', '+key+': '+value)
+                        interface.append(i, fixture)
+                        i = i+1
+                        
             except IndexError:
                 print('Error: You need to specify a key and value!')
+
         elif inputs[0] == 'xr':
             try:
-                remove_fixture(INTERFACE_MANAGER.get(inputs[1]))
+                fixtures = plot.FixtureList(plot_file, fixtures_dir)
+                fixtures.remove(interface.get(inputs[1]))
             except IndexError:
                 print('Error: You need to run either xl or xf then specify the'
                       ' interface id of the fixture you wish to remove')
+
         elif inputs[0] == 'xi':
-            fixture = INTERFACE_MANAGER.get(inputs[1])
-            list_fixture_info(fixture)
-            INTERFACE_MANAGER.option_list['this'] = fixture
+            fixture = interface.get(inputs[1])
+            for data_item in fixture.data:
+                print(data_item+': '+fixture.data[data_item])
+            interface.option_list['this'] = fixture
+
         elif inputs[0] == 'xs':
-            fixture = Fixture()
-            fixture.load(INTERFACE_MANAGER.get(inputs[1]))
-            fixture.edit(inputs[2], CliManager.resolve_input(inputs, 3)[-1])
+            fixture = interface.get(inputs[1])
+            fixture.data[inputs[2]] = CliManager.resolve_input(inputs, 3)[-1]
             fixture.save()
+            interface.option_list['this'] = fixture
+
         elif inputs[0] == 'xA':
-            fixture = Fixture()
-            fixture.load(INTERFACE_MANAGER.get(inputs[1]))
-            registry = DmxRegistry(inputs[2])
-            if inputs[3] == 'auto':
-                address = registry.get_start_address(fixture.dmx_num)
-            else:
-                address = int(inputs[3])
-            try:
-                fixture.data['universe']
-            except KeyError:
-                continue
-            else:
-                old_start_addr = int(fixture.data['dmx_start_address'])
-                i = old_start_addr
-                while i < old_start_addr+int(fixture.data['dmx_channels']):
-                    registry.registry[i] = None
-                    i=i+1
-            finally:
-                fixture.edit('dmx_start_address', str(address))
-                fixture.edit('universe', inputs[2])
-                for function in fixture.dmx:
-                    registry.registry[address] = (fixture.uuid, function)
-                    address = int(address)+1
-                fixture.save()
-                registry.save()
-                INTERFACE_MANAGER.option_list['this'] = fixture.xml_fixture
+            fixture = interface.get(inputs[1])
+            registry = plot.DmxRegistry(plot_file, inputs[2])
+            registry.address(fixture, inputs[3])
+            interface.option_list['this'] = fixture
+
         elif inputs[0] == 'xp':
-            purge_fixture(INTERFACE_MANAGER.get(inputs[1]))
+            fixture = interface.get(inputs[1])
+            registry = plot.DmxRegistry(plot_file, fixture.data['universe'])
+            registry.unaddress(fixture)
+            fixtures = plot.FixtureList(plot_file, fixtures_dir)
+            fixtures.remove(fixture)
+
         # DMX registry actions
         elif inputs[0] == 'rl':
             try:
-                dmx_registry = DmxRegistry(inputs[1])
-                dmx_registry.list()
+                registry = plot.DmxRegistry(plot_file, inputs[1])
+                interface.clear()
+                for channel in registry.registry:
+                    uuid = registry.registry[channel][0]
+                    func = registry.registry[channel][1]
+                    print('\033[4m'+str(format(channel, '03d'))+
+                        '\033[0m uuid: '+uuid+', func: '+func)
+                    interface.append(channel, plot.Fixture(plot_file, uuid))
             except IndexError:
                 print('You need to specify a DMX registry!')
+
+        # Extension actions
+        elif inputs[0] == 'texlux:rg':
+            report = texlux.Report(CliManager.resolve_input(inputs, 2)[-1],
+                 plot_file, inputs[1])
+            report.generate_header()
+            report.generate_dimmer_report()
+            report.generate_footer()
+            print(report.header)
+            print(report.report)
+            print(report.footer)
+
         # Utility actions
         elif inputs[0] == 'h':
             get_command_list()
+
         elif inputs[0] == 'c':
-            clear()
+            os.system('cls' if os.name == 'nt' else 'clear')
+
         elif inputs[0] == 'q':
             print('Autosaving changes...')
-            PROJECT_FILE.save()
+            plot_file.save()
             sys.exit()
-        elif inputs[0] == 'q!':
+
+        elif inputs[0] == 'Q':
             print('Ignoring changes and exiting...')
             sys.exit()
+
         else:
             print('Error: Command doesn\'t exist.') 
             print('Type \'h\' for a list of available commands.')
