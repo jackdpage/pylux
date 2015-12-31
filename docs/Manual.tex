@@ -184,47 +184,43 @@ with identifier \texttt{\textit{UNIVERSE}}.
 You may instead choose to launch Pylux using its GUI. This is NYI so please 
 don't.
 
+\subsection{Using Extensions}
+You cannot directly interact with extensions from the \texttt{plotter} 
+interface, you must first load the extension using the \texttt{:} command.
+For example, to load the \texttt{texlux} extension, use \texttt{:texlux}. 
+This will then present you with the interface as defined by that extension 
+which may vary but in practise should be a prompt of the form 
+\texttt{pylux:extension} to indicate to you which extension you are 
+operating in and some commands, much like in the \texttt{plotter} interface.
+The extension defines its own way of returning to \texttt{plotter} but this 
+should in general be \texttt{::} or \texttt{q}.
+
 \section{Extensions}
 In the previous sections, we have discussed the usage of the base program in 
 Pylux: \texttt{plotter}. This is the program that you will use to edit your
 plots, however, beyond that, it doesn't do much. That is why Pylux is also 
-bundled with additional programs to extend functionality. In the current 
-version, Pylux comes bundled with the \texttt{texlux} program only.
+bundled with extensions to provide extra functionality. In the current 
+version, Pylux comes bundled with the \texttt{texlux} extension only.
 
-\subsection{TeXlux}
-TeXlux is an extension to the base \texttt{plotter} program which allows for 
-the creation of reports in the \LaTeX{} format, which can then be 
+\subsection{\texttt{texlux}}
+\texttt{texlux} is an extension to the base \texttt{plotter} program which allows for the creation of reports in the \LaTeX{} format, which can then be 
 post-processed to create a PDF file, or many other formats through the use of 
 an external tool such as Pandoc.
 
-\subsubsection{Invoking}
-TeXlux is invoked as a separate program, although it does require 
-\texttt{plotter} to be present as it is imported when TeXlux is run. TeXlux is 
-invoked using: \texttt{texlux \textit{FILE} \textit{TEMPLATE}}, where 
-\texttt{\textit{FILE}} is the Pylux plot file to process and 
-\texttt{\textit{TEMPLATE}} is the built-in function to create the report from.
+\subsubsection{Commands}
 
-\subsubsection{Command-line Options}
-TeXlux has very little in the way of command-line options.
-
-\paragraph{\texttt{--title \textit{TITLE}}, \texttt{-t \textit{TITLE}}}
-Sets the title of the report to be \texttt{\textit{TITLE}}. If this is not 
-specified, a generic title such as 'Dimmer Report' will be used.
+\paragraph{\texttt{rg \textit{TEMPLATE OUTPUT TITLE}}}
+Generates a report using the template \texttt{\textit{TEMPLATE}}, with the 
+title \texttt{\textit{TITLE}}, writing the output to a file with path 
+\texttt{\textit{OUTPUT}}.
 
 \subsubsection{Processing}
 
-TeXlux uses built-in functions to generate \LaTeX{} docments with pre-defined 
-structures. Each built-in function has a corresponding \LaTeX{} style file 
-installed in \texttt{~/.pylux/tex/} which is required to build the PDF report. 
-Currently the only built-in function is \texttt{dimmer}, which produces a 
-report categorised by dimmer and containing power draw totals.
-
-\subsubsection{Output}
-
-TeXlux generates the \LaTeX{} source in STDOUT, which can be written to a 
-file or piped directly into a \LaTeX{} processing tool such as 
-\texttt{pdflatex}. Any errors that were encountered during processing are 
-written as \LaTeX{} compatible comments at the top of the source.
+\texttt{texlux} uses built-in functions to generate \LaTeX{} docments with 
+pre-defined structures. Each built-in function has a corresponding \LaTeX{} 
+style file installed in \texttt{~/.pylux/tex/} which is required to build the 
+PDF report. Currently the only built-in function is \texttt{dimmer}, which 
+produces a report categorised by dimmer and containing power draw totals.
 
 \section{Developing for Pylux}
 For the most part, Pylux is documented using Python docstrings, meaning you 
@@ -252,8 +248,6 @@ it has been specified). Your code should never directly alter or read from
 the XML tree. \texttt{plotter} doesn't even import the tree parser to ensure 
 this. You should always access these objects via the API.
 
-Each class within the \texttt{plot} module will now be documented in turn.
-
 \subsection{The \texttt{PlotFile} class}
 This class deals with the Pylux plot file that is being used. There is no 
 initialisation function.
@@ -273,5 +267,41 @@ the plot file was originally loaded.
 \paragraph{\texttt{saveas(path)}}
 Saves the current state of the XML working tree to the location with path 
 \texttt{path}.
+
+\paragraph{\texttt{generate(path)}}
+Creates an empty plot file containing the \texttt{olplot}, \texttt{metadata} 
+and \texttt{fixtures} tags at the location with path \texttt{path}. This does 
+not load the file as the working file.
+
+\subsubsection{Attributes of \texttt{PlotFile}}
+Whilst there are attributes defined in the \texttt{PlotFile} class, in 
+general they should not be used by extensions as this breaks down the 
+tiered structure explained in the opening paragraph.
+
+\paragraph{\texttt{file}}
+The path of the plot file.
+
+\paragraph{\texttt{tree}}
+The Python XML tree element that was parsed from the file using 
+\texttt{xml.etree.ElementTree}.
+
+\paragraph{\texttt{root}}
+The root element (\texttt{olplot}) of the plot file.
+
+\subsection{The \texttt{DmxRegistry} class}
+The \texttt{DmxRegistry} class is Pylux's method for managing DMX registries. 
+If you are using more than one DMX registry, each registry should call a new 
+instance of \texttt{DmxRegistry}.
+
+\subsubsection{Functions of \texttt{DmxRegistry}}
+
+\paragraph{\texttt{__init__(plot_file, universe)}}
+This creates a new Python registry and sets its \texttt{universe} attribute 
+to universe that was given as a parameter. It will then search the XML tree 
+for a DMX registry with this universe id. If it finds one with the correct 
+universe id, it will load the contents of that XML registry into the Python 
+registry (a dictionary in the form \texttt{\{address: (uuid, func), ...\}}).
+If it cannot find a registry with this universe id, it will instead create a 
+new XML DMX registry object and add this to the tree.
 
 \end{document}
