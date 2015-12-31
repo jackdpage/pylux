@@ -21,97 +21,9 @@ import os
 import sys
 from __init__ import __version__
 import plot
+import clihelper
 import importlib
-    
 
-class CliManager:
-    """Manage some CLI interactivity and other functionality.
-
-    Manage the interactive CLI lists, whereby a unique key which is 
-    presented to the user on the CLI returns an object, without the 
-    user having to specify the object itself. Also parse user input
-    containing multi-word arguments.
-
-    Attributes:
-        option_list: a dictionary of the options presented to the 
-            user on the CLI.
-    """
-
-    def __init__(self):
-        """Create a dictionary for the options.
-
-        Create a dictionary ready to populate with options, and add 
-        an entry for the special 'this' with the value None.
-        """
-        self.option_list = {'this': None}
-
-    def append(self, ref, object):
-        """Add an object to the option list.
-
-        Args:
-            ref: the unique CLI identifier of the option being added.
-            object: the object that should be returned if the user 
-                selects this option.
-        """
-        self.option_list[ref] = object
-
-    def get(self, ref):
-        """Return the object of a user selection.
-
-        Args:
-            ref: the unique CLI identifier that the user selected.
-
-        Returns:
-            The object (which could be of any form) that is 
-            associated with the reference in the option list.
-        """
-        try:
-            ref = int(ref)
-        finally:
-            return self.option_list[ref]
-
-    def clear(self):
-        """Clear the option list."""
-        self.option_list.clear()
-        self.option_list['this'] = None
-
-    def resolve_input(self, inputs_list, number_args):
-        """Parse user input that contains a multi-word argument.
-
-        From a list of user arguments which have already been split, 
-        return a new list containing a set number of arguments, where 
-        the last argument is a multi-word argument is a multi-word
-        argument.
-
-        Args:
-            inputs_list: a list containing strings which have been 
-                split from the user input using split(' ').
-            number_args: the number of arguments the input should 
-                contain, excluding the action itself. For example, 
-                the add metadata action takes two arguments: the tag 
-                and value.
-
-        Returns:
-            A list containing a list of the arguments, where the last 
-            argument is a concatenation of any arguments that were 
-            left after processing the rest of the inputs list. For 
-            example, the metadata example above would return 
-            ['ma', 'tag', 'value which can be many words long'].
-        """
-        i = 0
-        parsed_input = []
-        multiword_input = ""
-        while i < number_args:
-            parsed_input.append(inputs_list[i])
-            i = i+1
-        while number_args <= i <= len(inputs_list)-1:
-            if multiword_input == "":
-                multiword_input = multiword_input+inputs_list[i]
-            else:
-                multiword_input = multiword_input+' '+inputs_list[i]
-            i = i+1
-        parsed_input.append(multiword_input)
-        return parsed_input
 
 def get_olf_library():
     """Return a list of the installed OLF files."""
@@ -131,42 +43,9 @@ def get_command_list():
     print(text)
 
 
-def clear():
-    """Clear the console."""
-
-
-def purge_fixture(fixture):
-    """Remove a fixture and all its DMX channels.
-
-    Args:
-        fixture: the XML object of the fixture to be purged.
-    """
-    registry = DmxRegistry(fixture.find('universe').text)
-    start_addr = int(fixture.find('dmx_start_address').text)
-    i = start_addr
-    while i < start_addr+int(fixture.find('dmx_channels').text):
-        registry.registry[i] = None
-        i=i+1
-    registry.save()
-    remove_fixture(fixture)
-
-
-def get_data_list(project_file, data_name):
-    """Search through the fixtures list and return every value of data_name.
-
-    Args:
-        project_file: the Pylux plot file to search.
-        data_name: the XML tag of the data.
-
-    Returns:
-        A list containing every value present for this XML tag.
-    """
-    fixture_list = project_file.root.find('fixtures')
-    data_values = []
-
 def main(plot_file, config):
     """The main user loop."""
-    interface = CliManager()
+    interface = clihelper.Interface()
     prompt = config['Settings']['prompt']+' '
     fixtures_dir = os.path.expanduser(config['Fixtures']['dir'])
     print('Welcome to Pylux! Type \'h\' to view a list of commands.')
@@ -193,7 +72,12 @@ def main(plot_file, config):
             except IndexError:
                 print('Error: You need to specify a destination path!')
 
-        elif inputs[0] == 'fg':
+        elif inputs[0] == 'fp':
+            print('Using plot file '+plot_file.file)
+
+        elif inputs[0] == 'fn':
+            plot_file.generate(os.path.expanduser(inputs[1]))
+            plot_file.load(os.path.expanduser(inputs[1]))
             print('Using plot file '+plot_file.file)
 
         # Metadata actions
@@ -204,7 +88,7 @@ def main(plot_file, config):
 
         elif inputs[0] == 'ma':
             metadata = plot.Metadata(plot_file)
-            metadata.meta[inputs[1]] = interface.resolve_input(inputs, 2)[-1]
+            metadata.meta[inputs[1]] = clihelper.resolve_input(inputs, 2)[-1]
             metadata.save()
 
         elif inputs[0] == 'mr':
@@ -248,8 +132,8 @@ def main(plot_file, config):
         elif inputs[0] == 'xf':
             try:
                 key = inputs[1]
-                value = interface.resolve_input(inputs, 2)[-1]
-                fixtures = plot.FixtureList(plot_file, fixtures_dir)
+                value = clihelper.resolve_input(inputs, 2)[-1]
+                fixtures = plot.FixtureList(plot_file)
                 interface.clear()
                 i = 1
                 for fixture in fixtures.fixtures:
@@ -271,7 +155,7 @@ def main(plot_file, config):
 
         elif inputs[0] == 'xr':
             try:
-                fixtures = plot.FixtureList(plot_file, fixtures_dir)
+                fixtures = plot.FixtureList(plot_file)
                 fixtures.remove(interface.get(inputs[1]))
             except IndexError:
                 print('Error: You need to run either xl or xf then specify the'
@@ -285,7 +169,7 @@ def main(plot_file, config):
 
         elif inputs[0] == 'xs':
             fixture = interface.get(inputs[1])
-            fixture.data[inputs[2]] = interface.resolve_input(inputs, 3)[-1]
+            fixture.data[inputs[2]] = clihelper.resolve_input(inputs, 3)[-1]
             fixture.save()
             interface.option_list['this'] = fixture
 
@@ -299,7 +183,7 @@ def main(plot_file, config):
             fixture = interface.get(inputs[1])
             registry = plot.DmxRegistry(plot_file, fixture.data['universe'])
             registry.unaddress(fixture)
-            fixtures = plot.FixtureList(plot_file, fixtures_dir)
+            fixtures = plot.FixtureList(plot_file)
             fixtures.remove(fixture)
 
         # DMX registry actions
@@ -323,10 +207,10 @@ def main(plot_file, config):
             except ImportError:
                 print('No extension with this name!')
             else:
-                try:
-                    ext_module.main(plot_file, interface)
-                except AttributeError:
-                    print('This extension is not configured correctly!')
+                ext_module.run_pylux_extension(plot_file)
+                #try:
+                #except Exception:
+                #    print('This module is not a valid Pylux extension!')
 
         # Utility actions
         elif inputs[0] == 'h':

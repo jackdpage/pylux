@@ -18,7 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import plot
+import clihelper
 
 class Report:
     """Create a LaTeX report."""
@@ -65,25 +67,28 @@ class Report:
                 dmx = fixture.data['dmx_start_address']
             except KeyError:
                 dmx = None
-                print('% Couldn\'t get DMX start address for '+uuid)
+                print('Couldn\'t get DMX start address for '+uuid)
             try:
                 circuit = fixture.data['circuit']
             except KeyError:
                 circuit = None
-                print('% Couldn\'t get circuit number for '+uuid)
+                print('Couldn\'t get circuit number for '+uuid)
             try:
                 power = fixture.data['power']
             except KeyError:
                 power = '0'
-                print('% Couldn\'t get power for '+uuid+', using zero instead')
+                print('Couldn\'t get power for '+uuid+', using zero instead')
             self.report = (self.report+'\\fixture{'+olid+'}{'+str(dmx)+'}{'+
                 str(circuit)+'}{'+power+'}\n')
 
-        dimmer_list = self.fixtures.get_all_values_for_data_type('dimmer')
+        for fixture in self.fixtures.fixtures:
+            if 'dimmer' not in fixture.data:
+                no_dimmer.append(fixture)
+
+        dimmer_list = self.fixtures.get_data_values('dimmer')
         if len(dimmer_list) == 0:
             print('You\'re not using any dimmers, why are you trying to '
                 'create a dimmer report?')
-            sys.exit()
         for dimmer in dimmer_list:
             self.report = self.report+'\\dimmer{'+dimmer+'}\n\n'
             for fixture in self.fixtures.fixtures:
@@ -91,11 +96,11 @@ class Report:
                     if fixture.data['dimmer'] == dimmer:
                         add_fixture(fixture)
                 except KeyError:
-                    no_dimmer.append(fixture)
+                    pass
             self.report = self.report+'\\subtotal\n\n'
         no_dimmer = list(set(no_dimmer))
-        if len(no_dimmer) < 0:
-            print('% '+str(len(no_dimmer))+' fixtures with no dimmer')
+        if len(no_dimmer) > 0:
+            print(str(len(no_dimmer))+' fixtures with no dimmer')
             self.report = self.report+'\\dimmer{None}\n\n'
             for fixture in no_dimmer:
                 add_fixture(fixture)
@@ -103,7 +108,7 @@ class Report:
     def generate_footer(self):
         self.footer = '\\end{reportTable}\n\\end{document}'
 
-def main(plot_file, interface):
+def run_pylux_extension(plot_file):
     prompt = '(pylux:texlux) ' 
     while True:
         user_input = input(prompt)
@@ -112,14 +117,15 @@ def main(plot_file, interface):
             inputs.append(i)
         
         if inputs[0] == 'rg':
-            report = Report(interface.resolve_input(inputs, 2)[-1],
+            report = Report(clihelper.resolve_input(inputs, 3)[-1],
                  plot_file, inputs[1])
             report.generate_header()
             report.generate_dimmer_report()
             report.generate_footer()
-            print(report.header)
-            print(report.report)
-            print(report.footer)
+            with open(os.path.expanduser(inputs[2]), 'w') as output_file:
+                output_file.write(report.header)
+                output_file.write(report.report)
+                output_file.write(report.footer)
 
         elif inputs[0] == '::' or inputs[0] == 'q':
             break

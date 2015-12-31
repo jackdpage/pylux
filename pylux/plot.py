@@ -53,6 +53,17 @@ class PlotFile:
         """
         self.tree.write(path, encoding='UTF-8', xml_declaration=True)
 
+    def generate(self, path):
+        """Generate a blank project file.
+
+        Generate a file containing the olplot root element, the 
+        metadata element and the fixtures element.
+        """
+        with open(path, 'w') as new_file:
+            new_file.write('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'
+                           '<olplot>\n<metadata>\n</metadata>\n'
+                           '<fixtures>\n</fixtures>\n</olplot>')
+
 
 class DmxRegistry:
     """Manages DMX registries.
@@ -181,10 +192,11 @@ class DmxRegistry:
                 next_test = occupied[occupied.index(i)+1]
             free_until = next_test-1
             if free_until-free_from >= 0:
-                print('Found free channels in the range '+str(free_from)+':'
-                    +str(free_until))
+                print('Found free channels in the range '+
+                    str(free_from)+':'+str(free_until))
             if free_until-free_from+1 >= n:
-                print('Automatically chose start address '+str(free_from))
+                print('Automatically chose start address '+
+                    str(free_from))
                 return free_from
 
     def address(self, fixture, start_address):
@@ -237,7 +249,7 @@ class FixtureList:
         """Remove a fixture from the plot."""
         self.xml_fixture_list.remove(fixture.xml_fixture)
 
-    def get_all_values_for_data_type(self, data_type):
+    def get_data_values(self, data_type):
         """Returns a list containing the values of data...etc""" 
         data_values = []
         for fixture in self.fixtures:
