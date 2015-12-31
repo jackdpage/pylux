@@ -21,9 +21,9 @@ import os
 import sys
 from __init__ import __version__
 import plot
-import texlux
-
+import importlib
     
+
 class CliManager:
     """Manage some CLI interactivity and other functionality.
 
@@ -75,7 +75,7 @@ class CliManager:
         self.option_list.clear()
         self.option_list['this'] = None
 
-    def resolve_input(inputs_list, number_args):
+    def resolve_input(self, inputs_list, number_args):
         """Parse user input that contains a multi-word argument.
 
         From a list of user arguments which have already been split, 
@@ -204,7 +204,7 @@ def main(plot_file, config):
 
         elif inputs[0] == 'ma':
             metadata = plot.Metadata(plot_file)
-            metadata.meta[inputs[1]] = CliManager.resolve_input(inputs, 2)[-1]
+            metadata.meta[inputs[1]] = interface.resolve_input(inputs, 2)[-1]
             metadata.save()
 
         elif inputs[0] == 'mr':
@@ -248,7 +248,7 @@ def main(plot_file, config):
         elif inputs[0] == 'xf':
             try:
                 key = inputs[1]
-                value = CliManager.resolve_input(inputs, 2)[-1]
+                value = interface.resolve_input(inputs, 2)[-1]
                 fixtures = plot.FixtureList(plot_file, fixtures_dir)
                 interface.clear()
                 i = 1
@@ -285,7 +285,7 @@ def main(plot_file, config):
 
         elif inputs[0] == 'xs':
             fixture = interface.get(inputs[1])
-            fixture.data[inputs[2]] = CliManager.resolve_input(inputs, 3)[-1]
+            fixture.data[inputs[2]] = interface.resolve_input(inputs, 3)[-1]
             fixture.save()
             interface.option_list['this'] = fixture
 
@@ -317,15 +317,16 @@ def main(plot_file, config):
                 print('You need to specify a DMX registry!')
 
         # Extension actions
-        elif inputs[0] == 'texlux:rg':
-            report = texlux.Report(CliManager.resolve_input(inputs, 2)[-1],
-                 plot_file, inputs[1])
-            report.generate_header()
-            report.generate_dimmer_report()
-            report.generate_footer()
-            print(report.header)
-            print(report.report)
-            print(report.footer)
+        elif inputs[0][0] == ':':
+            try:
+                ext_module = importlib.import_module(inputs[0].split(':')[1])
+            except ImportError:
+                print('No extension with this name!')
+            else:
+                try:
+                    ext_module.main(plot_file, interface)
+                except AttributeError:
+                    print('This extension is not configured correctly!')
 
         # Utility actions
         elif inputs[0] == 'h':
