@@ -180,10 +180,6 @@ List all the used channels in \texttt{\textit{UNIVERSE}}. This will list the
 DMX address, fixture UUID and function of every channel in the DMX registry 
 with identifier \texttt{\textit{UNIVERSE}}.
 
-\section{Using the Graphical User Interface}
-You may instead choose to launch Pylux using its GUI. This is NYI so please 
-don't.
-
 \subsection{Using Extensions}
 You cannot directly interact with extensions from the \texttt{plotter} 
 interface, you must first load the extension using the \texttt{:} command.
@@ -194,6 +190,10 @@ which may vary but in practise should be a prompt of the form
 operating in and some commands, much like in the \texttt{plotter} interface.
 The extension defines its own way of returning to \texttt{plotter} but this 
 should in general be \texttt{::} or \texttt{q}.
+
+\section{Using the Graphical User Interface}
+You may instead choose to launch Pylux using its GUI. This is NYI so please 
+don't.
 
 \section{Extensions}
 In the previous sections, we have discussed the usage of the base program in 
@@ -295,7 +295,7 @@ instance of \texttt{DmxRegistry}.
 
 \subsubsection{Functions of \texttt{DmxRegistry}}
 
-\paragraph{\texttt{__init__(plot_file, universe)}}
+\paragraph{\texttt{\_\_init\_\_(plot\_file, universe)}}
 This creates a new Python registry and sets its \texttt{universe} attribute 
 to universe that was given as a parameter. It will then search the XML tree 
 for a DMX registry with this universe id. If it finds one with the correct 
@@ -303,5 +303,30 @@ universe id, it will load the contents of that XML registry into the Python
 registry (a dictionary in the form \texttt{\{address: (uuid, func), ...\}}).
 If it cannot find a registry with this universe id, it will instead create a 
 new XML DMX registry object and add this to the tree.
+
+\paragraph{\texttt{save()}}
+This function simply saves the current state of the DmxRegistry object to the 
+XML tree. 
+
+\paragraph{\texttt{get\_occupied()}}
+Returns a list of the occupied DMX channels in the Python registry.
+
+\paragraph{\texttt{get\_start\_address(n)}}
+Returns a recommeded start address for a fixture. This function will search 
+through the registry to find the next \texttt{n} free DMX addresses in a row.
+
+\paragraph{\texttt{address(fixture, start\_address)}}
+Assigns DMX addresses to the fixture \texttt{fixture}. The function will start 
+assigning at \texttt{start\_address} if it is an integer, or will call 
+\texttt{get\_start\_address} if the string \texttt{auto} is given instead. 
+The number of addresses to assign and the functions of these addresses is 
+deterimned by accessing the fixture's attributes. Additionally, if the 
+fixture has been previously addressed (whether it has or not is determined by 
+getting the value of \texttt{universe} from its data), those channels will be 
+removed before the new ones are assigned.
+
+\paragraph{\texttt{unaddress(fixture)}}
+Removes the DMX addresses from a fixture \texttt{fixture} and from the 
+registry. Removes based on the fixture's \texttt{dmx\_channels} data tag.
 
 \end{document}
