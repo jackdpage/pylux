@@ -5,16 +5,21 @@ import os
 HOME = os.path.expanduser('~/')
 FIXTURES = os.listdir('fixture/')
 TEX = os.listdir('tex/')
+EXTENSIONS = os.listdir('extension/')
 TEXFILES = []
 FIXFILES = []
+EXTFILES = []
 
 INSFILES = [(HOME+'.pylux/', ['pylux.conf'])]
 for texfile in TEX:
     TEXFILES.append('tex/'+texfile)
 for fixfile in FIXTURES:
     FIXFILES.append('fixture/'+fixfile)
+for extfile in EXTENSIONS:
+    EXTFILES.append('extension/'+extfile)
 INSFILES.append((HOME+'.pylux/fixture/', FIXFILES))
 INSFILES.append((HOME+'texmf/tex/latex/base/', TEXFILES))
+INSFILES.append((HOME+'.pylux/extension/', EXTFILES))
 print(INSFILES)
 setup(name='Pylux',
       version=__version__,

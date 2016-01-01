@@ -47,7 +47,7 @@ class Report:
                                  ('Followspot Operator', 'spot_operator')]
         side = True
         for header_item in document_header_items:
-            if self.meta.meta[header_item[1]] != None:
+            try:
                 self.header = (self.header+'{\\bf '+
                     header_item[0]+': } '+self.meta.meta[header_item[1]])
                 if side == True:
@@ -55,6 +55,8 @@ class Report:
                 elif side == False:
                     self.header = self.header+' \\\\\n'
                 side = not side
+            except KeyError:
+                print('No meta value for '+header_item[1])
 
     def generate_dimmer_report(self):
         self.report = '\\begin{reportTable}\n\n'

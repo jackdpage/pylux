@@ -22,7 +22,7 @@ import sys
 from __init__ import __version__
 import plot
 import clihelper
-import importlib
+import importlib.util as IL
 
 
 def get_olf_library():
@@ -202,8 +202,13 @@ def main(plot_file, config):
 
         # Extension actions
         elif inputs[0][0] == ':':
+            extensions_dir = os.path.expanduser('~/.pylux/extension/')
+            module_name = inputs[0].split(':')[1]
             try:
-                ext_module = importlib.import_module(inputs[0].split(':')[1])
+                ext_spec = IL.spec_from_file_location(module_name, 
+                    extensions_dir+module_name+'.py')
+                ext_module = IL.module_from_spec(ext_spec)
+                ext_spec.loader.exec_module(ext_module)
             except ImportError:
                 print('No extension with this name!')
             else:

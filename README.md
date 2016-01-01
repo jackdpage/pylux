@@ -11,8 +11,11 @@ development.
 ## Installation and Dependencies
 
 Pylux is written in Python 3, so Python 3 must be installed. Run the setup 
-script to install the necessary Python binaries and also additional files 
-which are packaged with Pylux: ``sudo python setup.py install``.
+script as a root user to install the necessary Python binaries: 
+``sudo python setup.py install_lib``.
+
+Then install the extra files to your home directory:
+``python setup.py install_data``.
 
 TeXlux does not require LaTeX to be installed to produce the reports, as they 
 are produced as LaTeX source, however, you will need a LaTeX distribution, such 
