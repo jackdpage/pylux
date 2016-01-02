@@ -1,23 +1,25 @@
 # Pylux
 
-Pylux is a suite for the management of lighting documentation. Currently, the 
-package includes two programs: ``plotter``, for the manipulation of Pylux's 
-XML formatted plot files and ``texlux``, for the production of LaTeX reports 
-from Pylux plot files.
+Pylux is a suite for the management of lighting documentation. It comes with 
+a base program, ``plotter``, which is used to edit its plot XML files. From 
+the base program, you can also call extensions which perform other functions.
+Current extensions in development are ``texlux`` for producing LaTeX reports 
+and ``plotgen`` for producing SVG plots.
 
 ``plotter`` currently is only functional on the CLI, but a GUI is in 
 development.
 
 ## Installation and Dependencies
 
-Pylux is written in Python 3, so Python 3 must be installed. Run the setup 
-script as a root user to install the necessary Python binaries: 
-``sudo python setup.py install_lib``.
+THIS PROGRAM IS NOT FUNCTIONAL ON WINDOWS. The program installs and searches 
+for content in ``/usr/share/pylux``, so you will need a UNIX based computer. 
+I will make it work on Windows when I can be bothered.
 
-Then install the extra files to your home directory:
-``python setup.py install_data``.
+Pylux is written in Python 3, so the Python 3 interpreter is required.
 
-TeXlux does not require LaTeX to be installed to produce the reports, as they 
+To install, run ``sudo python setup.py install``.
+
+Texlux does not require LaTeX to be installed to produce the reports, as they 
 are produced as LaTeX source, however, you will need a LaTeX distribution, such 
 as TeX Live, installed in order to build PDF files from this source.
 
@@ -28,7 +30,7 @@ in which you can help:
 ### Writing code
 If you know Python you can contribute by either adding to the base program and 
 API or by writing your own extensions which can be implemented into the 
-program. The manual (found in the ``docs`` folder) will fully document how to use 
+program. The manual (found in the ``docs`` folder) fully documents how to use 
 the API to write your own extensions. Most of Pylux is documented using 
 docstrings but the manual will be more up-to-date.
 
