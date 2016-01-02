@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE olfixture>
-<olfixture>
+<!DOCTYPE fixture>
+<fixture>
 	<olid>p650</olid>
-	<name>P650</name>
-	<constants>
-		<power>650</power>
-	</constants>
-	<variables>
-		<gel></gel>
-		<gobo></gobo>
-		<barn_doors></barn_doors>
-	</variables>
-	<dmx_channels>
+	<type>Hutton P650</type>
+        <power>650</power>
+	<dmx_functions>
 		<intensity></intensity>
-	</dmx_channels>
-</olfixture>
+	</dmx_functions>
+</fixture>
 

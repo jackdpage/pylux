@@ -66,6 +66,11 @@ class Report:
             uuid = fixture.uuid
             olid = fixture.olid
             try:
+                fix_type = fixture.data['type']
+            except KeyError:
+                fix_type = olid
+                print('Couldn\'t get fixture type for '+uuid)
+            try:
                 dmx = fixture.data['dmx_start_address']
             except KeyError:
                 dmx = None
@@ -80,7 +85,7 @@ class Report:
             except KeyError:
                 power = '0'
                 print('Couldn\'t get power for '+uuid+', using zero instead')
-            self.report = (self.report+'\\fixture{'+olid+'}{'+str(dmx)+'}{'+
+            self.report = (self.report+'\\fixture{'+fix_type+'}{'+str(dmx)+'}{'+
                 str(circuit)+'}{'+power+'}\n')
 
         for fixture in self.fixtures.fixtures:
@@ -131,3 +136,6 @@ def run_pylux_extension(plot_file):
 
         elif inputs[0] == '::' or inputs[0] == 'q':
             break
+
+        else:
+            print('That command doesn\'t exist!')

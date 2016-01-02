@@ -437,7 +437,7 @@ class Metadata:
         # Search for meta in XML
         def get_xml_meta(self, name):
             try:
-                return self.xml_fixture.find(name)
+                return self.xml_meta.find(name)
             except AttributeError:
                 return None
 
