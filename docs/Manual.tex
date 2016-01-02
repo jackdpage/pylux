@@ -1,7 +1,7 @@
 \documentclass[a4paper]{article}
 \usepackage{hyperref}
 \begin{document}
-\title{Pylux User Manual \\ \large{for Pylux v0.1-alpha}}
+\title{Pylux User Manual \\ \large{for Pylux v0.1-alpha2}}
 \author{J. Page}
 \date{2015}
 \maketitle
@@ -39,28 +39,127 @@ Display the usage message of the program then exit.
 Display the version number of the program then exit.
 
 \paragraph{\texttt{--file \textit{FILE}}, \texttt{-f \textit{FILE}}} 
-Load the file with path \texttt{\textit{FILE}} as the project file on launch.
+Load the file with path \texttt{\textit{FILE}} as the plot file on launch.
 
-\paragraph{\texttt{--interface \textit{INTERFACE}}, \texttt{-i 
-\textit{INTERFACE}}}
-Launch Pylux with the interface with identifier \texttt{\textit{INTERFACE}}.
-\texttt{\textit{INTERFACE}} is either \texttt{cli} or \texttt{gui} depending on 
-whether you want to launch the command line interface or graphical user 
-interface respectively. The default is \texttt{cli}.
+\paragraph{\texttt{--gui}, \texttt{-g}}
+Launch Pylux with the graphical user interface. This is not yet implemented. 
+Omitting this flag launches Pylux with its standard CLI interface.
 
-\section{Basic Concepts}
-Pylux uses the OpenLighting Plot format as its document format. This format 
-specifies three main components of an XML document: the meta section, the 
-fixtures section and the registries section. In its current version, Pylux 
-can only read and write to the latter two sections.
+\section{The Plot File}
+Pylux uses the Pylux plot format as its document format. This format 
+specifies three main components of an XML document: the metadata section, the 
+fixtures section and the registries section. 
 
-The fixtures section contains multiple fixture elements, each of which has 
-various data associated with it, depending on the fields as defined by the 
-fixture's OpenLighting ID (olid).
+\subsection{The Metadata Section}
+The metadata section of the plot file contains any additional information 
+that does not fit inside the other sections. The information in this section 
+is often called upon to produce output.
 
+\subsubsection{Standard Metadata Tags}
+Whilst you can use any name for a tag you wish, there are some standard ones 
+which are used by Pylux and its bundled extensions.
+
+\paragraph{\texttt{production}}
+The name of the production for which the lighting documentation is being 
+produced, e.g. 'Romeo and Juliet'. Used by: \texttt{texlux}.
+
+\paragraph{\texttt{designer}}
+The name of the lighting designer for this production. Used by: 
+\texttt{texlux}.
+
+\paragraph{\texttt{board\_operator}}
+The name of the person operating the main lighting board for this production.
+Used by: \texttt{texlux}.
+
+\paragraph{\texttt{spot\_operator}}
+The name of the person operating the primary followspot for this production.
+Used by: \texttt{texlux}.
+
+\paragraph{\texttt{director}}
+The name of the director of the production. Used by: \texttt{texlux}.
+
+\paragraph{\texttt{venue}}
+The location at which the production is taking place. Used by: 
+\texttt{texlux}.
+
+\subsection{The Fixtures Section}
+The fixtures section consists of a base \texttt{fixtures} element and 
+multiple \texttt{fixture} child elements, each of which describes one fixture 
+within the plot file. Each fixture is assigned a UUID on creation, which 
+never changes. Each fixture also has children which represent its other data.
+Some of these children will have been imported from the fixture template 
+file on the fixture's creation but others you will have to define yourself.
+
+\subsubsection{Standard Fixture Data Tags}
+
+\paragraph{\texttt{dmx\_functions}}
+This is the parent of a list of empty elements, each of which represents a 
+function that the fixture has that requires the use of a DMX channel. For 
+example, traditional fixtures will have an \texttt{intensity} function 
+whilst modern LED fixtures may have \texttt{colour} and \texttt{mode} 
+functions. Used by: \texttt{plotter}.
+
+\paragraph{\texttt{dmx\_channels}}
+The number of DMX channels that a fixture needs. This is automatically 
+calculated from the \texttt{dmx\_functions} tag, so should not be changed 
+manually. Used by: \texttt{plotter}.
+
+\paragraph{\texttt{dmx\_start\_address}}
+The start address of this fixture, if it has been addressed. This is 
+automatically assigned using the address function so shouldn't be changed 
+manually. Used by: \texttt{plotter texlux}.
+
+\paragraph{\texttt{universe}}
+The universe in which the DMX channels for this fixture are located. This too 
+is set when the address command is run so shouldn't be changed by the user. 
+Used by: \texttt{plotter}.
+
+\paragraph{\texttt{posX}}
+The x position in 2D space where this fixture is located. Measured in metres.
+
+\paragraph{\texttt{posY}}
+The y position in 2D space where this fixture is located. Measured in metres.
+
+\paragraph{\texttt{focusX}}
+The x position in 2D space where the centre of this fixture's beam is 
+focused. Measured in metres.
+
+\paragraph{\texttt{focusY}}
+The y position in 2D space where the centre of this fixture's beam is 
+focused. Measured in metres.
+
+\paragraph{\texttt{rotation}}
+The rotation of this fixture about its centre. Measured anticlockwise from 
+the positive x axis in radians. This can be automatically calculated if the 
+preceding four data tags are present.
+
+\paragraph{\texttt{dimmer}}
+For traditional fixtures only. The dimmer that is controlling this fixture. 
+Used by: \texttt{texlux}.
+
+\paragraph{\texttt{circuit}}
+For traditional fixtures only. The circuit into which the fixture is patched. 
+Used by: \texttt{texlux}.
+
+\paragraph{\texttt{power}}
+For traditional fixtures only. The maximum power draw by the lamp in this 
+fixture.
+
+\paragraph{\texttt{gel}}
+The name or manufacturer's code of the gel that is being used in this 
+fixture.
+
+\paragraph{\texttt{colour}}
+The colour in which this fixture should be rendered on lighting plots. This 
+can be calculated automatically if the preceding tag is present and is a 
+standard colour name or code. (NYI)
+
+\subsection{The Registries Section}
 The registries section contains one or more DMX registries, each of which 
 contains some channel elements, which contain both the UUID of the fixture 
-they control and their function.
+they control and their function. There is very little that the user can do 
+to directly control this section as all addresses are assigned based on 
+the manipulation of fixtures.
 
 \section{Using the Command Line Interface}
 Pylux ships with two interface modes: a command line interface (CLI) and a 
@@ -105,26 +204,34 @@ Exit the program without saving any changes to disk.
 
 \subsection{File Commands}
 
-\paragraph{\texttt{fl \textit{FILE}}}
-Load the file with path \texttt{\textit{FILE}} as the project file. This will 
-override any unsaved buffer associated with the previous project file, if there 
-was one.
+\paragraph{\texttt{fo \textit{FILE}}}
+Open the file with path \texttt{\textit{FILE}} as the plot file. This will 
+override any unsaved buffer associated with the previous plot file, if 
+there was one.
 
-\paragraph{\texttt{fs}}
+\paragraph{\texttt{fw}}
 Save the current file buffer to its original location.
 
-\paragraph{\texttt{fS \textit{PATH}}}
-Save the current file buffer to a new file with location \texttt{\textit{PATH}}.
+\paragraph{\texttt{fW \textit{PATH}}}
+Save the current file buffer to a new file with location 
+\texttt{\textit{PATH}}.
+
+\paragraph{\texttt{fg}}
+Print the path of the file that is currently loaded.
+
+\paragraph{\texttt{fn \textit{PATH}}}
+Create an new empty plot file at the location with path \texttt{\textit{PATH}} 
+and load it as the new plot file
 
 \subsection{Metadata Commands}
 
 \paragraph{\texttt{ml}}
-List all the metadata tags associated with the currently loaded project
-file.
+List all the metadata tags associated with the currently loaded plot file.
 
-\paragraph{\texttt{ma \textit{TAG VALUE}}}
-Add a new piece of metadata. Adds a new tag with the name \texttt{\textit{TAG}}
-to the metadata section and sets its value to \texttt{\textit{VALUE}}.
+\paragraph{\texttt{ms \textit{TAG VALUE}}}
+Set the value of the metadata with tag \texttt{\textit{TAG}} to 
+\texttt{\textit{VALUE}}. If the metadata already exists, it will be 
+overridden.
 
 \paragraph{\texttt{mr \textit{TAG}}}
 Remove the piece of metadata from the file which has the name 
@@ -136,11 +243,15 @@ name \texttt{\textit{TAG}} on the screen.
 
 \subsection{Fixture Commands}
 
-\paragraph{\texttt{xa \textit{OLID}}}
+\paragraph{\texttt{xn \textit{OLID}}}
 Add a new fixture to the plot. This will add a fixture to the plot with olid 
 \texttt{\textit{OLID}}. It will also automatically assign a UUID and search 
 the OLF file associated with this olid for any constants that this fixture has and add them to the fixture. This will not assign DMX addresses to the fixture,
 use \texttt{xA} for that.
+
+\paragraph{\texttt{xc \textit{REF}}}
+Clone the fixture with interface reference \texttt{\textit{REF}} into a new 
+fixture. This does not reassign any DMX values.
 
 \paragraph{\texttt{xl}}
 List all the fixtures in the plot. This will generate a list of every fixture 
@@ -148,12 +259,16 @@ in the plot, listing an interface reference, the fixture olid, and the fixture
 UUID.
 
 \paragraph{\texttt{xf \textit{TAG VALUE}}}
-List all the fixtures in the plot which have a tag called \texttt{\textit{TAG}} 
-with a value of \texttt{\textit{VALUE}}. Like the list function, this will list 
-an interface reference, the fixture olid and UUID, and also the value of the 
-tag that was given for verification purposes.
+List all the fixtures in the plot which have a tag called 
+\texttt{\textit{TAG}} with a value of \texttt{\textit{VALUE}}. Like the list 
+function, this will list an interface reference, the fixture olid and UUID, 
+and also the value of the tag that was given for verification purposes.
 
-\paragraph{\texttt{xi \textit{REF}}}
+\paragraph{\texttt{xg \textit{REF TAG}}}
+Print the value of \texttt{\textit{TAG}} for the fixture with interface
+reference \texttt{\textit{REF}}.
+
+\paragraph{\texttt{xG \textit{REF}}}
 List all the information associated with the fixture with interface reference 
 \texttt{\textit{REF}}.
 
@@ -172,6 +287,10 @@ Assign DMX addresses to the fixture with interface reference
 \texttt{\textit{UNIVERSE}}, beginning at the start address 
 \texttt{\textit{ADDR}}. \texttt{\textit{ADDR}} can either be a user-assigned 
 number or auto to allow Pylux to choose the most appropriate start address.
+
+\paragraph{\texttt{xp \textit{REF}}}
+Remove the fixture with interface reference \texttt{\textit{REF}} from the 
+plot and also remove any DMX channels associated with it.
 
 \subsection{DMX Registry Commands}
 
@@ -209,7 +328,7 @@ an external tool such as Pandoc.
 
 \subsubsection{Commands}
 
-\paragraph{\texttt{rg \textit{TEMPLATE OUTPUT TITLE}}}
+\paragraph{\texttt{rn \textit{TEMPLATE OUTPUT TITLE}}}
 Generates a report using the template \texttt{\textit{TEMPLATE}}, with the 
 title \texttt{\textit{TITLE}}, writing the output to a file with path 
 \texttt{\textit{OUTPUT}}.
@@ -248,7 +367,7 @@ it has been specified). Your code should never directly alter or read from
 the XML tree. \texttt{plotter} doesn't even import the tree parser to ensure 
 this. You should always access these objects via the API.
 
-\subsection{The \texttt{PlotFile} class}
+\subsection{The \texttt{PlotFile} Class}
 This class deals with the Pylux plot file that is being used. There is no 
 initialisation function.
 
@@ -288,7 +407,7 @@ The Python XML tree element that was parsed from the file using
 \paragraph{\texttt{root}}
 The root element (\texttt{olplot}) of the plot file.
 
-\subsection{The \texttt{DmxRegistry} class}
+\subsection{The \texttt{DmxRegistry} Class}
 The \texttt{DmxRegistry} class is Pylux's method for managing DMX registries. 
 If you are using more than one DMX registry, each registry should call a new 
 instance of \texttt{DmxRegistry}.
@@ -328,5 +447,143 @@ removed before the new ones are assigned.
 \paragraph{\texttt{unaddress(fixture)}}
 Removes the DMX addresses from a fixture \texttt{fixture} and from the 
 registry. Removes based on the fixture's \texttt{dmx\_channels} data tag.
+
+\subsubsection{Attributes of \texttt{DmxRegistry}}
+
+\paragraph{\texttt{plot\_file}}
+The current plot file is stored as an attribute simply to make accessing it 
+easier, it should not be used externally.
+
+\paragraph{\texttt{registry}}
+A dictionary containing all of the registry information, in the form 
+\texttt{\{address: (uuid, func), ...\}}.
+
+\paragraph{universe}
+The name of the universe id of this registry.
+
+\paragraph{xml\_registry}
+This is another attribute which is present for internal puproses and should 
+not be referenced by external programs; simply the XML data of the registry.
+
+\subsection{The \texttt{FixtureList} Class}
+The \texttt{FixtureList} class manages all the fixtures in a plot as a single 
+entity to make filtering and listing easier. This is a small class present 
+to make code cleaner.
+
+\subsubsection{Functions of \texttt{FixtureList}}
+
+\paragraph{\texttt{\_\_init\_\_(plot\_file)}}
+Finds all the fixtures in XML and makes a \texttt{Fixture} object for them, 
+then appends them to a list.
+
+\paragraph{\texttt{remove(fixture)}}
+Removes the fixture \texttt{fixture} from the plot.
+
+\paragraph{\texttt{get\_data\_values(data\_type)}}
+Returns a list of all the values that exist for \texttt{data\_type} in all the 
+fixtures in the plot.
+
+\subsubsection{Attributes of \texttt{FixtureList}}
+
+\paragraph{\texttt{xml\_fixture\_list}}
+The fixtures list in XML. Should not be referenced externally.
+
+\paragraph{\texttt{fixtures}}
+A list of \texttt{Fixture} objects, containing all the fixtures in the plot.
+
+\subsection{The \texttt{Fixture} Class}
+This class manages individual fixtures and their data.
+
+\subsubsection{Functions of \texttt{Fixture}}
+
+\paragraph{\texttt{\_\_init\_\_(plot\_file, uuid=None)}}
+Creates a new \texttt{Fixture} object in Python and, if a fixture with the 
+UUID \texttt{uuid} can be found in the XML file, loads the data of this 
+fixture into the object.
+
+\paragraph{\texttt{new(olid, fixtures\_dir)}}
+Initialises this fixture as a new fixture. This will load information from a 
+file located in \texttt{fixtures\_dir} with the name \texttt{olid.olf} and 
+copy it into the \texttt{Fixture} object.
+
+\paragraph{\texttt{add()}}
+Adds the fixture, in its current state to the XML tree as a new fixture. In 
+other words, it appends to the XML tree rather than checking if the fixture 
+already exists.
+
+\paragraph{\texttt{load(xml\_fixture)}}
+Initialises this fixture as an existing fixture from the XML tree with 
+XML fixture object \texttt{xml\_fixture}.
+
+\paragraph{\texttt{clone(src\_fixture)}}
+Clones the contents of \texttt{src\_fixture} into this fixture.
+
+\paragraph{\texttt{save()}}
+Saves the fixture to the XML tree. This will not add the fixture to the tree 
+if it does not already exist in the tree. However, it will manage all other 
+fixture data whether they are existing, new or removed.
+
+\paragraph{\texttt{generate\_rotation()}}
+Returns a value for rotation based on the fixture's position and focus 
+position. These values must be defined in the fixture's data dictionary 
+before this function is called.
+
+\subsubsection{Attributes of \texttt{Fixture}}
+
+\paragraph{plot\_file}
+Like all other instances of \texttt{plot\_file} as class attributes, this 
+should not be called externally.
+
+\paragraph{data}
+A dictionary containing all the child data of the fixture, except its DMX 
+functions, in the form \texttt{\{data\_name: data\_value, ...\}}.
+
+\paragraph{dmx\_functions}
+A list of all the DMX functions that this fixture has.
+
+\paragraph{olid}
+This fixture's olid.
+
+\paragraph{uuid}
+This fixture's uuid.
+
+\paragraph{xml\_fixture}
+Another attribute which should not be referenced externally: the fixture in 
+XML.
+
+\paragraph{dmx\_num}
+The number of DMX channels required by this fixture, calculated from 
+\texttt{dmx\_functions}.
+
+\subsection{The \texttt{Metadata} Class}
+The \texttt{Metadata} class deals with the metadata section of the plot file.
+
+\subsubsection{Functions of \texttt{Metadata}}
+
+\paragraph{\texttt{\_\_init\_\_(plot\_file)}}
+Loads the metadata from the XML tree into a Python dictionary.
+
+\paragraph{\texttt{save()}}
+Saves the current metadata dictionary to the XML tree.
+
+\subsubsection{Attributes of \texttt{Metadata}}
+
+\paragraph{xml\_meta}
+The metadata in XML. Should not be externally referenced.
+
+\paragraph{meta}
+A dictionary containing all the metadata information in the form 
+\texttt{\{meta\_name: meta\_value, ...\}}.
+
+\subsection{Creating Fixture Symbols}
+Pylux fixture symbols are written in SVG. A symbol SVG document should 
+consist of the base SVG element, with an immediate child \texttt{g} element, 
+with class \texttt{fixture}. This is the element that \texttt{plotter} will 
+manipulate then insert into the plot. The fixture should be pointing towards 
+the positive x direction, to allow proper rotation. Outer paths should have 
+the class \texttt{outer}, these will be filled with the colour determined by 
+the \texttt{colour} data tag. Inner paths should have the class 
+\texttt{inner}, these will be filled white. Each coordinate point in SVG 
+should represent one millimetre.
 
 \end{document}

@@ -17,6 +17,7 @@
 
 import xml.etree.ElementTree as ET
 import uuid
+import math
 
 
 class PlotFile:
@@ -394,6 +395,13 @@ class Fixture:
             if data_name != 'dmx_functions' and self.data[data_name] == "" :
                 self.xml_fixture.remove(data_item)
 
+    def generate_rotation(self):
+        posX = int(self.data['posX'])
+        posY = int(self.data['posY'])
+        focusX = int(self.data['focusX'])
+        focusY = int(self.data['focusY'])
+        return math.atan2((focusY-posY), (focusX-posX))
+
 
 class Metadata:
     """Manages the metadata section of the XML file.
@@ -445,4 +453,3 @@ class Metadata:
             name = metaitem.tag
             if self.meta[name] == None:
                 self.xml_meta.remove(metaitem)
-

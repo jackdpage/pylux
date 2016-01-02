@@ -25,24 +25,6 @@ import clihelper
 import importlib.util as IL
 
 
-def get_olf_library():
-    """Return a list of the installed OLF files."""
-    library = os.listdir(OL_FIXTURES_DIR)
-    for olf in library:
-        olid = olf.split('.')[0]
-        library[library.index(olf)] = olid
-    return library
-
-
-def get_command_list():
-    """Display the help page."""
-    text = ""
-    with open('help.txt') as man:
-        for line in man:
-            text = text+line
-    print(text)
-
-
 def main(plot_file, config):
     """The main user loop."""
     interface = clihelper.Interface()
@@ -57,22 +39,22 @@ def main(plot_file, config):
             inputs.append(i)
 
         # File actions
-        if inputs[0] == 'fl':
+        if inputs[0] == 'fo':
             try:
                 plot_file.load(inputs[1])
             except UnboundLocalError:
                 print('Error: You need to specify a file path to load')
 
-        elif inputs[0] == 'fs':
+        elif inputs[0] == 'fw':
             plot_file.save()
 
-        elif inputs[0] == 'fS':
+        elif inputs[0] == 'fW':
             try:
                 plot_file.saveas(inputs[1])
             except IndexError:
                 print('Error: You need to specify a destination path!')
 
-        elif inputs[0] == 'fp':
+        elif inputs[0] == 'fg':
             print('Using plot file '+plot_file.file)
 
         elif inputs[0] == 'fn':
@@ -86,7 +68,7 @@ def main(plot_file, config):
             for i in metadata.meta:
                 print(i+': '+metadata.meta[i])
 
-        elif inputs[0] == 'ma':
+        elif inputs[0] == 'ms':
             metadata = plot.Metadata(plot_file)
             metadata.meta[inputs[1]] = clihelper.resolve_input(inputs, 2)[-1]
             metadata.save()
@@ -101,7 +83,7 @@ def main(plot_file, config):
             print(inputs[1]+': '+metadata.meta[inputs[1]])
 
         # Fixture actions
-        elif inputs[0] == 'xa':
+        elif inputs[0] == 'xn':
             fixture = plot.Fixture(plot_file)
             try:
                 fixture.new(inputs[1], fixtures_dir)
@@ -142,7 +124,7 @@ def main(plot_file, config):
                     else:
                         try:
                             test_value = fixture.data[key]
-                        except IndexError:
+                        except KeyError:
                             pass
                     if test_value == value:
                         print('\033[4m'+str(i)+'\033[0m '+fixture.olid+
@@ -161,7 +143,15 @@ def main(plot_file, config):
                 print('Error: You need to run either xl or xf then specify the'
                       ' interface id of the fixture you wish to remove')
 
-        elif inputs[0] == 'xi':
+        elif inputs[0] == 'xg':
+            fixture = interface.get(inputs[1])
+            try:
+                print(fixture.data[inputs[2]])
+            except KeyError:
+                print('Error: This fixture has no data with that name')
+            interface.option_list['this'] = fixture
+
+        elif inputs[0] == 'xG':
             fixture = interface.get(inputs[1])
             for data_item in fixture.data:
                 print(data_item+': '+fixture.data[data_item])
@@ -169,7 +159,16 @@ def main(plot_file, config):
 
         elif inputs[0] == 'xs':
             fixture = interface.get(inputs[1])
-            fixture.data[inputs[2]] = clihelper.resolve_input(inputs, 3)[-1]
+            tag = inputs[2]
+            value = clihelper.resolve_input(inputs, 3)[-1]
+            if value == 'auto':
+                if tag == 'rotation':
+                    fixture.data['rotation'] = str(fixture.generate_rotation())
+                else:
+                    print('Error: No automatic generation is available for ' 
+                        'this tag')
+            else:
+                fixture.data[tag] = value
             fixture.save()
             interface.option_list['this'] = fixture
 
@@ -219,7 +218,11 @@ def main(plot_file, config):
 
         # Utility actions
         elif inputs[0] == 'h':
-            get_command_list()
+            text = ""
+            with open('help.txt') as man:
+                for line in man:
+                    text = text+line
+            print(text)
 
         elif inputs[0] == 'c':
             os.system('cls' if os.name == 'nt' else 'clear')

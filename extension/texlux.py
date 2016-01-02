@@ -118,7 +118,7 @@ def run_pylux_extension(plot_file):
         for i in user_input.split(' '):
             inputs.append(i)
         
-        if inputs[0] == 'rg':
+        if inputs[0] == 'rn':
             report = Report(clihelper.resolve_input(inputs, 3)[-1],
                  plot_file, inputs[1])
             report.generate_header()
