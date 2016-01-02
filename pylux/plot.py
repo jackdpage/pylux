@@ -298,14 +298,14 @@ class Fixture:
         self.uuid = str(uuid.uuid4()) # Random UUID assigned
         src_tree = ET.parse(fixtures_dir+self.olid+'.olf')
         self.src_root = src_tree.getroot()
-        constants_xml = self.src_root.find('constants')
-        dmx_xml = self.src_root.find('dmx_channels')
+        dmx_xml = self.src_root.find('dmx_functions')
         for channel in dmx_xml:
             self.dmx_functions.append(channel.tag)
         dmx_num = len(self.dmx_functions)
         # Add constants from OLF file
-        for constant in constants_xml:
-            self.data[constant.tag] = constant.text
+        for xml_data in self.src_root:
+            if xml_data.tag != 'dmx_functions':
+                self.data[xml_data.tag] = xml_data.text
         self.data['dmx_channels'] = str(dmx_num)
 
     def add(self):
@@ -396,10 +396,10 @@ class Fixture:
                 self.xml_fixture.remove(data_item)
 
     def generate_rotation(self):
-        posX = int(self.data['posX'])
-        posY = int(self.data['posY'])
-        focusX = int(self.data['focusX'])
-        focusY = int(self.data['focusY'])
+        posX = float(self.data['posX'])
+        posY = float(self.data['posY'])
+        focusX = float(self.data['focusX'])
+        focusY = float(self.data['focusY'])
         return math.atan2((focusY-posY), (focusX-posX))
 
 

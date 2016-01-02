@@ -6,9 +6,11 @@ TARGET = '/usr/share/pylux/'
 FIXTURES = os.listdir('fixture/')
 TEX = os.listdir('tex/')
 EXTENSIONS = os.listdir('extension/')
+SYMBOLS = os.listdir('symbol/')
 TEXFILES = []
 FIXFILES = []
 EXTFILES = []
+SYMFILES = []
 
 INSFILES = [(TARGET, ['pylux.conf'])]
 for texfile in TEX:
@@ -17,9 +19,12 @@ for fixfile in FIXTURES:
     FIXFILES.append('fixture/'+fixfile)
 for extfile in EXTENSIONS:
     EXTFILES.append('extension/'+extfile)
+for symfile in SYMBOLS:
+    SYMFILES.append('symbol/'+symfile)
 INSFILES.append((TARGET+'fixture/', FIXFILES))
 #INSFILES.append((HOME+'texmf/tex/latex/base/', TEXFILES))
 INSFILES.append((TARGET+'extension/', EXTFILES))
+INSFILES.append((TARGET+'symbol/', SYMFILES))
 print(INSFILES)
 setup(name='Pylux',
       version=__version__,

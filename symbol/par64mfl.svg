@@ -1,0 +1,8 @@
+<?xml version='1.0' standalone='no'?>
+<!DOCTYPE svg>
+<svg>
+    <g>
+        <path class='outer' d='M 75 0 A 75 75 0 0 0 75 150 L 300 150 L 300 0 L 75 0' stroke='black' stroke-width='1' />
+    </g>
+</svg>
+

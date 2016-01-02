@@ -1,19 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE olfixture>
-<olfixture>
+<!DOCTYPE fixture>
+<fixture>
 	<olid>par64mfl</olid>
-	<name>PAR64 MFL</name>
-	<constants>
-	</constants>
-	<variables>
-		<power></power>
-		<gel></gel>
-		<gobo></gobo>
-		<barn_doors></barn_doors>
-		<lamp_axis_rotation></lamp_axis_rotation>
-	</variables>
-	<dmx_channels>
+	<type>PAR64 MFL</type>
+	<dmx_functions>
 		<intensity></intensity>
-	</dmx_channels>
-</olfixture>
+	</dmx_functions>
+</fixture>
 

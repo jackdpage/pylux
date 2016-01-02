@@ -154,7 +154,7 @@ def main(plot_file, config):
         elif inputs[0] == 'xG':
             fixture = interface.get(inputs[1])
             for data_item in fixture.data:
-                print(data_item+': '+fixture.data[data_item])
+                print(data_item+': '+str(fixture.data[data_item]))
             interface.option_list['this'] = fixture
 
         elif inputs[0] == 'xs':
@@ -201,7 +201,7 @@ def main(plot_file, config):
 
         # Extension actions
         elif inputs[0][0] == ':':
-            extensions_dir = os.path.expanduser('~/.pylux/extension/')
+            extensions_dir = '/usr/share/pylux/extension/'
             module_name = inputs[0].split(':')[1]
             try:
                 ext_spec = IL.spec_from_file_location(module_name, 

@@ -44,7 +44,7 @@ def main():
         help='launch Pylux with a GUI')
     launch_args = parser.parse_args()
     # Load configuration
-    config_file = os.path.expanduser('~/.pylux/pylux.conf')
+    config_file = '/usr/share/pylux/pylux.conf'
     config = configparser.ConfigParser()
     config.read(config_file)
     print('Using configuration file '+config_file)
