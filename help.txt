@@ -1,22 +1,26 @@
 Below is a table of the commands used by Pylux.
-Each command has a memorable one or two letter shortcut.
-Some commands require a parameter (indicated by the capitalised word).
-COMMAND       FUNCTION
+For more detailed information about each one, see the manual.
+COMMAND          FUNCTION
 h                display this message
 c                clear the screen
 q                exit the program
-fl FILE          load FILE as the project file
-fs               save the current project file
-fS FILE          save the working file to FILE
+fo PATH          load FILE as the plot file
+fw               save the current plot file
+fW PATH          save the current plot file to PATH
+fn PATH          make a new plot file at PATH and load it
+fg               print the path of the current plot file
 ml               list all the meta tags in the file
-ma TAG VALUE     add a piece of metadata with TAG value VALUE
-mr TAG           remove the piece of metadata with tag TAG
-mg TAG           print the value of the metadata with tag TAG
-xa OLID          add a new fixture with OLID
+ms TAG VALUE     set the value of TAG to VALUE
+mr TAG           remove TAG from the file
+mg TAG           print the value of TAG
+xn OLID          add a new fixture with OLID
 xl               list the fixtures in the plot
 xf TAG VALUE     list fixtures whose TAG value is VALUE
-xi REF           get information about the fixture with CLI id REF
-xr REF           remove the fixture with CLI id REF
-xs REF TAG VALUE set the TAG to VALUE in fixture with CLI id REF
-xA REF UNIV ADDR assign an address in universe UNIV starting at ADDR to REF
+xG REF           list all data about REF
+xg REF TAG       print the value of TAG in REF
+xr REF           remove REF
+xp REF           remove REF and its DMX channels
+xs REF TAG VALUE set the value of TAG to VALUE in REF
+xA REF UNIV ADDR assign DMX to REF in UNIV starting at ADDR
 rl UNIVERSE      list the used channels in UNIVERSE
+:EXTENSION       load EXTENSION
