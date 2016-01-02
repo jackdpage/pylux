@@ -575,6 +575,18 @@ The metadata in XML. Should not be externally referenced.
 A dictionary containing all the metadata information in the form 
 \texttt{\{meta\_name: meta\_value, ...\}}.
 
+\subsection{Creating Extensions}
+A Pylux extension is simply a Python script file that is run from the 
+\texttt{plotter} program. Extensions are installed in 
+\texttt{/usr/share/pylux/extension/} although support for a local 
+directory will be added soon. When Pylux launches an extension, it runs a 
+function called \texttt{run\_pylux\_extension(plot\_file)}, so this is 
+where your main code needs to be. Other than that, the extension 
+completely handles all interactivity, including returning to the 
+\texttt{plotter} program, which should be implemented with the \texttt{::} 
+shortcut. Your extension should not import \texttt{plotter}; it should 
+rely only on \texttt{plot} and \texttt{clihelper}, if need be.
+
 \subsection{Creating Fixture Symbols}
 Pylux fixture symbols are written in SVG. A symbol SVG document should 
 consist of the base SVG element, with an immediate child \texttt{g} element, 
