@@ -1,8 +1,13 @@
-<?xml version='1.0' standalone='no'?>
-<!DOCTYPE svg>
-<svg>
-    <g>
-        <path class='outer' d='M 0 0 L 540 0 L 540 170 L 0 170 L 0 0' stroke='black' stroke-width='1' />
-    </g>
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg
+    xmlns='http://www.w3.org/2000/svg'
+    version='1.1'>
+<g>
+    <path 
+        stroke-width='1'
+        stroke='black'
+        d='M 0 0 L 540 0 L 540 170 L 0 170 L 0 0'
+        class='outer' />
+</g>
 </svg>
 

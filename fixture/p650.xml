@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE fixture>
 <fixture>
-	<olid>par64mfl</olid>
-	<type>PAR64 MFL</type>
+	<olid>p650</olid>
+	<type>Hutton P650</type>
+        <power>650</power>
+        <symbol>p650</symbol>
 	<dmx_functions>
 		<intensity></intensity>
 	</dmx_functions>

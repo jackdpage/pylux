@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<fixture>
+	<type>LEDJ RGB PAR</type>
+        <symbol>ledjrgbpar</symbol>
+	<dmx_functions>
+            <red />
+            <green />
+            <blue />
+            <colour_wheel />
+            <strobe />
+            <function />
+	</dmx_functions>
+</fixture>
+
