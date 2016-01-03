@@ -1,7 +1,7 @@
 *.log
 *.aux
 *.out
-*.pdf
+Manual.pdf
 *.toc
 *.swp
 __pycache__/
