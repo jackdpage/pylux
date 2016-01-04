@@ -266,7 +266,6 @@ class Fixture:
     """Manage individual fixtures.
 
     Attributes:
-        olid: the OLID of the fixture.
         uuid: the UUID of the fixture.
         data: a dictionary containing all other data for the fixture.
         dmx: a list of the functions of the DMX channels used by this 
@@ -285,18 +284,17 @@ class Fixture:
                 if uuid == xml_fixture.get('uuid'):
                     self.load(xml_fixture)
 
-    def new(self, olid, fixtures_dir):
+    def new(self, template, fixtures_dir):
         """Make this fixture as a brand new fixture.
 
-        Given an OLID, assign a UUID and load the constants from the 
+        Given template name, assign a UUID and load the constants from the 
         OLF file into the data dictionary.
 
         Args:
-            olid: the OLID of the new fixture.
+            template: the name of the template the new fixture should copy.
         """
-        self.olid = olid # OLID was specified on creation
         self.uuid = str(uuid.uuid4()) # Random UUID assigned
-        src_tree = ET.parse(fixtures_dir+self.olid+'.olf')
+        src_tree = ET.parse(fixtures_dir+template+'.xml')
         self.src_root = src_tree.getroot()
         dmx_xml = self.src_root.find('dmx_functions')
         for channel in dmx_xml:
@@ -317,7 +315,6 @@ class Fixture:
         """
         fixture_list = self.plot_file.root.find('fixtures')
         new_fixture = ET.Element('fixture')
-        new_fixture.set('olid', self.olid)
         new_fixture.set('uuid', self.uuid)
         # Iterate over data 
         for data_item in self.data:
@@ -339,7 +336,6 @@ class Fixture:
             fixture: the XML fixture object to load.
         """
         self.xml_fixture = xml_fixture
-        self.olid = xml_fixture.get('olid')
         self.uuid = xml_fixture.get('uuid')
         for data_item in xml_fixture:
             if data_item.tag != 'dmx_functions':
@@ -359,7 +355,6 @@ class Fixture:
             src_fixture: source Python fixture object to copy.
         """
         self.uuid = str(uuid.uuid4())
-        self.olid = src_fixture.olid
         for data_item in src_fixture.data:
             self.data[data_item] = src_fixture.data[data_item]
 

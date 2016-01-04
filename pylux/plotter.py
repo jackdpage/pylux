@@ -29,7 +29,7 @@ def main(plot_file, config):
     """The main user loop."""
     interface = clihelper.Interface()
     prompt = config['Settings']['prompt']+' '
-    fixtures_dir = os.path.expanduser(config['Fixtures']['dir'])
+    fixtures_dir = '/usr/share/pylux/fixture/'
     print('Welcome to Pylux! Type \'h\' to view a list of commands.')
     # Begin the main loop
     while True:
@@ -106,7 +106,8 @@ def main(plot_file, config):
             i = 1
             interface.clear()
             for fixture in fixtures.fixtures:
-                print('\033[4m'+str(i)+'\033[0m '+fixture.olid+', id: '+
+                fixture_type = fixture.data['type']
+                print('\033[4m'+str(i)+'\033[0m '+fixture_type+', id: '+
                     fixture.uuid)
                 interface.append(i, fixture)
                 i = i+1
@@ -119,15 +120,12 @@ def main(plot_file, config):
                 interface.clear()
                 i = 1
                 for fixture in fixtures.fixtures:
-                    if key == 'olid':
-                        test_value = fixture.olid
-                    else:
-                        try:
-                            test_value = fixture.data[key]
-                        except KeyError:
-                            pass
+                    try:
+                        test_value = fixture.data[key]
+                    except KeyError:
+                        pass
                     if test_value == value:
-                        print('\033[4m'+str(i)+'\033[0m '+fixture.olid+
+                        print('\033[4m'+str(i)+'\033[0m '
                             ', id: '+fixture.uuid+', '+key+': '+value)
                         interface.append(i, fixture)
                         i = i+1

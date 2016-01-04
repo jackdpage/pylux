@@ -3,17 +3,19 @@
 \begin{document}
 \title{Pylux User Manual \\ \large{for Pylux v0.1-alpha2}}
 \author{J. Page}
-\date{2015}
+\date{2016}
 \maketitle
 \vspace{1.0pt}
-Copyright (C)  2015 Jack Page \\
+Copyright (C)  2015 2016 Jack Page \\
 Permission is granted to copy, distribute and/or modify this document
 in source form (LaTeX) or compiled form (PDF, PostScript, etc.), including 
 for commercial use, provided that this copyright notice is retained and that 
 you grant the same freedoms to any recipients of your modifications.
 \tableofcontents
 \newpage
+% ------- END HEADER MATERIAL ------- %
 \section{Introduction}
+\subsection{About Pylux}
 Pylux is a program written in Python for the manipulation of OpenLighting Plot
 documents. Pylux currently allows for the basic editing of the OpenLighting
 Plot XML files, including referencing OpenLighting Fixture files to obtain
@@ -26,11 +28,23 @@ format.
 Bugs and feature requests should be submitted to 
 \url{https://github.com/jackdpage/pylux/issues}.
 
+\subsection{About this Manual}
+This manual is split into three main sections. The first section focuses on 
+how to use the program itself and the included extensions. This is given from 
+a user perspective. It is assumed you know relevant lighting terminology.
+
+The second section looks into more detail about the files that Pylux uses to 
+store information about plots and fixtures. This is not essential reading for 
+a user and is mainly aimed at developers but having a look at 
+\autoref{sec:plotfile} which goes into detail about the plot file would be 
+beneficial to normal users.
+
+The final section is aimed at developers and documents the functions of 
+Pylux's API and how to create extensions.
+
+% ------- USER SECTION ------- %
 \section{Command-line Options}
-Pylux is invoked simply by running the \texttt{plotter.py} program. Windows 
-operating systems should automatically associate file with the Python 
-interpreter. The program contains a shebang line for compatibility with UNIX
-systems. 
+Pylux is invoked simply by running the \texttt{pylux} package with Python. 
 
 \paragraph{\texttt{--help}, \texttt{-h}}
 Display the usage message of the program then exit.
@@ -45,121 +59,6 @@ Load the file with path \texttt{\textit{FILE}} as the plot file on launch.
 Launch Pylux with the graphical user interface. This is not yet implemented. 
 Omitting this flag launches Pylux with its standard CLI interface.
 
-\section{The Plot File}
-Pylux uses the Pylux plot format as its document format. This format 
-specifies three main components of an XML document: the metadata section, the 
-fixtures section and the registries section. 
-
-\subsection{The Metadata Section}
-The metadata section of the plot file contains any additional information 
-that does not fit inside the other sections. The information in this section 
-is often called upon to produce output.
-
-\subsubsection{Standard Metadata Tags}
-Whilst you can use any name for a tag you wish, there are some standard ones 
-which are used by Pylux and its bundled extensions.
-
-\paragraph{\texttt{production}}
-The name of the production for which the lighting documentation is being 
-produced, e.g. 'Romeo and Juliet'. Used by: \texttt{texlux}.
-
-\paragraph{\texttt{designer}}
-The name of the lighting designer for this production. Used by: 
-\texttt{texlux}.
-
-\paragraph{\texttt{board\_operator}}
-The name of the person operating the main lighting board for this production.
-Used by: \texttt{texlux}.
-
-\paragraph{\texttt{spot\_operator}}
-The name of the person operating the primary followspot for this production.
-Used by: \texttt{texlux}.
-
-\paragraph{\texttt{director}}
-The name of the director of the production. Used by: \texttt{texlux}.
-
-\paragraph{\texttt{venue}}
-The location at which the production is taking place. Used by: 
-\texttt{texlux}.
-
-\subsection{The Fixtures Section}
-The fixtures section consists of a base \texttt{fixtures} element and 
-multiple \texttt{fixture} child elements, each of which describes one fixture 
-within the plot file. Each fixture is assigned a UUID on creation, which 
-never changes. Each fixture also has children which represent its other data.
-Some of these children will have been imported from the fixture template 
-file on the fixture's creation but others you will have to define yourself.
-
-\subsubsection{Standard Fixture Data Tags}
-
-\paragraph{\texttt{dmx\_functions}}
-This is the parent of a list of empty elements, each of which represents a 
-function that the fixture has that requires the use of a DMX channel. For 
-example, traditional fixtures will have an \texttt{intensity} function 
-whilst modern LED fixtures may have \texttt{colour} and \texttt{mode} 
-functions. Used by: \texttt{plotter}.
-
-\paragraph{\texttt{dmx\_channels}}
-The number of DMX channels that a fixture needs. This is automatically 
-calculated from the \texttt{dmx\_functions} tag, so should not be changed 
-manually. Used by: \texttt{plotter}.
-
-\paragraph{\texttt{dmx\_start\_address}}
-The start address of this fixture, if it has been addressed. This is 
-automatically assigned using the address function so shouldn't be changed 
-manually. Used by: \texttt{plotter texlux}.
-
-\paragraph{\texttt{universe}}
-The universe in which the DMX channels for this fixture are located. This too 
-is set when the address command is run so shouldn't be changed by the user. 
-Used by: \texttt{plotter}.
-
-\paragraph{\texttt{posX}}
-The x position in 2D space where this fixture is located. Measured in metres.
-
-\paragraph{\texttt{posY}}
-The y position in 2D space where this fixture is located. Measured in metres.
-
-\paragraph{\texttt{focusX}}
-The x position in 2D space where the centre of this fixture's beam is 
-focused. Measured in metres.
-
-\paragraph{\texttt{focusY}}
-The y position in 2D space where the centre of this fixture's beam is 
-focused. Measured in metres.
-
-\paragraph{\texttt{rotation}}
-The rotation of this fixture about its centre. Measured anticlockwise from 
-the positive x axis in radians. This can be automatically calculated if the 
-preceding four data tags are present.
-
-\paragraph{\texttt{dimmer}}
-For traditional fixtures only. The dimmer that is controlling this fixture. 
-Used by: \texttt{texlux}.
-
-\paragraph{\texttt{circuit}}
-For traditional fixtures only. The circuit into which the fixture is patched. 
-Used by: \texttt{texlux}.
-
-\paragraph{\texttt{power}}
-For traditional fixtures only. The maximum power draw by the lamp in this 
-fixture.
-
-\paragraph{\texttt{gel}}
-The name or manufacturer's code of the gel that is being used in this 
-fixture.
-
-\paragraph{\texttt{colour}}
-The colour in which this fixture should be rendered on lighting plots. This 
-can be calculated automatically if the preceding tag is present and is a 
-standard colour name or code. (NYI)
-
-\subsection{The Registries Section}
-The registries section contains one or more DMX registries, each of which 
-contains some channel elements, which contain both the UUID of the fixture 
-they control and their function. There is very little that the user can do 
-to directly control this section as all addresses are assigned based on 
-the manipulation of fixtures.
 
 \section{Using the Command Line Interface}
 Pylux ships with two interface modes: a command line interface (CLI) and a 
@@ -341,7 +240,163 @@ style file installed in \texttt{\~{}/.pylux/tex/} which is required to build the
 PDF report. Currently the only built-in function is \texttt{dimmer}, which 
 produces a report categorised by dimmer and containing power draw totals.
 
-\section{Developing for Pylux}
+% -------- FILES SECTION ------- %
+\section{The Plot File} \label{sec:plotfile}
+Pylux uses the Pylux plot format as its document format. This format 
+specifies three main components of an XML document: the metadata section, the 
+fixtures section and the registries section. 
+
+\subsection{The Metadata Section}
+The metadata section of the plot file contains any additional information 
+that does not fit inside the other sections. The information in this section 
+is often called upon to produce output.
+
+\subsubsection{Standard Metadata Tags}
+Whilst you can use any name for a tag you wish, there are some standard ones 
+which are used by Pylux and its bundled extensions.
+
+\paragraph{\texttt{production}}
+The name of the production for which the lighting documentation is being 
+produced, e.g. 'Romeo and Juliet'. Used by: \texttt{texlux}.
+
+\paragraph{\texttt{designer}}
+The name of the lighting designer for this production. Used by: 
+\texttt{texlux}.
+
+\paragraph{\texttt{board\_operator}}
+The name of the person operating the main lighting board for this production.
+Used by: \texttt{texlux}.
+
+\paragraph{\texttt{spot\_operator}}
+The name of the person operating the primary followspot for this production.
+Used by: \texttt{texlux}.
+
+\paragraph{\texttt{director}}
+The name of the director of the production. Used by: \texttt{texlux}.
+
+\paragraph{\texttt{venue}}
+The location at which the production is taking place. Used by: 
+\texttt{texlux}.
+
+\subsection{The Fixtures Section}
+The fixtures section consists of a base \texttt{fixtures} element and 
+multiple \texttt{fixture} child elements, each of which describes one fixture 
+within the plot file. Each fixture is assigned a UUID on creation, which 
+never changes. Each fixture also has children which represent its other data.
+Some of these children will have been imported from the fixture template 
+file on the fixture's creation but others you will have to define yourself.
+
+\subsubsection{Standard Fixture Data Tags} \label{sec:fixtags}
+
+\paragraph{\texttt{dmx\_functions}}
+This is the parent of a list of empty elements, each of which represents a 
+function that the fixture has that requires the use of a DMX channel. For 
+example, traditional fixtures will have an \texttt{intensity} function 
+whilst modern LED fixtures may have \texttt{colour} and \texttt{mode} 
+functions. Used by: \texttt{plotter}.
+
+\paragraph{\texttt{dmx\_channels}}
+The number of DMX channels that a fixture needs. This is automatically 
+calculated from the \texttt{dmx\_functions} tag, so should not be changed 
+manually. Used by: \texttt{plotter}.
+
+\paragraph{\texttt{dmx\_start\_address}}
+The start address of this fixture, if it has been addressed. This is 
+automatically assigned using the address function so shouldn't be changed 
+manually. Used by: \texttt{plotter texlux}.
+
+\paragraph{\texttt{universe}}
+The universe in which the DMX channels for this fixture are located. This too 
+is set when the address command is run so shouldn't be changed by the user. 
+Used by: \texttt{plotter}.
+
+\paragraph{\texttt{posX}}
+The x position in 2D space where this fixture is located. Measured in metres.
+
+\paragraph{\texttt{posY}}
+The y position in 2D space where this fixture is located. Measured in metres.
+
+\paragraph{\texttt{focusX}}
+The x position in 2D space where the centre of this fixture's beam is 
+focused. Measured in metres.
+
+\paragraph{\texttt{focusY}}
+The y position in 2D space where the centre of this fixture's beam is 
+focused. Measured in metres.
+
+\paragraph{\texttt{rotation}}
+The rotation of this fixture about its centre. Measured anticlockwise from 
+the positive x axis in radians. This can be automatically calculated if the 
+preceding four data tags are present.
+
+\paragraph{\texttt{dimmer}}
+For traditional fixtures only. The dimmer that is controlling this fixture. 
+Used by: \texttt{texlux}.
+
+\paragraph{\texttt{circuit}}
+For traditional fixtures only. The circuit into which the fixture is patched. 
+Used by: \texttt{texlux}.
+
+\paragraph{\texttt{power}}
+For traditional fixtures only. The maximum power draw by the lamp in this 
+fixture.
+
+\paragraph{\texttt{gel}}
+The name or manufacturer's code of the gel that is being used in this 
+fixture.
+
+\paragraph{\texttt{colour}}
+The colour in which this fixture should be rendered on lighting plots. This 
+can be calculated automatically if the preceding tag is present and is a 
+standard colour name or code. (NYI)
+
+\subsection{The Registries Section}
+The registries section contains one or more DMX registries, each of which 
+contains some channel elements, which contain both the UUID of the fixture 
+they control and their function. There is very little that the user can do 
+to directly control this section as all addresses are assigned based on 
+the manipulation of fixtures.
+
+\section{Other Files}
+Pylux and its extensions also use some other files to help produce its output. 
+These files are not necessary to the functioning of the base program, but 
+make using it a lot easier and may be required for extensions to function 
+properly.
+
+\subsection{Fixture Files}
+A fixture file is simply an XML file giving a template of a fixture that can 
+be used multiple times by the user to speed up the fixture configuration 
+process. Generally a fixture file will contain common constants that will not 
+change from fixture to fixture, such as \texttt{type}, \texttt{power}, etc. 
+These are defined as top-level XML objects. In the fixture file, there is also 
+a top-level \texttt{dmx\_functions} object. The sub-elements of this object 
+are loaded as the fixture's DMX functions when it is created. Currently, the 
+user cannot set these options using the program, so fixture files must be 
+used for this. See \autoref{sec:fixtags} for a list of standard tags that 
+are applied to fixtures. Of course, any tag can be applied in reality, it 
+just may not be used.
+
+\subsection{Symbol Files}
+A symbol file defines how a fixture will look when it is rendered on a 
+plan-view plot. This is an SVG file, layed out in a specific way to allow 
+manipulation by the plotting program. Directly below the base \texttt{svg} 
+element, there should be a \texttt{g} element enclosing the entire fixture 
+with the class \texttt{fixture}. This is the element that the plotting 
+program will perform transformations on when it inserts it into the plot. 
+
+Beneath that, the fixture can contian any number of \texttt{p} elements, 
+provided that they meet the following critera:
+\begin{enumerate}
+\item Any outer paths have the class \texttt{outer} and any inner paths have 
+the class \texttt{inner};
+\item All paths have \texttt{stroke=black} and \texttt{stroke-width=1};
+\item An SVG unit represents 1mm in reality;
+\item The fixture points towards the right hand side of the image to allow for 
+rotation compatibility.
+\end{enumerate}
+
+% ------- DEVELOPER SECTION ------- %
+\section{The Pylux API}
 For the most part, Pylux is documented using Python docstrings, meaning you 
 can access most documentation using the \texttt{pydoc} command. However, it 
 is documented here anyway for the sake of legibility.
