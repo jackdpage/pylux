@@ -448,3 +448,23 @@ class Metadata:
             name = metaitem.tag
             if self.meta[name] == None:
                 self.xml_meta.remove(metaitem)
+
+
+class FixtureSymbol:
+    """Manages the SVG symbols for fixtures."""
+
+    def __init__(self, path):
+        tree = ET.parse(path)
+        root = tree.getroot()
+        self.ns = {'ns0': 'http://www.w3.org/2000/svg'}
+        self.image_group = root.find('ns0:g', self.ns)
+
+    def prepare(self, posX, posY, rotation, colour):
+        posX = str(float(posX)*1000)
+        posY = str(float(posY)*1000)
+        rotation = str(math.degrees(float(rotation)))
+        self.image_group.set('transform', 'translate(0 0) rotate('+rotation+') translate('+
+            posX+' '+posY+')')
+        for path in self.image_group:
+            if path.get('class') == 'outer':
+                path.set('fill', colour)

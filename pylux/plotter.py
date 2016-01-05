@@ -124,11 +124,13 @@ def main(plot_file, config):
                         test_value = fixture.data[key]
                     except KeyError:
                         pass
-                    if test_value == value:
-                        print('\033[4m'+str(i)+'\033[0m '
-                            ', id: '+fixture.uuid+', '+key+': '+value)
-                        interface.append(i, fixture)
-                        i = i+1
+                    else:
+                        if test_value == value:
+                            fix_type = fixture.data['type']
+                            print('\033[4m'+str(i)+'\033[0m '+fix_type+
+                                ', id: '+fixture.uuid+', '+key+': '+value)
+                            interface.append(i, fixture)
+                            i = i+1
                         
             except IndexError:
                 print('Error: You need to specify a key and value!')

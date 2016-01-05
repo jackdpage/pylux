@@ -124,7 +124,7 @@ and load it as the new plot file
 
 \subsection{Metadata Commands}
 
-\paragraph{\texttt{ml}}
+\paragraph{\texttt{mG}}
 List all the metadata tags associated with the currently loaded plot file.
 
 \paragraph{\texttt{ms \textit{TAG VALUE}}}
@@ -142,11 +142,11 @@ name \texttt{\textit{TAG}} on the screen.
 
 \subsection{Fixture Commands}
 
-\paragraph{\texttt{xn \textit{OLID}}}
-Add a new fixture to the plot. This will add a fixture to the plot with olid 
-\texttt{\textit{OLID}}. It will also automatically assign a UUID and search 
-the OLF file associated with this olid for any constants that this fixture has and add them to the fixture. This will not assign DMX addresses to the fixture,
-use \texttt{xA} for that.
+\paragraph{\texttt{xn \textit{TEMPLATE}}}
+Add a new fixture to the plot. This will load the contents of the fixture 
+file with the name \texttt{TEMPLATE} into the new fixture, including DMX 
+functions. This will not allocate DMX addresses to the fixture, use 
+\texttt{xA} for that.
 
 \paragraph{\texttt{xc \textit{REF}}}
 Clone the fixture with interface reference \texttt{\textit{REF}} into a new 
@@ -221,7 +221,8 @@ bundled with extensions to provide extra functionality. In the current
 version, Pylux comes bundled with the \texttt{texlux} extension only.
 
 \subsection{\texttt{texlux}}
-\texttt{texlux} is an extension to the base \texttt{plotter} program which allows for the creation of reports in the \LaTeX{} format, which can then be 
+\texttt{texlux} is an extension to the base \texttt{plotter} program which 
+allows for the creation of reports in the \LaTeX{} format, which can then be 
 post-processed to create a PDF file, or many other formats through the use of 
 an external tool such as Pandoc.
 
@@ -236,8 +237,8 @@ title \texttt{\textit{TITLE}}, writing the output to a file with path
 
 \texttt{texlux} uses built-in functions to generate \LaTeX{} docments with 
 pre-defined structures. Each built-in function has a corresponding \LaTeX{} 
-style file installed in \texttt{\~{}/.pylux/tex/} which is required to build the 
-PDF report. Currently the only built-in function is \texttt{dimmer}, which 
+style file installed in \texttt{\~{}/texmf} which is required to build 
+the PDF report. Currently the only built-in function is \texttt{dimmer}, which 
 produces a report categorised by dimmer and containing power draw totals.
 
 % -------- FILES SECTION ------- %

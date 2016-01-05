@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <fixture>
-	<olid>p650</olid>
 	<type>Hutton P650</type>
         <power>650</power>
         <symbol>p650</symbol>

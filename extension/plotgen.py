@@ -30,15 +30,15 @@ class ImagePlot:
     def create_plot(self):
         image_plot = ET.Element('svg')
         for fixture in self.fixtures.fixtures:
-            symbol_file = '/usr/share/pylux/symbol/'+fixture.olid+'.svg'
-            symbol_tree = ET.parse(symbol_file)
-            symbol_root = symbol_tree.getroot()
-            symbol_image = symbol_root.find('g')
-            locationX = float(fixture.data['posX'])*1000
-            locationY = float(fixture.data['posY'])*1000
-            rotation = math.degrees(float(fixture.data['rotation']))
-            symbol_image.set('transform', 'rotate('+str(rotation)+') translate('+str(locationX)+' '+str(locationY)+')')
-            image_plot.append(symbol_image)
+            symbol_name = fixture.data['symbol']
+            posX = fixture.data['posX']
+            posY = fixture.data['posY']
+            rotation = fixture.data['rotation']
+            colour = fixture.data['colour']
+            symbol = plot.FixtureSymbol('/usr/share/pylux/symbol/'+
+                symbol_name+'.svg')
+            symbol.prepare(posX, posY, rotation, colour)
+            image_plot.append(symbol.image_group)
         return image_plot
 
 
