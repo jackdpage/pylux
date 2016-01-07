@@ -18,6 +18,7 @@
 import xml.etree.ElementTree as ET
 import uuid
 import math
+import reference
 
 
 class PlotFile:
@@ -395,7 +396,10 @@ class Fixture:
         posY = float(self.data['posY'])
         focusX = float(self.data['focusX'])
         focusY = float(self.data['focusY'])
-        return math.atan2((focusY-posY), (focusX-posX))
+        return math.degrees(math.atan2((focusY-posY), (focusX-posX)))
+
+    def generate_colour(self):
+        return reference.gel_colours[self.data['gel']]
 
 
 class Metadata:
@@ -462,7 +466,7 @@ class FixtureSymbol:
     def prepare(self, posX, posY, rotation, colour):
         posX = str(float(posX)*1000)
         posY = str(float(posY)*1000)
-        rotation = str(math.degrees(float(rotation)))
+        rotation = str(rotation)
         self.image_group.set('transform', 'translate('+
             posX+' '+posY+') rotate('+rotation+')')
         for path in self.image_group:

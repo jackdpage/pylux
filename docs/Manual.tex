@@ -241,6 +241,12 @@ style file installed in \texttt{\~{}/texmf} which is required to build
 the PDF report. Currently the only built-in function is \texttt{dimmer}, which 
 produces a report categorised by dimmer and containing power draw totals.
 
+\subsection{\texttt{plotgen}}
+\texttt{plotgen} generates, from the fixture list and the fixture's symbol 
+files, a plan view of the lighting plot in SVG format. Currently WIP but 
+functional. Includes support for positioning, rotation and colouring based 
+on fixture data.
+
 % -------- FILES SECTION ------- %
 \section{The Plot File} \label{sec:plotfile}
 Pylux uses the Pylux plot format as its document format. This format 
@@ -327,7 +333,7 @@ focused. Measured in metres.
 
 \paragraph{\texttt{rotation}}
 The rotation of this fixture about its centre. Measured anticlockwise from 
-the positive x axis in radians. This can be automatically calculated if the 
+the positive x axis in degrees. This can be automatically calculated if the 
 preceding four data tags are present.
 
 \paragraph{\texttt{dimmer}}
@@ -630,6 +636,26 @@ The metadata in XML. Should not be externally referenced.
 \paragraph{meta}
 A dictionary containing all the metadata information in the form 
 \texttt{\{meta\_name: meta\_value, ...\}}.
+
+\subsection{The \texttt{FixtureSymbol} Class}
+The \texttt{FixtureSymbol} class prepares plain SVG fixtures symbols so that 
+they are ready to be inserted into an SVG plot.
+
+\subsubsection{Functions of \texttt{FixtureSymbol}}
+
+\paragraph{\texttt{\_\_init\_\_(path)}}
+Extracts the base group from the SVG image with path \texttt{path}.
+
+\paragraph{\texttt{prepare(posX, posY, rotation, colour)}}
+Prepares a symbol for inserting into the plot by setting transformations 
+as given by the \texttt{rotation} and position parameters and sets the fill 
+of outer paths to \texttt{colour}.
+
+\subsubsection{Attributes of \texttt{FixtureSymbol}}
+
+\paragraph{image\_group}
+The base image group of the SVG symbol file. This is what should be inserted 
+into the plot file once it has been prepared.
 
 \subsection{Creating Extensions}
 A Pylux extension is simply a Python script file that is run from the 

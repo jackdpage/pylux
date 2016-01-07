@@ -88,7 +88,7 @@ def main(plot_file, config):
             try:
                 fixture.new(inputs[1], fixtures_dir)
             except FileNotFoundError:
-                print('Error: Couldn\'t find an OLF file with OLID '+inputs[1])
+                print('Error: Couldn\'t find a fixture file with this name')
             else:
                 fixture.add()
                 fixture.save()
@@ -164,6 +164,8 @@ def main(plot_file, config):
             if value == 'auto':
                 if tag == 'rotation':
                     fixture.data['rotation'] = str(fixture.generate_rotation())
+                elif tag == 'colour':
+                    fixture.data['colour'] = fixture.generate_colour()
                 else:
                     print('Error: No automatic generation is available for ' 
                         'this tag')

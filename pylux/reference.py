@@ -1,0 +1,27 @@
+# reference.py is part of Pylux
+#
+# Pylux is a program for the management of lighting documentation
+# Copyright 2015 Jack Page
+# Pylux is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Pylux is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# GEL COLOURS ARE SOURCED FROM SAMPLES ON STAGEDEPOT.CO.UK USING GPICK
+gel_colours = {
+    "24": "#FE5A64",
+    "71": "#0000B4",
+    "102": "#F00032",
+    "104": "#FFDC00",
+    "127": "#E06272",
+    "157": "#FF92A3",
+    "166": "#EC6063",
+    "736": "#00AA00"}
