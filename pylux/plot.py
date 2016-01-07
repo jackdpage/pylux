@@ -463,8 +463,8 @@ class FixtureSymbol:
         posX = str(float(posX)*1000)
         posY = str(float(posY)*1000)
         rotation = str(math.degrees(float(rotation)))
-        self.image_group.set('transform', 'translate(0 0) rotate('+rotation+') translate('+
-            posX+' '+posY+')')
+        self.image_group.set('transform', 'translate('+
+            posX+' '+posY+') rotate('+rotation+')')
         for path in self.image_group:
             if path.get('class') == 'outer':
                 path.set('fill', colour)
