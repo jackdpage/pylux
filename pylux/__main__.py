@@ -23,8 +23,8 @@ import argparse
 import os
 import configparser
 import sys
-import gplotter
-import plotter
+import geditor
+import editor
 import plot
 
 from __init__ import __version__
@@ -56,10 +56,10 @@ def main():
         print('No plot file loaded')
     if launch_args.gui == True:
         print('Running in GUI mode\n')
-        gplotter.main(plot_file, config)
+        geditor.main(plot_file, config)
     else:
         print('Running in CLI mode\n')
-        plotter.main(plot_file, config)
+        editor.main(plot_file, config)
 
 
 if __name__ == '__main__':

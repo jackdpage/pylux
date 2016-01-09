@@ -33,9 +33,7 @@ def main(plot_file, config):
     # Begin the main loop
     while True:
         user_input = input(config['Settings']['prompt']+' ')
-        inputs = []
-        for i in user_input.split(' '):
-            inputs.append(i)
+        inputs = user_input.split(' ')
 
         # File actions
         if inputs[0] == 'fo':
