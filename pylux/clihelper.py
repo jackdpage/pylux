@@ -46,25 +46,71 @@ class Interface:
         """
         self.option_list[ref] = object
 
-    def get(self, ref):
+    def get(self, refs):
         """Return the object of a user selection.
 
         Args:
             ref: the unique CLI identifier that the user selected.
 
         Returns:
-            The object (which could be of any form) that is 
-            associated with the reference in the option list.
+            A list of objects that correspond to the references that 
+            were given.
         """
-        try:
-            ref = int(ref)
-        finally:
-            return self.option_list[ref]
+        if refs == 'this':
+            refs = self.option_list['this']
+        references = resolve_references(refs)
+        objects = []
+        for ref in references:
+            objects.append(self.option_list[ref])
+        return objects
 
     def clear(self):
         """Clear the option list."""
         self.option_list.clear()
         self.option_list['this'] = None
+
+    def update_this(self, reference):
+        """Update the 'this' special reference.
+
+        Set the 'this' special reference to a specified reference. 
+        If the given reference is also 'this', do nothing as 'this' 
+        will already point to the desired reference.
+
+        Args:
+            reference: the reference that 'this' should point to.
+        """
+        if reference != 'this':
+            self.option_list['this'] = reference
+
+
+def resolve_references(user_input):
+    """Parse the reference input.
+    
+    From a user input string of references, generate a list of 
+    integers that can then be passed to the Interface class to 
+    return objects. Parse comma separated values such as a,b,c 
+    and colon separated ranges such as a:b, or a combination of 
+    the two such as a,b:c,d:e,f.
+
+    Args:
+        user_input: the input string that the user entered.
+
+    Returns:
+        A list containing a list of integers.
+    """
+    reference_list = []
+    all_input = user_input.split(',')
+    for input_item in all_input:
+        if ':' in input_item:
+            limits = input_item.split(':')
+            i = int(limits[0])
+            while i <= int(limits[1]):
+                reference_list.append(i)
+                i = i+1
+        else:
+            reference_list.append(int(input_item))
+    reference_list.sort()
+    return reference_list
 
 
 def resolve_input(inputs_list, number_args):

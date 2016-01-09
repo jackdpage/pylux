@@ -64,11 +64,9 @@ class Report:
 
         def add_fixture(fixture):
             uuid = fixture.uuid
-            olid = fixture.olid
             try:
                 fix_type = fixture.data['type']
             except KeyError:
-                fix_type = olid
                 print('Couldn\'t get fixture type for '+uuid)
             try:
                 dmx = fixture.data['dmx_start_address']
@@ -139,3 +137,7 @@ def run_pylux_extension(plot_file):
 
         else:
             print('That command doesn\'t exist!')
+
+
+if __name__ == 'pyext':
+    run_pylux_extension(plot_file)

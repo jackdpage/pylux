@@ -1,10 +1,9 @@
 (A) 2015-12-29 DMX start address assigner doesn't check DMX001 +Bugfix
-(A) 2016-01-07 Multiple fixture selection eg 1,2,3 & 1:3 +Base
 (B) 2015-12-19 Better (and more) error handling +Base
 (B) 2015-12-20 Auto completion
-(B) 2015-12-30 add() in Fixture shouldn't exist +Clean
 (B) 2015-12-30 Error message when removing non-existant meta +Bugfix
 (B) 2016-01-07 Make unaddressing fixtures independent of fixture XML +Clean
+(C) 2015-12-30 add() in Fixture shouldn't exist +Clean
 (C) 2016-01-07 Calculate auto fields on plotgen +Extensions
 x 2015-12-14 2015-12-12 Automatic DMX start address assignment +Base
 x 2015-12-14 2015-12-13 DmxRegistry save deletes empty channels +Base
@@ -12,7 +11,7 @@ x 2015-12-19 2015-12-12 List information action +Base
 x 2015-12-19 2015-12-17 User input on DMX registries +Base
 x 2015-12-19 2015-12-19 Main user loop +Base
 x 2015-12-21 2015-12-12 Remove fixture action +Base
-x 2015-12-28  2015-12-19 Multi-word variable support +Bugfix
+x 2015-12-28 2015-12-19 Multi-word variable support +Bugfix
 x 2015-12-28 2015-12-28 Make plotter importable +Bugfix
 x 2015-12-29 2015-12-19 Create dimmer/circuit infrastructure
 x 2016-01-01 2015-12-13 File management support (save as, new) +Base
@@ -20,3 +19,4 @@ x 2016-01-02 2015-12-19 Create positioning infrastructure +Base
 x 2016-01-02 2015-12-29 Separate code into __main__ and plotter +Clean
 x 2016-01-07 2015-12-12 Plotting to SVG +Extensions
 x 2016-01-07 2015-12-12 Report creation using LaTeX (pandoc?) +Extensions
+x 2016-01-09 2016-01-07 Multiple fixture selection eg 1,2,3 & 1:3 +Base

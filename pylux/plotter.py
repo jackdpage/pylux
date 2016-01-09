@@ -19,10 +19,9 @@
 
 import os
 import sys
-from __init__ import __version__
 import plot
 import clihelper
-import importlib.util as IL
+import runpy
 
 
 def main(plot_file, config):
@@ -92,14 +91,16 @@ def main(plot_file, config):
             else:
                 fixture.add()
                 fixture.save()
-                interface.option_list['this'] = fixture
 
         elif inputs[0] == 'xc':
             src_fixture = interface.get(inputs[1])
-            new_fixture = plot.Fixture(plot_file, fixtures_dir)
-            new_fixture.clone(src_fixture)
-            new_fixture.add()
-            new_fixture.save()
+            if len(src_fixture) > 1:
+                print('Error: You can only clone one fixture!')
+            else:
+                new_fixture = plot.Fixture(plot_file, fixtures_dir)
+                new_fixture.clone(src_fixture[0])
+                new_fixture.add()
+                new_fixture.save()
 
         elif inputs[0] == 'xl':
             fixtures = plot.FixtureList(plot_file)
@@ -136,56 +137,72 @@ def main(plot_file, config):
                 print('Error: You need to specify a key and value!')
 
         elif inputs[0] == 'xr':
-            try:
-                fixtures = plot.FixtureList(plot_file)
-                fixtures.remove(interface.get(inputs[1]))
-            except IndexError:
-                print('Error: You need to run either xl or xf then specify the'
-                      ' interface id of the fixture you wish to remove')
+            fixture_list = plot.FixtureList(plot_file)
+            fixtures = interface.get(inputs[1])
+            for fixture in fixtures:
+                fixture_list.remove(fixture)
 
         elif inputs[0] == 'xg':
-            fixture = interface.get(inputs[1])
-            try:
-                print(fixture.data[inputs[2]])
-            except KeyError:
-                print('Error: This fixture has no data with that name')
-            interface.option_list['this'] = fixture
+            fixtures = interface.get(inputs[1])
+            for fixture in fixtures:
+                try:
+                    print(fixture.data[inputs[2]])
+                except KeyError:
+                    print('Error: This fixture has no data with that name')
+            interface.update_this(inputs[1])
 
         elif inputs[0] == 'xG':
-            fixture = interface.get(inputs[1])
-            for data_item in fixture.data:
-                print(data_item+': '+str(fixture.data[data_item]))
-            interface.option_list['this'] = fixture
+            fixtures = interface.get(inputs[1])
+            for fixture in fixtures:
+                for data_item in fixture.data:
+                    print(data_item+': '+str(fixture.data[data_item]))
+            interface.update_this(inputs[1])
 
         elif inputs[0] == 'xs':
-            fixture = interface.get(inputs[1])
+            fixtures = interface.get(inputs[1])
             tag = inputs[2]
             value = clihelper.resolve_input(inputs, 3)[-1]
-            if value == 'auto':
-                if tag == 'rotation':
-                    fixture.data['rotation'] = str(fixture.generate_rotation())
-                elif tag == 'colour':
-                    fixture.data['colour'] = fixture.generate_colour()
+            for fixture in fixtures:
+                # See if it can be automatically generated
+                if value == 'auto':
+                    if tag == 'rotation':
+                        fixture.data['rotation'] = str(fixture.generate_rotation())
+                    elif tag == 'colour':
+                        fixture.data['colour'] = fixture.generate_colour()
+                    else:
+                        print('Error: No automatic generation is available for '
+                            'this tag')
+                # See if it is a special pseudo tag
+                elif tag == 'position':
+                    fixture.data['posX'] = value.split(',')[0]
+                    fixture.data['posY'] = value.split(',')[1]
+                elif tag == 'focus':
+                    fixture.data['focusX'] = value.split(',')[0]
+                    fixture.data['focusY'] = value.split(',')[1]
+                # Otherwise just set it
                 else:
-                    print('Error: No automatic generation is available for ' 
-                        'this tag')
-            else:
-                fixture.data[tag] = value
-            fixture.save()
-            interface.option_list['this'] = fixture
+                    fixture.data[tag] = value
+                fixture.save()
+            interface.update_this(inputs[1])
 
         elif inputs[0] == 'xA':
-            fixture = interface.get(inputs[1])
-            registry = plot.DmxRegistry(plot_file, inputs[2])
-            registry.address(fixture, inputs[3])
-            interface.option_list['this'] = fixture
+            fixtures = interface.get(inputs[1])
+            if len(fixtures) > 1 and inputs[3] != 'auto':
+                print('Error: You must specify auto if you address more than '
+                    'one fixture.')
+            else:
+                registry = plot.DmxRegistry(plot_file, inputs[2])
+                for fixture in fixtures:
+                    registry.address(fixture, inputs[3])
+            interface.update_this(inputs[1])
 
         elif inputs[0] == 'xp':
-            fixture = interface.get(inputs[1])
-            registry = plot.DmxRegistry(plot_file, fixture.data['universe'])
-            registry.unaddress(fixture)
-            fixtures = plot.FixtureList(plot_file)
-            fixtures.remove(fixture)
+            fixtures = interface.get(inputs[1])
+            for fixture in fixtures:
+                registry = plot.DmxRegistry(plot_file, fixture.data['universe'])
+                registry.unaddress(fixture)
+                fixture_list = plot.FixtureList(plot_file)
+                fixture_list.remove(fixture)
 
         # DMX registry actions
         elif inputs[0] == 'rl':
@@ -206,17 +223,10 @@ def main(plot_file, config):
             extensions_dir = '/usr/share/pylux/extension/'
             module_name = inputs[0].split(':')[1]
             try:
-                ext_spec = IL.spec_from_file_location(module_name, 
-                    extensions_dir+module_name+'.py')
-                ext_module = IL.module_from_spec(ext_spec)
-                ext_spec.loader.exec_module(ext_module)
-            except ImportError:
+                runpy.run_path(extensions_dir+module_name+'.py',
+                    init_globals={'plot_file': plot_file}, run_name='pyext')
+            except FileNotFoundError:
                 print('No extension with this name!')
-            else:
-                ext_module.run_pylux_extension(plot_file)
-                #try:
-                #except Exception:
-                #    print('This module is not a valid Pylux extension!')
 
         # Utility actions
         elif inputs[0] == 'h':
@@ -241,8 +251,3 @@ def main(plot_file, config):
         else:
             print('Error: Command doesn\'t exist.') 
             print('Type \'h\' for a list of available commands.')
-
-
-# Check that the program isn't imported, then run main
-if __name__ == '__main__':
-    main()
