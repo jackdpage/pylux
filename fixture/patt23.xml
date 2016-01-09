@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<fixture>
+	<type>Strand Patt.23</type>
+  	<power>500</power>
+    <symbol>patt23</symbol>
+		<mass>3.75</mass>
+		<throw>8</throw>
+	<dmx_functions>
+		<intensity></intensity>
+	</dmx_functions>
+</fixture>
+
