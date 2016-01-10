@@ -1,7 +1,6 @@
 *.log
 *.aux
 *.out
-Manual.pdf
 *.toc
 *.swp
 __pycache__/

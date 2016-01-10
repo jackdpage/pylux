@@ -29,18 +29,11 @@ Bugs and feature requests should be submitted to
 \url{https://github.com/jackdpage/pylux/issues}.
 
 \subsection{About this Manual}
-This manual is split into three main sections. The first section focuses on 
-how to use the program itself and the included extensions. This is given from 
-a user perspective. It is assumed you know relevant lighting terminology.
-
-The second section looks into more detail about the files that Pylux uses to 
-store information about plots and fixtures. This is not essential reading for 
-a user and is mainly aimed at developers but having a look at 
-\autoref{sec:plotfile} which goes into detail about the plot file would be 
-beneficial to normal users.
-
-The final section is aimed at developers and documents the functions of 
-Pylux's API and how to create extensions.
+This manual is intended for general users of Pylux. If you are a developer 
+who wants to contribute to Pylux, you should read the Developer Reference. 
+The first section of this manual details all of the actions that you can enter 
+on the command-line interface of Pylux. The second section goes into more 
+detail about what tags you should use, etc.
 
 % ------- USER SECTION ------- %
 \section{Command-line Options}
@@ -255,17 +248,13 @@ functional. Includes support for positioning, rotation and colouring based
 on fixture data.
 
 % -------- FILES SECTION ------- %
-\section{The Plot File} \label{sec:plotfile}
-Pylux uses the Pylux plot format as its document format. This format 
-specifies three main components of an XML document: the metadata section, the 
-fixtures section and the registries section. 
+\section{Standard Tags} \label{sec:plotfile}
+Below is a list of standard tags for each section, to advise which tags you 
+should apply to your metadata and fixtures. Also included is a list of 
+pseudo-tags: tags which are not added to the file but actually represent one 
+or more other tags to make adding them easier.
 
-\subsection{The Metadata Section}
-The metadata section of the plot file contains any additional information 
-that does not fit inside the other sections. The information in this section 
-is often called upon to produce output.
-
-\subsubsection{Standard Metadata Tags}
+\subsection{Standard Metadata Tags}
 Whilst you can use any name for a tag you wish, there are some standard ones 
 which are used by Pylux and its bundled extensions.
 
@@ -292,15 +281,7 @@ The name of the director of the production. Used by: \texttt{texlux}.
 The location at which the production is taking place. Used by: 
 \texttt{texlux}.
 
-\subsection{The Fixtures Section}
-The fixtures section consists of a base \texttt{fixtures} element and 
-multiple \texttt{fixture} child elements, each of which describes one fixture 
-within the plot file. Each fixture is assigned a UUID on creation, which 
-never changes. Each fixture also has children which represent its other data.
-Some of these children will have been imported from the fixture template 
-file on the fixture's creation but others you will have to define yourself.
-
-\subsubsection{Standard Fixture Data Tags} \label{sec:fixtags}
+\subsection{Standard Fixture Data Tags} \label{sec:fixtags}
 
 \paragraph{\texttt{dmx\_functions}}
 This is the parent of a list of empty elements, each of which represents a 
@@ -364,384 +345,19 @@ The colour in which this fixture should be rendered on lighting plots. This
 can be calculated automatically if the preceding tag is present and is a 
 standard colour name or code. (NYI)
 
-\subsubsection{Illegal Fixture Tags}
-There are some tags which cannot be used for fixtures. This is because they 
-interfere with the pseudo-tags that Pylux uses to speed up the insertion of 
-data on the command line.
-
-\paragraph{\texttt{position}}
-Used to define \texttt{posX} and \texttt{posY} at the same time.
-
-\paragraph{\texttt{focus}}
-Used to define \texttt{focusX} and \texttt{focusY} at the same time.
-
-\subsection{The Registries Section}
-The registries section contains one or more DMX registries, each of which 
-contains some channel elements, which contain both the UUID of the fixture 
-they control and their function. There is very little that the user can do 
-to directly control this section as all addresses are assigned based on 
-the manipulation of fixtures.
-
-\section{Other Files}
-Pylux and its extensions also use some other files to help produce its output. 
-These files are not necessary to the functioning of the base program, but 
-make using it a lot easier and may be required for extensions to function 
-properly.
-
-\subsection{Fixture Files}
-A fixture file is simply an XML file giving a template of a fixture that can 
-be used multiple times by the user to speed up the fixture configuration 
-process. Generally a fixture file will contain common constants that will not 
-change from fixture to fixture, such as \texttt{type}, \texttt{power}, etc. 
-These are defined as top-level XML objects. In the fixture file, there is also 
-a top-level \texttt{dmx\_functions} object. The sub-elements of this object 
-are loaded as the fixture's DMX functions when it is created. Currently, the 
-user cannot set these options using the program, so fixture files must be 
-used for this. See \autoref{sec:fixtags} for a list of standard tags that 
-are applied to fixtures. Of course, any tag can be applied in reality, it 
-just may not be used.
-
-\subsection{Symbol Files}
-A symbol file defines how a fixture will look when it is rendered on a 
-plan-view plot. This is an SVG file, layed out in a specific way to allow 
-manipulation by the plotting program. Directly below the base \texttt{svg} 
-element, there should be a \texttt{g} element enclosing the entire fixture 
-with the class \texttt{fixture}. This is the element that the plotting 
-program will perform transformations on when it inserts it into the plot. 
-
-Beneath that, the fixture can contian any number of \texttt{path} elements, 
-provided that they meet the following critera:
-\begin{enumerate}
-\item Any outer paths have the class \texttt{outer} and any inner paths have 
-the class \texttt{inner};
-\item All paths have \texttt{stroke=black} and \texttt{stroke-width=1};
-\item An SVG unit represents 1mm in reality;
-\item The fixture points towards the right hand side of the image to allow for 
-rotation compatibility;
-\item The centre of rotation of the fixture is located at (0,0).
-\end{enumerate}
-
-% ------- DEVELOPER SECTION ------- %
-\section{The Pylux API}
-For the most part, Pylux is documented using Python docstrings, meaning you 
-can access most documentation using the \texttt{pydoc} command. However, it 
-is documented here anyway for ease of access.
-
-If you are developing an external program or interface and wish to use the 
-Pylux system, Pylux provides an API to allow you to easily control the data of 
-plot files in the form of the \texttt{plot} module. Once you have installed 
-Pylux onto your system, you can then import this using 
-\texttt{from pylux import plot}. This gives you access to a variety of 
-objects to manipulate Pylux plot files.
-
-Before each API function is documented, it is important to look at the 
-structure of Pylux: an XML file, called a Pylux plot, is read and its data 
-parsed using the \texttt{xml.etree.ElementTree} module. This means that the 
-full XML tree is available in Python. However, Pylux does not directly edit 
-this XML tree. Instead, Pylux creates empty Python objects then loads the 
-data from the XML tree into these. This allows for easy editing and adding of 
-information to these objects. Once these objects have been edited, they are 
-then written back to the XML tree (usually using a \texttt{save()} function). 
-Once Pylux is finished with a document, or when a user explicitly requests, 
-it will then write the new tree back to the original XML file (or a new one if 
-it has been specified). Your code should never directly alter or read from 
-the XML tree. \texttt{plotter} doesn't even import the tree parser to ensure 
-this. You should always access these objects via the API.
-
-\subsection{The \texttt{PlotFile} Class}
-This class deals with the Pylux plot file that is being used. There is no 
-initialisation function.
-
-\subsubsection{Functions of \texttt{PlotFile}}
-
-\paragraph{\texttt{load(self, path)}}
-Loads the file with location \texttt{path} as the working plot file. It will 
-then parse the file into a Python-usable XML tree and store it in 
-\texttt{tree}. It will then get the root element from the tree and store it in 
-\texttt{root}.
-
-\paragraph{\texttt{save()}}
-Saves the current state of the XML working tree to the location from which 
-the plot file was originally loaded.
-
-\paragraph{\texttt{saveas(path)}}
-Saves the current state of the XML working tree to the location with path 
-\texttt{path}.
-
-\paragraph{\texttt{generate(path)}}
-Creates an empty plot file containing the \texttt{olplot}, \texttt{metadata} 
-and \texttt{fixtures} tags at the location with path \texttt{path}. This does 
-not load the file as the working file.
-
-\subsubsection{Attributes of \texttt{PlotFile}}
-Whilst there are attributes defined in the \texttt{PlotFile} class, in 
-general they should not be used by extensions as this breaks down the 
-tiered structure explained in the opening paragraph.
-
-\paragraph{\texttt{file}}
-The path of the plot file.
-
-\paragraph{\texttt{tree}}
-The Python XML tree element that was parsed from the file using 
-\texttt{xml.etree.ElementTree}.
-
-\paragraph{\texttt{root}}
-The root element (\texttt{olplot}) of the plot file.
-
-\subsection{The \texttt{DmxRegistry} Class}
-The \texttt{DmxRegistry} class is Pylux's method for managing DMX registries. 
-If you are using more than one DMX registry, each registry should call a new 
-instance of \texttt{DmxRegistry}.
-
-\subsubsection{Functions of \texttt{DmxRegistry}}
-
-\paragraph{\texttt{\_\_init\_\_(plot\_file, universe)}}
-This creates a new Python registry and sets its \texttt{universe} attribute 
-to universe that was given as a parameter. It will then search the XML tree 
-for a DMX registry with this universe id. If it finds one with the correct 
-universe id, it will load the contents of that XML registry into the Python 
-registry (a dictionary in the form \texttt{\{address: (uuid, func), ...\}}).
-If it cannot find a registry with this universe id, it will instead create a 
-new XML DMX registry object and add this to the tree.
-
-\paragraph{\texttt{save()}}
-This function simply saves the current state of the DmxRegistry object to the 
-XML tree. 
-
-\paragraph{\texttt{get\_occupied()}}
-Returns a list of the occupied DMX channels in the Python registry.
-
-\paragraph{\texttt{get\_start\_address(n)}}
-Returns a recommeded start address for a fixture. This function will search 
-through the registry to find the next \texttt{n} free DMX addresses in a row.
-
-\paragraph{\texttt{address(fixture, start\_address)}}
-Assigns DMX addresses to the fixture \texttt{fixture}. The function will start 
-assigning at \texttt{start\_address} if it is an integer, or will call 
-\texttt{get\_start\_address} if the string \texttt{auto} is given instead. 
-The number of addresses to assign and the functions of these addresses is 
-deterimned by accessing the fixture's attributes. Additionally, if the 
-fixture has been previously addressed (whether it has or not is determined by 
-getting the value of \texttt{universe} from its data), those channels will be 
-removed before the new ones are assigned.
-
-\paragraph{\texttt{unaddress(fixture)}}
-Removes the DMX addresses from a fixture \texttt{fixture} and from the 
-registry. Removes based on the fixture's \texttt{dmx\_channels} data tag.
-
-\subsubsection{Attributes of \texttt{DmxRegistry}}
-
-\paragraph{\texttt{plot\_file}}
-The current plot file is stored as an attribute simply to make accessing it 
-easier, it should not be used externally.
-
-\paragraph{\texttt{registry}}
-A dictionary containing all of the registry information, in the form 
-\texttt{\{address: (uuid, func), ...\}}.
-
-\paragraph{universe}
-The name of the universe id of this registry.
-
-\paragraph{xml\_registry}
-This is another attribute which is present for internal puproses and should 
-not be referenced by external programs; simply the XML data of the registry.
-
-\subsection{The \texttt{FixtureList} Class}
-The \texttt{FixtureList} class manages all the fixtures in a plot as a single 
-entity to make filtering and listing easier. This is a small class present 
-to make code cleaner.
-
-\subsubsection{Functions of \texttt{FixtureList}}
-
-\paragraph{\texttt{\_\_init\_\_(plot\_file)}}
-Finds all the fixtures in XML and makes a \texttt{Fixture} object for them, 
-then appends them to a list.
-
-\paragraph{\texttt{remove(fixture)}}
-Removes the fixture \texttt{fixture} from the plot.
-
-\paragraph{\texttt{get\_data\_values(data\_type)}}
-Returns a list of all the values that exist for \texttt{data\_type} in all the 
-fixtures in the plot.
-
-\subsubsection{Attributes of \texttt{FixtureList}}
-
-\paragraph{\texttt{xml\_fixture\_list}}
-The fixtures list in XML. Should not be referenced externally.
-
-\paragraph{\texttt{fixtures}}
-A list of \texttt{Fixture} objects, containing all the fixtures in the plot.
-
-\subsection{The \texttt{Fixture} Class}
-This class manages individual fixtures and their data.
-
-\subsubsection{Functions of \texttt{Fixture}}
-
-\paragraph{\texttt{\_\_init\_\_(plot\_file, uuid=None)}}
-Creates a new \texttt{Fixture} object in Python and, if a fixture with the 
-UUID \texttt{uuid} can be found in the XML file, loads the data of this 
-fixture into the object.
-
-\paragraph{\texttt{new(olid, fixtures\_dir)}}
-Initialises this fixture as a new fixture. This will load information from a 
-file located in \texttt{fixtures\_dir} with the name \texttt{olid.olf} and 
-copy it into the \texttt{Fixture} object.
-
-\paragraph{\texttt{add()}}
-Adds the fixture, in its current state to the XML tree as a new fixture. In 
-other words, it appends to the XML tree rather than checking if the fixture 
-already exists.
-
-\paragraph{\texttt{load(xml\_fixture)}}
-Initialises this fixture as an existing fixture from the XML tree with 
-XML fixture object \texttt{xml\_fixture}.
-
-\paragraph{\texttt{clone(src\_fixture)}}
-Clones the contents of \texttt{src\_fixture} into this fixture.
-
-\paragraph{\texttt{save()}}
-Saves the fixture to the XML tree. This will not add the fixture to the tree 
-if it does not already exist in the tree. However, it will manage all other 
-fixture data whether they are existing, new or removed.
-
-\paragraph{\texttt{generate\_rotation()}}
-Returns a value for rotation based on the fixture's position and focus 
-position. These values must be defined in the fixture's data dictionary 
-before this function is called.
-
-\subsubsection{Attributes of \texttt{Fixture}}
-
-\paragraph{plot\_file}
-Like all other instances of \texttt{plot\_file} as class attributes, this 
-should not be called externally.
-
-\paragraph{data}
-A dictionary containing all the child data of the fixture, except its DMX 
-functions, in the form \texttt{\{data\_name: data\_value, ...\}}.
-
-\paragraph{dmx\_functions}
-A list of all the DMX functions that this fixture has.
-
-\paragraph{olid}
-This fixture's olid.
-
-\paragraph{uuid}
-This fixture's uuid.
-
-\paragraph{xml\_fixture}
-Another attribute which should not be referenced externally: the fixture in 
-XML.
-
-\paragraph{dmx\_num}
-The number of DMX channels required by this fixture, calculated from 
-\texttt{dmx\_functions}.
-
-\subsection{The \texttt{Metadata} Class}
-The \texttt{Metadata} class deals with the metadata section of the plot file.
-
-\subsubsection{Functions of \texttt{Metadata}}
-
-\paragraph{\texttt{\_\_init\_\_(plot\_file)}}
-Loads the metadata from the XML tree into a Python dictionary.
-
-\paragraph{\texttt{save()}}
-Saves the current metadata dictionary to the XML tree.
-
-\subsubsection{Attributes of \texttt{Metadata}}
-
-\paragraph{xml\_meta}
-The metadata in XML. Should not be externally referenced.
-
-\paragraph{meta}
-A dictionary containing all the metadata information in the form 
-\texttt{\{meta\_name: meta\_value, ...\}}.
-
-\subsection{The \texttt{FixtureSymbol} Class}
-The \texttt{FixtureSymbol} class prepares plain SVG fixtures symbols so that 
-they are ready to be inserted into an SVG plot.
-
-\subsubsection{Functions of \texttt{FixtureSymbol}}
-
-\paragraph{\texttt{\_\_init\_\_(path)}}
-Extracts the base group from the SVG image with path \texttt{path}.
-
-\paragraph{\texttt{prepare(posX, posY, rotation, colour)}}
-Prepares a symbol for inserting into the plot by setting transformations 
-as given by the \texttt{rotation} and position parameters and sets the fill 
-of outer paths to \texttt{colour}.
-
-\subsubsection{Attributes of \texttt{FixtureSymbol}}
-
-\paragraph{image\_group}
-The base image group of the SVG symbol file. This is what should be inserted 
-into the plot file once it has been prepared.
-
-\subsection{The \texttt{clihelper} module}
-As well as the base \texttt{plot} module, the Pylux API includes a helper 
-module to assist in the management of the command-line interface. This doesn't 
-generate an interface like that generated by \texttt{curses}, it mainly assists 
-with the processing of on-screen references.
-
-For your program or extension, if you wish to use the on-screen references, 
-you will need to create one global instance of the \texttt{Interface} class 
-which you will use to access and save to the references dictionary.
-
-\subsubsection{Functions of \texttt{Interface}}
-
-\paragraph{\texttt{\_\_init\_\_()}}
-Creates a dictionary ready to populate with references, and adds the special 
-reference 'this' with the value \texttt{None}.
-
-\paragraph{\texttt{append(ref, object)}}
-Append an item to the dictionary with reference \texttt{ref} that points to 
-\texttt{object}. \texttt{object} can be any Python object although is usually 
-a fixture. \texttt{ref} should be an integer.
-
-\paragraph{\texttt{get(refs)}}
-Return the object associated with the references specified in the string 
-\texttt{refs}. \texttt{refs} should be a string formatted as a comma separated 
-list of integers and ranges, which are indicated by colon separated limits.
-
-\paragraph{\texttt{clear()}}
-Clears all values from the reference dictionary. This should be called before 
-you run any listing action that will add items to the dictionary, unless it is 
-a cummulative list.
-
-\paragraph{\texttt{update\_this(reference)}}
-Update the special 'this' value so that it points to \texttt{reference} which 
-will in turn point to an object. If \texttt{reference} is 'this', the value 
-will not be updated as it should already be correct. Generally you would pipe 
-the user input into this each time the user performs an action on a referenced 
-object.
-
-\subsubsection{Other Functions}
-
-\paragraph{\texttt{resolve\_references(user\_input)}}
-Given \texttt{user\_input} which is a string of numbers formatted as described 
-above, return a list of every integer that this string represents. The 
-\texttt{Interface} class calls this with the \texttt{get} function anyway so 
-it shouldn't really be needed elsewhere.
-
-\paragraph{\texttt{resolve\_input(inputs\_list, number\_args)}}
-From a list of each input word that has been separated using \texttt{split}, 
-return a list of the words, but where the last argument can be multiple words 
-long. This will essentially concatenate any arguments after 
-\texttt{number\_args} into a single final argument, so if the user inputs 
-\texttt{ms production Oedipus Rex} and your program splits this into a list 
-containing the four words separately, you can then run it through the 
-\texttt{resolve\_input} function, with the number of arguments being two and 
-it will return \texttt{['ms', 'production', 'Oedipus Rex']}.
-
-\subsection{Creating Extensions}
-A Pylux extension is simply a Python script file that is run from the 
-\texttt{plotter} program. Extensions are installed in 
-\texttt{/usr/share/pylux/extension/} although support for a local 
-directory will be added soon. When Pylux launches an extension, it runs a 
-function called \texttt{run\_pylux\_extension(plot\_file)}, so this is 
-where your main code needs to be. Other than that, the extension 
-completely handles all interactivity, including returning to the 
-\texttt{plotter} program, which should be implemented with the \texttt{::} 
-shortcut. Your extension should not import \texttt{plotter}; it should 
-rely only on \texttt{plot} and \texttt{clihelper}, if need be.
+\subsubsection{Pseudo Fixture Tags}
+These tags can be used to set multiple attributes of a fixture at once.
+
+\paragraph{\texttt{position \textit{X},\textit{Y}}}
+Sets \texttt{posX} to \texttt{\textit{X}} and \texttt{posY} to 
+\texttt{\textit{Y}}.
+
+\paragraph{\texttt{focus \textit{X},\textit{Y}}}
+Sets \texttt{focusX} to \texttt{\textit{X}} and \texttt{focusY} to 
+\texttt{\textit{Y}}.
+
+\paragraph{\texttt{dimmer \textit{REF} \textit{CHAN}}}
+Sets \texttt{dimmer\_uuid} to the uuid of the dimmer represented by 
+\texttt{\textit{REF}} and \texttt{dimmer\_channel} to \texttt{\textit{CHAN}}.
 
 \end{document}
