@@ -6,7 +6,6 @@
 		<mass>3.75</mass>
 		<throw>8</throw>
 	<dmx_functions>
-		<intensity></intensity>
 	</dmx_functions>
 </fixture>
 

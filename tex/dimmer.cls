@@ -68,7 +68,7 @@
     \setlength\LTright{0pt}
     \begin{longtable}{@{\extracolsep{\fill}\hspace{\tabcolsep}} l r r r }
     \hline
-    {\bf Fixture Type} & \multicolumn{1}{c}{\bf DMX Address} & \multicolumn{1}{c}{\bf Circuit} & \multicolumn{1}{c}{\bf Power} \\*
+    {\bf Fixture Type} & \multicolumn{1}{c}{\bf Dimmer Channel} & \multicolumn{1}{c}{\bf Circuit} & \multicolumn{1}{c}{\bf Power} \\*
     \hline\hline
     \endhead
 }{

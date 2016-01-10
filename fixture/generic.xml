@@ -3,7 +3,6 @@
 	<type>Generic Incandescent</type>
     <symbol>generic</symbol>
 	<dmx_functions>
-		<intensity></intensity>
 	</dmx_functions>
 </fixture>
 

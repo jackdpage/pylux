@@ -61,18 +61,23 @@ class Report:
     def generate_dimmer_report(self):
         self.report = '\\begin{reportTable}\n\n'
         no_dimmer = []
+        dimmer_list = []
 
         def add_fixture(fixture):
             uuid = fixture.uuid
             try:
-                fix_type = fixture.data['type']
+                print_name = fixture.data['name']
             except KeyError:
-                print('Couldn\'t get fixture type for '+uuid)
+                try:
+                    print_name = fixture.data['type']
+                except KeyError:
+                    print_name = fixture.uuid
+                    print('Couldn\'t get fixture type for '+uuid)
             try:
-                dmx = fixture.data['dmx_start_address']
+                chan = fixture.data['dimmer_channel']
             except KeyError:
-                dmx = None
-                print('Couldn\'t get DMX start address for '+uuid)
+                chan = None
+                print('Couldn\'t get dimmer channel for '+uuid)
             try:
                 circuit = fixture.data['circuit']
             except KeyError:
@@ -83,22 +88,34 @@ class Report:
             except KeyError:
                 power = '0'
                 print('Couldn\'t get power for '+uuid+', using zero instead')
-            self.report = (self.report+'\\fixture{'+fix_type+'}{'+str(dmx)+'}{'+
+            self.report = (self.report+'\\fixture{'+print_name+'}{'+str(chan)+'}{'+
                 str(circuit)+'}{'+power+'}\n')
 
+        # Generate a list of dimmers
         for fixture in self.fixtures.fixtures:
-            if 'dimmer' not in fixture.data:
-                no_dimmer.append(fixture)
-
-        dimmer_list = self.fixtures.get_data_values('dimmer')
+            try:
+                if fixture.data['is_dimmer'] == 'True':
+                    dimmer_list.append(fixture)
+            except KeyError:
+                pass
+        dimmer_list = list(set(dimmer_list))
         if len(dimmer_list) == 0:
             print('You\'re not using any dimmers, why are you trying to '
                 'create a dimmer report?')
+        # Generate a list of fixtures without dimmers
+        for fixture in self.fixtures.fixtures:
+            if 'dimmer_uuid' not in fixture.data and fixture not in dimmer_list:
+                no_dimmer.append(fixture)
+        # Iterate through the dimmers
         for dimmer in dimmer_list:
-            self.report = self.report+'\\dimmer{'+dimmer+'}\n\n'
+            try:
+                print_name = dimmer.data['name']
+            except KeyError:
+                print_name = dimmer.uuid
+            self.report = self.report+'\\dimmer{'+print_name+'}\n\n'
             for fixture in self.fixtures.fixtures:
                 try:
-                    if fixture.data['dimmer'] == dimmer:
+                    if fixture.data['dimmer_uuid'] == dimmer.uuid:
                         add_fixture(fixture)
                 except KeyError:
                     pass

@@ -136,11 +136,11 @@ def resolve_input(inputs_list, number_args):
         example, the metadata example above would return 
         ['ma', 'tag', 'value which can be many words long'].
     """
-    i = 0
-    parsed_input = []
+    i = 1
+    args_list = []
     multiword_input = ""
     while i < number_args:
-        parsed_input.append(inputs_list[i])
+        args_list.append(inputs_list[i])
         i = i+1
     while number_args <= i <= len(inputs_list)-1:
         if multiword_input == "":
@@ -148,5 +148,5 @@ def resolve_input(inputs_list, number_args):
         else:
             multiword_input = multiword_input+' '+inputs_list[i]
         i = i+1
-    parsed_input.append(multiword_input)
-    return parsed_input
+    args_list.append(multiword_input)
+    return args_list

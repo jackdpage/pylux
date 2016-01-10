@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<fixture>
+    <type>Zero88 Betapack 2</type>
+    <symbol>PHANTOM</symbol>
+    <is_dimmer>True</is_dimmer>
+    <dimmer_channels>12</dimmer_channels>
+    <dmx_functions>
+        <channel_1 />
+        <channel_2 />
+        <channel_3 />
+        <channel_4 />
+        <channel_5 />
+        <channel_6 />
+    </dmx_functions>
+</fixture>
+

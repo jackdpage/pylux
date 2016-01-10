@@ -3,7 +3,6 @@
 	<type>PAR64 MFL</type>
         <symbol>par64mfl</symbol>
 	<dmx_functions>
-		<intensity></intensity>
 	</dmx_functions>
 </fixture>
 

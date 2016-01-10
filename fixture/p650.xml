@@ -4,7 +4,6 @@
         <power>650</power>
         <symbol>p650</symbol>
 	<dmx_functions>
-		<intensity></intensity>
 	</dmx_functions>
 </fixture>
 
