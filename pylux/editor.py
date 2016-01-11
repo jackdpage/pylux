@@ -15,30 +15,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Edit the content of Pylux plot files.
+
+editor is a CLI implementation of the Pylux plot editor, allowing 
+for the reading and editing of Pylux plot files.
+"""
+
 import os
 import sys
-import plot
-import clihelper
+import pylux.plot as plot
+import pylux.clihelper as clihelper
 import runpy
 
 
 def file_open(inputs):
     try:
         globals['plot_file'].load(inputs[1])
-    except UnboundLocalError:
+    except IndexError:
         print('Error: You need to specify a file path to load')
+    except AttributeError:
+        pass
 
 def file_write(inputs):
-    plot_file.save()
+    try:
+        globals['plot_file'].save()
+    except AttributeError:
+        print('Error: No file is loaded')
 
 def file_writeas(inputs):
     try:
-        plot_file.saveas(inputs[1])
+        globals['plot_file'].saveas(inputs[1])
     except IndexError:
         print('Error: You need to specify a destination path!')
 
 def file_get(inputs):
-    print('Using plot file '+plot_file.file)
+    print('Using plot file '+globals['plot_file'].file)
 
 def file_new(inputs):
     globals['plot_file'].generate(os.path.expanduser(inputs[1]))
@@ -90,9 +101,11 @@ def fixture_list(inputs):
     i = 1
     globals['interface'].clear()
     for fixture in fixtures.fixtures:
-        fixture_type = fixture.data['type']
-        print('\033[4m'+str(i)+'\033[0m '+fixture_type+', id: '+
-            fixture.uuid)
+        if 'name' in fixture.data:
+            name = fixture.data['name']
+        else:
+            name = fixture.data['type']
+        print('\033[4m'+str(i)+'\033[0m '+name+', id: '+fixture.uuid)
         globals['interface'].append(i, fixture)
         i = i+1
 
@@ -101,20 +114,21 @@ def fixture_filter(inputs):
         key = inputs[1]
         value = clihelper.resolve_input(inputs, 2)[-1]
         fixtures = plot.FixtureList(globals['plot_file'])
-        interface.clear()
+        globals['interface'].clear()
         i = 1
         for fixture in fixtures.fixtures:
-            try:
-                test_value = fixture.data[key]
-            except KeyError:
-                pass
-            else:
-                if test_value == value:
-                    fix_type = fixture.data['type']
-                    print('\033[4m'+str(i)+'\033[0m '+fix_type+
+            if key in fixture.data:
+                if fixture.data[key] == value:
+                    if 'name' in fixture.data:
+                        name = fixture.data['name']
+                    else:
+                        name = fixture.data['type']
+                    print('\033[4m'+str(i)+'\033[0m '+name+
                         ', id: '+fixture.uuid+', '+key+': '+value)
                     globals['interface'].append(i, fixture)
                     i = i+1
+            else:
+                pass
     except IndexError:
         print('Error: You need to specify a key and value!')
 
@@ -127,10 +141,10 @@ def fixture_remove(inputs):
 def fixture_get(inputs):
     fixtures = globals['interface'].get(inputs[1])
     for fixture in fixtures:
-        try:
+        if inputs[2] in fixture.data:
             print(fixture.data[inputs[2]])
-        except KeyError:
-            print('Error: This fixture has no data with that name')
+        else:
+            print(None)
     globals['interface'].update_this(inputs[1])
 
 def fixture_getall(inputs):
@@ -162,7 +176,7 @@ def fixture_set(inputs):
             fixture.data['focusX'] = value.split(',')[0]
             fixture.data['focusY'] = value.split(',')[1]
         elif tag == 'dimmer':
-            fixture.data['dimmer_uuid'] = interface.get(inputs[3])[0].uuid
+            fixture.data['dimmer_uuid'] = globals['interface'].get(inputs[3])[0].uuid
             fixture.data['dimmer_channel'] = inputs[4]
         # Otherwise just set it
         else:
@@ -213,7 +227,7 @@ def utility_clear(inputs):
     
 def utility_quit(inputs):
     print('Autosaving changes...')
-    globals['plot_file'].save()
+    file_write(inputs)
     sys.exit()
 
 def utility_kill(inputs):
@@ -228,7 +242,7 @@ def main(plot_file, config):
     globals = {
         'plot_file': plot_file, 
         'config': config, 
-            'interface': interface,
+        'interface': interface,
         'fixtures_dir': '/usr/share/pylux/fixture/'}
 
     functions_dict = {

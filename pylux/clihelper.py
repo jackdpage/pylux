@@ -56,12 +56,17 @@ class Interface:
             A list of objects that correspond to the references that 
             were given.
         """
-        if refs == 'this':
-            refs = self.option_list['this']
-        references = resolve_references(refs)
-        objects = []
-        for ref in references:
-            objects.append(self.option_list[ref])
+        objects= []
+        if refs == 'all':
+            for ref in self.option_list:
+                if ref != 'this':
+                    objects.append(self.option_list[ref])
+        else:
+            if refs == 'this':
+                refs = self.option_list['this']
+            references = resolve_references(refs)
+            for ref in references:
+                objects.append(self.option_list[ref])
         return objects
 
     def clear(self):

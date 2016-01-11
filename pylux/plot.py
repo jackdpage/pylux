@@ -18,7 +18,7 @@
 import xml.etree.ElementTree as ET
 import uuid
 import math
-import reference
+import pylux.reference as reference
 
 
 class PlotFile:
