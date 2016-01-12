@@ -23,8 +23,8 @@ import argparse
 import os
 import configparser
 import sys
-import geditor
-import editor
+import runpy
+import logging
 import plot
 
 from __init__ import __version__
@@ -42,24 +42,41 @@ def main():
         help='load this project file on launch')
     parser.add_argument('-g', '--gui', action='store_true', 
         help='launch Pylux with a GUI')
+    parser.add_argument('-V', '--verbose', dest='verbose', action='count',
+        help='set the verbosity of output')
     launch_args = parser.parse_args()
     # Load configuration
     config_file = '/usr/share/pylux/pylux.conf'
     config = configparser.ConfigParser()
     config.read(config_file)
     print('Using configuration file '+config_file)
+
+    # Handle verbosity
+    verbosity_dict = {
+        None: (logging.WARNING, 'WARNING'), 
+        1: (logging.INFO, 'INFO'),
+        2: (logging.DEBUG, 'DEBUG')}
+    print('Logging level is '+verbosity_dict[launch_args.verbose][1])
+    # Load plot file
     plot_file = plot.PlotFile()
     if launch_args.file != None:
         plot_file.load(launch_args.file)
         print('Using plot file '+plot_file.file)
     else:
         print('No plot file loaded')
+    # Prepare globals for launch
+    initialisation_globals = {
+        'plot_file': plot_file,
+        'config': config,
+        'verbosity': verbosity_dict[launch_args.verbose][0]}
     if launch_args.gui == True:
         print('Running in GUI mode\n')
-        geditor.main(plot_file, config)
+        runpy.run_module(geditor)
     else:
         print('Running in CLI mode\n')
-        editor.main(plot_file, config)
+        runpy.run_module('pylux.editor', 
+            init_globals={'globals': initialisation_globals}, 
+            run_name='pylux_root')
 
 
 if __name__ == '__main__':

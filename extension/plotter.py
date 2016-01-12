@@ -16,10 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pylux.plot
 import os
 import math
+import logging
+from tqdm import tqdm
 import xml.etree.ElementTree as ET
+import pylux.plot as plot
 import pylux.clihelper as clihelper
 import pylux.reference as reference
 
@@ -30,7 +32,6 @@ class ImagePlot:
         self.fixtures = plot.FixtureList(plot_file)
         self.image_plot = ET.Element('svg')
         self.options = options
-
 
     def verify_fixture(self, fixture):
         errors = []
@@ -50,10 +51,13 @@ class ImagePlot:
             return errors
 
     def add_fixtures(self):
-        for fixture in self.fixtures.fixtures:
+        for fixture in tqdm(self.fixtures.fixtures):
             if self.verify_fixture(fixture) == True:
                 fixture.data['rotation'] = fixture.generate_rotation()
-                fixture.data['colour'] = fixture.generate_colour()
+                if not fixture.generate_colour():
+                    fixture.data['colour'] = '#000000'
+                else:
+                    fixture.data['colour'] = fixture.generate_colour()
                 symbol_name = fixture.data['symbol']
                 posX = fixture.data['posX']
                 posY = fixture.data['posY']
@@ -94,6 +98,7 @@ def default_options():
     return options
 
 def run_pylux_extension():
+    logging.basicConfig(level=verbosity)
     options = default_options()
     while True:
         user_input = input('(pylux:plotter) ')

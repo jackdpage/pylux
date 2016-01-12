@@ -399,7 +399,10 @@ class Fixture:
         return math.degrees(math.atan2((focusY-posY), (focusX-posX)))
 
     def generate_colour(self):
-        return reference.gel_colours[self.data['gel']]
+        if self.data['gel'] in reference.gel_colours:
+            return reference.gel_colours[self.data['gel']]
+        else:
+            return False
 
 
 class Metadata:
