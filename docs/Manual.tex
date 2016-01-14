@@ -52,36 +52,48 @@ Load the file with path \texttt{\textit{FILE}} as the plot file on launch.
 Launch Pylux with the graphical user interface. This is not yet implemented. 
 Omitting this flag launches Pylux with its standard CLI interface.
 
+\paragraph{\texttt{--verbose}, \texttt{-V}}
+Set the verbosity level of output. Don't include to keep logging level at the 
+default of \texttt{WARNING}. Include once for logging level of \texttt{INFO} 
+and include twice for a logging level of \texttt{DEBUG}.
 
 \section{Using the Command Line Interface}
-Pylux ships with two interface modes: a command line interface (CLI) and a 
-graphical user interface (GUI). The interface that is loaded on launch is 
-specified by the interface flag when the program is run. However, the 
-default interface is the CLI. When the CLI launches, you are presented with an 
-interactive prompt, which accepts commands which may also have arguments. Each 
-command is two letters long (apart from the utility commands), where the first 
-letter represents the aspect that the command affects and the second letter 
-represents the action of the command.
+The command line interface (CLI) is the default interface used by Pylux. It 
+allows for very efficient editing of plot files with very little CPU overhead. 
 
-When you are using the CLI, you will notice that some commands call for you 
-to provide an interface reference id (usually called \texttt{\textit{REF}} 
-in the command synopsis). This allows you to easily pass objects that have 
-been listed on-screen into another command. You can tell which references are 
-legal because they will be underlined. For example to pipe a fixture object 
-into the \texttt{xs} command, you would first run a command which lists the 
-fixture you wish to change (\texttt{xl} or \texttt{xf}), find the interface 
-reference of that fixture, then use that reference in the \texttt{xs} 
-command. In addition to these references, there is an additional special 
-reference which is not displayed on-screen which is called using the 
-reference \texttt{this}. This special reference will refer to the object that 
-was previously worked on. For example, if you perform \texttt{xs} on a fixture 
-then wish to perform another \texttt{xs} immediately afterwards, you can use 
-\texttt{this} instead of the interface reference.
+The CLI is interacted with using a series of commands, each of which may have 
+one or more arguments. When the prompt is displayed, the program is waiting 
+for the user to enter one of these commands. Each command is a memorable 
+two character sequence (apart from the utility commands), where the first 
+character is the object that is going to be acted upon and the second 
+character is the action to perform.
 
-To allow for the easy editing of objects in batch, you can specify more than 
-one interface reference at once using a comma separated list such as a,b,c. 
-You can also specify ranges such as a:b and combine these two features such 
-as a:b,c,d,e:f.
+\subsection{Piping Complex Objects into Commands}
+Many commands require that you specify an object other than one which can be 
+represented by a simple command line string. For example, the \texttt{xs} 
+command requires that you supply a fixture object as an argument. This is made 
+possible whilst retaining the simplicity of text based entry through the 
+interface reference system.
+
+When you run a listing or filtering command such as \texttt{xl}, you will 
+notice that the objects in the list each have a number which is underlined. 
+This is that objects's interface reference. Using this, you can pipe objects
+into other commands, simply by specifying the number where the command calls 
+for another object type. 
+
+To allow for the efficient manipulation of objects in batch, you can specify 
+more than one object at once using a comma-separated list (provided of course 
+that the command allows for multiple objects to be piped into it) such as 
+\texttt{a,b,c}. You can also specify ranges of numbers if you are piping 
+sequential objects from a list using the format \texttt{a:b} where \texttt{a} 
+and \texttt{b} are the inclusive limits. You can of course use any 
+combination of these formats, such as \texttt{a:b,c,d:e,f}.
+
+If you need to pipe the same object or group of objects into multiple commands, 
+you can use the \texttt{this} reference instead of a number or list of numbers. 
+This points to the last used reference, so will pipe in the same object or 
+objects that were used for the last command, unless the reference list has 
+changed since (i.e. a listing command has been run again).
 
 \subsection{Utility Commands}
 
@@ -178,9 +190,9 @@ removed, use \texttt{xp} for that.
 Set the value of \texttt{\textit{TAG}} in fixture with interface reference 
 \texttt{\textit{REF}} to \texttt{\textit{VALUE}}. For a list of standard 
 fixture tags, see \autoref{sec:fixtags}. There are also some shortcuts to set 
-mulitple tags at once, which can be found in the illegal tags section.
+mulitple tags at once, which can be found in the pseudo tags section.
 
-\paragraph{\texttt{xA \textit{REF UNIVERSE ADDR}}}
+\paragraph{\texttt{xa \textit{REF UNIVERSE ADDR}}}
 Assign DMX addresses to the fixture with interface reference 
 \texttt{\textit{REF}}. This will add the fixture to the universe 
 \texttt{\textit{UNIVERSE}}, beginning at the start address 
@@ -199,14 +211,14 @@ DMX address, fixture UUID and function of every channel in the DMX registry
 with identifier \texttt{\textit{UNIVERSE}}.
 
 \subsection{Using Extensions}
-You cannot directly interact with extensions from the \texttt{plotter} 
+You cannot directly interact with extensions from the \texttt{editor} 
 interface, you must first load the extension using the \texttt{:} command.
 For example, to load the \texttt{texlux} extension, use \texttt{:texlux}. 
 This will then present you with the interface as defined by that extension 
 which may vary but in practise should be a prompt of the form 
 \texttt{pylux:extension} to indicate to you which extension you are 
-operating in and some commands, much like in the \texttt{plotter} interface.
-The extension defines its own way of returning to \texttt{plotter} but this 
+operating in and some commands, much like in the \texttt{editor} interface.
+The extension defines its own way of returning to \texttt{editor} but this 
 should in general be \texttt{::} or \texttt{q}.
 
 \section{Using the Graphical User Interface}
@@ -215,13 +227,13 @@ don't.
 
 \section{Extensions}
 In the previous sections, we have discussed the usage of the base program in 
-Pylux: \texttt{plotter}. This is the program that you will use to edit your
+Pylux: \texttt{editor}. This is the program that you will use to edit your
 plots, however, beyond that, it doesn't do much. That is why Pylux is also 
 bundled with extensions to provide extra functionality. In the current 
 version, Pylux comes bundled with the \texttt{texlux} extension only.
 
 \subsection{\texttt{texlux}}
-\texttt{texlux} is an extension to the base \texttt{plotter} program which 
+\texttt{texlux} is an extension to the base \texttt{editor} program which 
 allows for the creation of reports in the \LaTeX{} format, which can then be 
 post-processed to create a PDF file, or many other formats through the use of 
 an external tool such as Pandoc.
@@ -288,22 +300,21 @@ This is the parent of a list of empty elements, each of which represents a
 function that the fixture has that requires the use of a DMX channel. For 
 example, traditional fixtures will have an \texttt{intensity} function 
 whilst modern LED fixtures may have \texttt{colour} and \texttt{mode} 
-functions. Used by: \texttt{plotter}.
+functions.
 
 \paragraph{\texttt{dmx\_channels}}
 The number of DMX channels that a fixture needs. This is automatically 
 calculated from the \texttt{dmx\_functions} tag, so should not be changed 
-manually. Used by: \texttt{plotter}.
+manually.
 
 \paragraph{\texttt{dmx\_start\_address}}
 The start address of this fixture, if it has been addressed. This is 
 automatically assigned using the address function so shouldn't be changed 
-manually. Used by: \texttt{plotter texlux}.
+manually.
 
 \paragraph{\texttt{universe}}
 The universe in which the DMX channels for this fixture are located. This too 
 is set when the address command is run so shouldn't be changed by the user. 
-Used by: \texttt{plotter}.
 
 \paragraph{\texttt{posX}}
 The x position in 2D space where this fixture is located. Measured in metres.
@@ -324,10 +335,6 @@ The rotation of this fixture about its centre. Measured anticlockwise from
 the positive x axis in degrees. This can be automatically calculated if the 
 preceding four data tags are present.
 
-\paragraph{\texttt{dimmer}}
-For traditional fixtures only. The dimmer that is controlling this fixture. 
-Used by: \texttt{texlux}.
-
 \paragraph{\texttt{circuit}}
 For traditional fixtures only. The circuit into which the fixture is patched. 
 Used by: \texttt{texlux}.
@@ -336,14 +343,22 @@ Used by: \texttt{texlux}.
 For traditional fixtures only. The maximum power draw by the lamp in this 
 fixture.
 
+\paragraph{\texttt{dimmer\_uuid}}
+For traditional fixtures only. The UUID of the dimmer (which must exist as a 
+separate fixture in the plot file) which is controlling this fixture.
+
+\paragraph{\texttt{dimmer\_chan}}
+For traditional fixtures only. The name or number of the dimmer channel by 
+which this fixture is controlled. 
+
 \paragraph{\texttt{gel}}
-The name or manufacturer's code of the gel that is being used in this 
-fixture.
+The manufacturer's code of the gel that is being used in this fixture. The 
+automatic colour calculation currently supports Rosco Supergel and E-colour 
+and the named HTML (X11) colours.
 
 \paragraph{\texttt{colour}}
-The colour in which this fixture should be rendered on lighting plots. This 
-can be calculated automatically if the preceding tag is present and is a 
-standard colour name or code. (NYI)
+A hexadecimal colour code indicating the colour which best represents the gel 
+in this fixture. Can be automatically calculated if gel is present.
 
 \subsubsection{Pseudo Fixture Tags}
 These tags can be used to set multiple attributes of a fixture at once.

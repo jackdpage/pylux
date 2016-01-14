@@ -1,9 +1,12 @@
 (A) 2015-12-29 DMX start address assigner doesn't check DMX001 +Bugfix
 (B) 2015-12-19 Better (and more) error handling +Base
-(B) 2015-12-20 Auto completion
+(B) 2015-12-20 Auto completion +Base
 (B) 2015-12-30 Error message when removing non-existant meta +Bugfix
 (B) 2016-01-07 Make unaddressing fixtures independent of fixture XML +Clean
+(B) 2016-01-14 GUI fixture action buttons +Base
+(B) 2016-01-14 Cue data storage definition +Extensions
 (C) 2015-12-30 add() in Fixture shouldn't exist +Clean
+(C) 2016-01-14 Console and cue editor +Extensions
 x 2016-01-11 2016-01-07 Calculate auto fields on plotgen +Extensions
 x 2015-12-14 2015-12-12 Automatic DMX start address assignment +Base
 x 2015-12-14 2015-12-13 DmxRegistry save deletes empty channels +Base

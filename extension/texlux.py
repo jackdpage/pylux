@@ -25,10 +25,9 @@ import clihelper
 class Report:
     """Create a LaTeX report."""
 
-    def __init__(self, title, plot_file, template):
-        self.plot_file = plot_file
-        self.meta = plot.Metadata(self.plot_file)
-        self.fixtures = plot.FixtureList(self.plot_file)
+    def __init__(self, title, template):
+        self.meta = plot.Metadata(PLOT_FILE)
+        self.fixtures = plot.FixtureList(PLOT_FILE)
         self.title = title
         self.template = template
 
@@ -130,7 +129,7 @@ class Report:
     def generate_footer(self):
         self.footer = '\\end{reportTable}\n\\end{document}'
 
-def run_pylux_extension(plot_file):
+def run_pylux_extension():
     prompt = '(pylux:texlux) ' 
     while True:
         user_input = input(prompt)
@@ -139,8 +138,7 @@ def run_pylux_extension(plot_file):
             inputs.append(i)
         
         if inputs[0] == 'rn':
-            report = Report(clihelper.resolve_input(inputs, 3)[-1],
-                 plot_file, inputs[1])
+            report = Report(clihelper.resolve_input(inputs, 3)[-1], inputs[1])
             report.generate_header()
             report.generate_dimmer_report()
             report.generate_footer()
@@ -157,4 +155,4 @@ def run_pylux_extension(plot_file):
 
 
 if __name__ == 'pyext':
-    run_pylux_extension(plot_file)
+    run_pylux_extension()

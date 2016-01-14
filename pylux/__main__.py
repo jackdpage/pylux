@@ -65,18 +65,18 @@ def main():
     else:
         print('No plot file loaded')
     # Prepare globals for launch
-    initialisation_globals = {
-        'plot_file': plot_file,
-        'config': config,
-        'verbosity': verbosity_dict[launch_args.verbose][0]}
+    init_globals = {
+        'PLOT_FILE': plot_file,
+        'CONFIG': config,
+        'LOG_LEVEL': verbosity_dict[launch_args.verbose][0]}
     if launch_args.gui == True:
         print('Running in GUI mode\n')
-        runpy.run_module(geditor)
+        runpy.run_module('pylux.geditor', init_globals=init_globals, 
+                         run_name='pylux_root')
     else:
         print('Running in CLI mode\n')
-        runpy.run_module('pylux.editor', 
-            init_globals={'globals': initialisation_globals}, 
-            run_name='pylux_root')
+        runpy.run_module('pylux.editor', init_globals=init_globals, 
+                         run_name='pylux_root')
 
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ import pylux.reference as reference
 class ImagePlot:
 
     def __init__(self, options):    
-        self.fixtures = plot.FixtureList(plot_file)
+        self.fixtures = plot.FixtureList(PLOT_FILE)
         self.image_plot = ET.Element('svg')
         self.options = options
 
@@ -98,7 +98,7 @@ def default_options():
     return options
 
 def run_pylux_extension():
-    logging.basicConfig(level=verbosity)
+    logging.basicConfig(level=LOG_LEVEL)
     options = default_options()
     while True:
         user_input = input('(pylux:plotter) ')

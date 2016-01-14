@@ -31,7 +31,7 @@ import logging
 
 def file_open(inputs):
     try:
-        globals['plot_file'].load(inputs[1])
+        PLOT_FILE.load(inputs[1])
     except IndexError:
         print('Error: You need to specify a file path to load')
     except AttributeError:
@@ -40,55 +40,55 @@ def file_open(inputs):
 
 def file_write(inputs):
     try:
-        globals['plot_file'].save()
+        PLOT_FILE.save()
     except AttributeError:
         print('Error: No file is loaded')
 
 
 def file_writeas(inputs):
     try:
-        globals['plot_file'].saveas(inputs[1])
+        PLOT_FILE.saveas(inputs[1])
     except IndexError:
         print('Error: You need to specify a destination path!')
 
 
 def file_get(inputs):
-    print('Using plot file '+globals['plot_file'].file)
+    print('Using plot file '+PLOT_FILE.file)
 
 
 def file_new(inputs):
-    globals['plot_file'].generate(os.path.expanduser(inputs[1]))
-    globals['plot_file'].load(os.path.expanduser(inputs[1]))
+    PLOT_FILE.generate(os.path.expanduser(inputs[1]))
+    PLOT_FILE.load(os.path.expanduser(inputs[1]))
     file_get(inputs)
 
 
 def metadata_list(inputs):
-    metadata = plot.Metadata(globals['plot_file'])
+    metadata = plot.Metadata(PLOT_FILE)
     for i in metadata.meta:
         print(i+': '+metadata.meta[i])
 
 
 def metadata_set(inputs):
-    metadata = plot.Metadata(globals['plot_file'])
+    metadata = plot.Metadata(PLOT_FILE)
     metadata.meta[inputs[1]] = clihelper.resolve_input(inputs, 2)[-1]
     metadata.save()
 
 
 def metadata_remove(inputs):
-    metadata = plot.Metadata(globals['plot_file'])
+    metadata = plot.Metadata(PLOT_FILE)
     metadata.meta[inputs[1]] = None
     metadata.save()
 
 
 def metadata_get(inputs):
-    metadata = plot.Metadata(globals['plot_file'])
+    metadata = plot.Metadata(PLOT_FILE)
     print(inputs[1]+': '+metadata.meta[inputs[1]])
 
 
 def fixture_new(inputs):
-    fixture = plot.Fixture(globals['plot_file'])
+    fixture = plot.Fixture(PLOT_FILE)
     try:
-        fixture.new(inputs[1], globals['fixtures_dir'])
+        fixture.new(inputs[1], PLOT_FILE)
     except FileNotFoundError:
         print('Error: Couldn\'t find a fixture file with this name')
     else:
@@ -97,28 +97,27 @@ def fixture_new(inputs):
 
 
 def fixture_clone(inputs):
-    src_fixture = globals['interface'].get(inputs[1])
+    src_fixture = INTERFACE.get(inputs[1])
     if len(src_fixture) > 1:
         print('Error: You can only clone one fixture!')
     else:
-        new_fixture = plot.Fixture(globals['plot_file'], 
-            globals['fixtures_dir'])
+        new_fixture = plot.Fixture(PLOT_FILE, FIXTURES_DIR)
         new_fixture.clone(src_fixture[0])
         new_fixture.add()
         new_fixture.save()
 
 
 def fixture_list(inputs):
-    fixtures = plot.FixtureList(globals['plot_file'])
+    fixtures = plot.FixtureList(PLOT_FILE)
     i = 1
-    globals['interface'].clear()
+    INTERFACE.clear()
     for fixture in fixtures.fixtures:
         if 'name' in fixture.data:
             name = fixture.data['name']
         else:
             name = fixture.data['type']
         print('\033[4m'+str(i)+'\033[0m '+name+', id: '+fixture.uuid)
-        globals['interface'].append(i, fixture)
+        INTERFACE.append(i, fixture)
         i = i+1
 
 
@@ -126,8 +125,8 @@ def fixture_filter(inputs):
     try:
         key = inputs[1]
         value = clihelper.resolve_input(inputs, 2)[-1]
-        fixtures = plot.FixtureList(globals['plot_file'])
-        globals['interface'].clear()
+        fixtures = plot.FixtureList(PLOT_FILE)
+        INTERFACE.clear()
         i = 1
         for fixture in fixtures.fixtures:
             if key in fixture.data:
@@ -138,7 +137,7 @@ def fixture_filter(inputs):
                         name = fixture.data['type']
                     print('\033[4m'+str(i)+'\033[0m '+name+
                           ', id: '+fixture.uuid+', '+key+': '+value)
-                    globals['interface'].append(i, fixture)
+                    INTERFACE.append(i, fixture)
                     i = i+1
             else:
                 pass
@@ -147,32 +146,32 @@ def fixture_filter(inputs):
 
 
 def fixture_remove(inputs):
-    fixture_list = plot.FixtureList(globals['plot_file'])
-    fixtures = globals['interface'].get(inputs[1])
+    fixture_list = plot.FixtureList(PLOT_FILE)
+    fixtures = INTERFACE.get(inputs[1])
     for fixture in fixtures:
         fixture_list.remove(fixture)
 
 
 def fixture_get(inputs):
-    fixtures = globals['interface'].get(inputs[1])
+    fixtures = INTERFACE.get(inputs[1])
     for fixture in fixtures:
         if inputs[2] in fixture.data:
             print(fixture.data[inputs[2]])
         else:
             print(None)
-    globals['interface'].update_this(inputs[1])
+    INTERFACE.update_this(inputs[1])
 
 
 def fixture_getall(inputs):
-    fixtures = globals['interface'].get(inputs[1])
+    fixtures = INTERFACE.get(inputs[1])
     for fixture in fixtures:
         for data_item in fixture.data:
             print(data_item+': '+str(fixture.data[data_item]))
-    globals['interface'].update_this(inputs[1])
+    INTERFACE.update_this(inputs[1])
 
 
 def fixture_set(inputs):
-    fixtures = globals['interface'].get(inputs[1])
+    fixtures = INTERFACE.get(inputs[1])
     tag = inputs[2]
     value = clihelper.resolve_input(inputs, 3)[-1]
     for fixture in fixtures:
@@ -193,40 +192,39 @@ def fixture_set(inputs):
             fixture.data['focusX'] = value.split(',')[0]
             fixture.data['focusY'] = value.split(',')[1]
         elif tag == 'dimmer':
-            fixture.data['dimmer_uuid'] = globals['interface'].get(inputs[3])[0].uuid
+            fixture.data['dimmer_uuid'] = INTERFACE.get(inputs[3])[0].uuid
             fixture.data['dimmer_channel'] = inputs[4]
         # Otherwise just set it
         else:
             fixture.data[tag] = value
         fixture.save()
-    globals['interface'].update_this(inputs[1])
+    INTERFACE.update_this(inputs[1])
 
 
 def fixture_address(inputs):
-    fixtures = globals['interface'].get(inputs[1])
+    fixtures = INTERFACE.get(inputs[1])
     if len(fixtures) > 1 and inputs[3] != 'auto':
         print('Error: You must specify auto if you address more than '
               'one fixture.')
     else:
-        registry = plot.DmxRegistry(globals['plot_file'], inputs[2])
+        registry = plot.DmxRegistry(PLOT_FILE, inputs[2])
         for fixture in fixtures:
             registry.address(fixture, inputs[3])
-    globals['interface'].update_this(inputs[1])
+    INTERFACE.update_this(inputs[1])
 
 
 def fixture_purge(inputs):
-    fixtures = globals['interface'].get(inputs[1])
+    fixtures = INTERFACE.get(inputs[1])
     for fixture in fixtures:
-        registry = plot.DmxRegistry(globals['plot_file'], 
-                                    fixture.data['universe'])
+        registry = plot.DmxRegistry(PLOT_FILE, fixture.data['universe'])
         registry.unaddress(fixture)
-        fixture_list = plot.FixtureList(globals['plot_file'])
+        fixture_list = plot.FixtureList(PLOT_FILE)
         fixture_list.remove(fixture)
 
 
 def registry_list(inputs):
     try:
-        registry = plot.DmxRegistry(globals['plot_file'], inputs[1])
+        registry = plot.DmxRegistry(PLOT_FILE, inputs[1])
         for channel in registry.registry:
             uuid = registry.registry[channel][0]
             func = registry.registry[channel][1]
@@ -260,9 +258,10 @@ def utility_kill(inputs):
 
 def main():
     """The main user loop."""
-    interface = clihelper.Interface()
-    globals['interface'] = interface
-    globals['fixtures_dir'] = '/usr/share/pylux/fixture/'
+    global INTERFACE
+    INTERFACE = clihelper.Interface()
+    global FIXTURES_DIR 
+    FIXTURES_DIR = '/usr/share/pylux/fixture/'
 
     functions_dict = {
         'fo': file_open,
@@ -292,17 +291,21 @@ def main():
         
     print('Welcome to Pylux! Type \'h\' to view a list of commands.')
     # Begin the main loop
-    logging.basicConfig(level=globals['verbosity'])
+    logging.basicConfig(level=LOG_LEVEL)
     while True:
-        user_input = input(globals['config']['Settings']['prompt']+' ')
+        user_input = input(CONFIG['Settings']['prompt']+' ')
         inputs = user_input.split(' ')
 
         if inputs[0][0] == ':':
+            init_globals = {
+                'PLOT_FILE': PLOT_FILE,
+                'CONFIG': CONFIG,
+                'LOG_LEVEL': LOG_LEVEL}
             extensions_dir = '/usr/share/pylux/extension/'
             module_name = inputs[0].split(':')[1]
             try:
                 runpy.run_path(extensions_dir+module_name+'.py',
-                               init_globals=globals, run_name='pyext')
+                               init_globals=init_globals, run_name='pyext')
             except FileNotFoundError:
                 print('No extension with this name!')
 
