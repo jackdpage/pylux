@@ -11,3 +11,4 @@ MANIFEST
 *.pyc
 *.olp
 tests/*
+.idea/

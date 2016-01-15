@@ -18,73 +18,77 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pylux.plot as plot
-from tkinter import *
-from tkinter.ttk import *
-from tkinter import tix
-from tkinter import constants
-from tkinter import filedialog
+import gi.repository
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
 
-class GuiApp(Frame):
+class FixturesWindow(Gtk.Window):
 
-    def __init__(self, master=None):
-        Frame.__init__(self, master)
-        self.pack()
-        self.master = master
-        self.create_menubar()
-        try:
-            self.create_fixtures_list()
-        except AttributeError:
-            print('no plot file')
-        self.create_fixture_action_buttons()
-    
-    def create_menubar(self):
-        self.menubar = Menu(self)
-        self.master.config(menu=self.menubar)
-        self.file_menu = Menu(self.menubar)
-        self.menubar.add_cascade(label='File', menu=self.file_menu)
-        self.file_menu.add_command(label='Open...', 
-            command=self.command_file_load)
-        self.debug_menu = Menu(self.menubar)
-        self.menubar.add_cascade(label='Debug', menu=self.debug_menu)
-        self.debug_menu.add_command(label='GenFixList',
-            command=self.create_fixtures_list)
+    def __init__(self):
+        Gtk.Window.__init__(self, title='Fixtures')
+        self.box_container = Gtk.Box(spacing=6, 
+                                 orientation=Gtk.Orientation.VERTICAL)
+        self.add(self.box_container)
 
-    def create_fixtures_list(self):
-        self.gfixtures_tree = Treeview(self, selectmode='browse', 
-            columns=['tag', 'value'])
+        # Create MenuBar
+        self.menubar = Gtk.MenuBar()
+        self.box_container.pack_start(self.menubar, True, True, 0)
+        self.menu_file = Gtk.MenuItem(label='File')
+
+        # Create fixture ListBox
+        self.listbox_fixtures = Gtk.ListBox()
+        self.listbox_fixtures.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.box_container.pack_start(self.listbox_fixtures, True, True, 0)
+        self.gui_list_fixtures()
+
+        # Create fixture action buttons
+        self.button_fixture_new = Gtk.Button(label='New fixture')
+        self.button_fixture_new.connect('clicked', self.action_fixture_new)
+        self.button_fixture_remove = Gtk.Button(label='Remove fixture')
+        self.button_fixture_remove.connect('clicked', 
+                                           self.action_fixture_remove)
+        self.button_fixture_clone = Gtk.Button(label='Clone fixture')
+        self.button_fixture_clone.connect('clicked', self.action_fixture_clone)
+
+        # Pack fixture action buttons into Box
+        self.box_fixture_buttons = Gtk.Box(spacing=4)
+        self.box_container.pack_start(self.box_fixture_buttons, True, True, 0)
+        self.box_fixture_buttons.pack_start(self.button_fixture_new, 
+                                            True, True, 0)
+        self.box_fixture_buttons.pack_start(self.button_fixture_remove, 
+                                            True, True, 0)
+        self.box_fixture_buttons.pack_start(self.button_fixture_clone, 
+                                            True, True, 0)
+
+    def gui_list_fixtures(self):
         fixtures = plot.FixtureList(PLOT_FILE)
         for fixture in fixtures.fixtures:
-            uuid = fixture.uuid
+            listbox_row_fixture = Gtk.ListBoxRow()
+            box_listbox_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, 
+                                       spacing=20)
+            listbox_row_fixture.add(box_listbox_row)
             if 'name' in fixture.data:
-                name = fixture.data['name']
+                fixture_name = fixture.data['name']
             else:
-                name = fixture.data['type']
-            self.gfixtures_tree.insert('', 'end', uuid, text=name, 
-                values=[fixture.data['type']])
-            for data_item in fixture.data:
-                name = data_item
-                value = fixture.data[data_item]
-                self.gfixtures_tree.insert(uuid, 'end', values=[name, value])
-        self.gfixtures_tree.pack()
+                fixture_name = fixture.data['type']
+            label_fixture_name = Gtk.Label(fixture_name)
+            box_listbox_row.pack_start(label_fixture_name, True, True, 0)
+            self.listbox_fixtures.add(listbox_row_fixture)
 
-    def create_fixture_action_buttons(self):
-        self.gnew_fixture_button = Button(self)
-        self.gnew_fixture_button['text'] = 'New fixture'
-        self.gnew_fixture_button['command'] = self.command_fixture_add() 
-        self.gnew_fixture_button.pack(side='bottom')
+    def action_fixture_new(self, widget):
+        print('Adding a fixture...')
 
-    def command_file_load(self):
-        gfile_dialog = filedialog.askopenfile()
-        PLOT_FILE.load(gfile_dialog.name)
+    def action_fixture_remove(self, widget):
+        print('Removing fixture...')
 
-    def command_fixture_add(self):
-        print('adding a fixture.... shhhh only pretending')
-
+    def action_fixture_clone(self, widget):
+        print('Cloning fixture...')
 
 def main():
-    root = tix.Tk()
-    app = GuiApp(master=root)
-    app.mainloop()
+    win = FixturesWindow()
+    win.connect('delete-event', Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
 
 if __name__ == 'pylux_root':
     main()
