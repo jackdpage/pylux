@@ -36,6 +36,16 @@ class TextInputDialog(Gtk.Dialog):
         self.show_all()
 
 
+class FixtureInfoWindow(Gtk.Window):
+
+    def __init__(self, fixture):
+        if 'name' in fixture.data:
+            fixture_name = fixture.data['name']
+        else:
+            fixture_name = fixture.data['type']
+        Gtk.Window.__init__(self, title='Editing '+fixture_name)
+
+
 class FixturesWindow(Gtk.Window):
 
     def __init__(self):
@@ -49,26 +59,21 @@ class FixturesWindow(Gtk.Window):
         self.box_container.pack_start(self.menubar, True, True, 0)
         self.menu_file = Gtk.MenuItem(label='File')
 
-        self.gui_list_fixtures()
+        # Create Scrollbar
+        self.scrollbar = Gtk.Scrollbar.new(Gtk.Orientation.VERTICAL, None)
+        self.box_container.pack_start(self.scrollbar, True, True, 0)
 
+        # Create the fixtures list
+        self.gui_list_fixtures()
 
         # Create fixture action buttons
         self.button_fixture_new = Gtk.Button(label='New fixture')
         self.button_fixture_new.connect('clicked', self.action_fixture_new)
-        self.button_fixture_remove = Gtk.Button(label='Remove fixture')
-        self.button_fixture_remove.connect('clicked', 
-                                           self.action_fixture_remove)
-        self.button_fixture_clone = Gtk.Button(label='Clone fixture')
-        self.button_fixture_clone.connect('clicked', self.action_fixture_clone)
 
         # Pack fixture action buttons into Box
         self.box_fixture_buttons = Gtk.Box(spacing=4)
         self.box_container.pack_start(self.box_fixture_buttons, True, True, 0)
         self.box_fixture_buttons.pack_start(self.button_fixture_new, 
-                                            True, True, 0)
-        self.box_fixture_buttons.pack_start(self.button_fixture_remove, 
-                                            True, True, 0)
-        self.box_fixture_buttons.pack_start(self.button_fixture_clone, 
                                             True, True, 0)
 
     def gui_list_fixtures(self):
@@ -83,17 +88,33 @@ class FixturesWindow(Gtk.Window):
     def gui_add_fixture(self, fixture):
         """Add a fixture to the ListBox as a ListBoxRow."""
         listbox_row_fixture = Gtk.ListBoxRow()
-        box_listbox_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, 
-                                   spacing=20)
-        listbox_row_fixture.add(box_listbox_row)
+        table_fixture_listbox = Gtk.Table(3, 1, False)
+        listbox_row_fixture.add(table_fixture_listbox)
+        # LHS: name, uuid
+        box_listbox_row_LHS = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, 
+                                      spacing=5)
         if 'name' in fixture.data:
             fixture_name = fixture.data['name']
         else:
             fixture_name = fixture.data['type']
-        label_fixture_name = Gtk.Label(fixture_name)
-        label_fixture_uuid = Gtk.Label(fixture.uuid)
-        box_listbox_row.pack_start(label_fixture_name, True, True, 0)
-        box_listbox_row.pack_start(label_fixture_uuid, True, True, 0)
+        label_fixture_name = Gtk.Label(fixture_name, halign=1)
+        label_fixture_uuid = Gtk.Label(fixture.uuid, halign=1)
+        box_listbox_row_LHS.pack_start(label_fixture_name, True, True, 0)
+        box_listbox_row_LHS.pack_start(label_fixture_uuid, True, True, 0)
+        table_fixture_listbox.attach(box_listbox_row_LHS, 0, 2, 0, 1)
+        # RHS: action buttons
+        box_listbox_row_RHS = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, 
+                                      spacing=2)
+        button_fixture_getall = Gtk.Button.new_from_icon_name('dialog-information', 1)
+        button_fixture_getall.connect('clicked', self.action_fixture_getall)
+        button_fixture_clone = Gtk.Button.new_from_icon_name('edit-copy', 1)
+        button_fixture_clone.connect('clicked', self.action_fixture_clone)
+        button_fixture_remove = Gtk.Button.new_from_icon_name('edit-delete', 1)
+        button_fixture_remove.connect('clicked', self.action_fixture_remove)
+        box_listbox_row_RHS.pack_start(button_fixture_getall, True, True, 0)
+        box_listbox_row_RHS.pack_start(button_fixture_clone, True, True, 0)
+        box_listbox_row_RHS.pack_start(button_fixture_remove, True, True, 0)
+        table_fixture_listbox.attach(box_listbox_row_RHS, 2, 3, 0, 1)
         self.listbox_fixtures.add(listbox_row_fixture)
 
     def action_fixture_new(self, widget):
@@ -119,8 +140,8 @@ class FixturesWindow(Gtk.Window):
     def action_fixture_clone(self, widget):
         print('Cloning fixture...')
 
-    def action_fixture_getall(self, widget, fixture):
-        
+    def action_fixture_getall(self, widget):
+        print('Listing the things...')
         
 
 
