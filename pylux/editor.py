@@ -88,7 +88,7 @@ def metadata_get(inputs):
 def fixture_new(inputs):
     fixture = plot.Fixture(PLOT_FILE)
     try:
-        fixture.new(inputs[1], PLOT_FILE)
+        fixture.new(inputs[1], FIXTURES_DIR)
     except FileNotFoundError:
         print('Error: Couldn\'t find a fixture file with this name')
     else:

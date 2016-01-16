@@ -22,6 +22,20 @@ import gi.repository
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
+
+class TextInputDialog(Gtk.Dialog):
+
+    def __init__(self, parent, title):
+        Gtk.Dialog.__init__(self, title, parent, 0,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OK, Gtk.ResponseType.OK))
+        self.set_default_size(150, 100)
+        self.entry_box = Gtk.Entry()
+        self.container_box = self.get_content_area()
+        self.container_box.add(self.entry_box)
+        self.show_all()
+
+
 class FixturesWindow(Gtk.Window):
 
     def __init__(self):
@@ -49,6 +63,8 @@ class FixturesWindow(Gtk.Window):
                                            self.action_fixture_remove)
         self.button_fixture_clone = Gtk.Button(label='Clone fixture')
         self.button_fixture_clone.connect('clicked', self.action_fixture_clone)
+        self.BUTTON_DEBUG_REFRESH = Gtk.Button(label='[DEBUG] refresh')
+        self.BUTTON_DEBUG_REFRESH.connect('clicked', self.debug_refresh_list)
 
         # Pack fixture action buttons into Box
         self.box_fixture_buttons = Gtk.Box(spacing=4)
@@ -59,6 +75,11 @@ class FixturesWindow(Gtk.Window):
                                             True, True, 0)
         self.box_fixture_buttons.pack_start(self.button_fixture_clone, 
                                             True, True, 0)
+        self.box_fixture_buttons.pack_start(self.BUTTON_DEBUG_REFRESH,
+                                            True, True, 0)
+
+    def debug_refresh_list(self, widget):
+        self.gui_list_fixtures()
 
     def gui_list_fixtures(self):
         fixtures = plot.FixtureList(PLOT_FILE)
@@ -77,12 +98,31 @@ class FixturesWindow(Gtk.Window):
 
     def action_fixture_new(self, widget):
         print('Adding a fixture...')
+        type_dialog = TextInputDialog(self, 'Fixture Type')
+        response = type_dialog.run()
+        if response == Gtk.ResponseType.CANCEL:
+            print('Oh no it was cancelled :(')
+        else:
+            fixture_type = type_dialog.entry_box.get_text()
+            print('Fixture type is '+fixture_type)
+            fixture = plot.Fixture(PLOT_FILE)
+            try:
+                fixture.new(fixture_type, '/usr/share/pylux/fixture/')
+            except FileNotFoundError:
+                print('Error: Couldn\'t find a fixture file with this name')
+            else:
+                fixture.add()
+                fixture.save()
+                
+            
+        type_dialog.destroy()
 
     def action_fixture_remove(self, widget):
         print('Removing fixture...')
 
     def action_fixture_clone(self, widget):
         print('Cloning fixture...')
+
 
 def main():
     win = FixturesWindow()
