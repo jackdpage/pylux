@@ -222,21 +222,31 @@ The extension defines its own way of returning to \texttt{editor} but this
 should in general be \texttt{::} or \texttt{q}.
 
 \section{Using the Graphical User Interface}
-You may instead choose to launch Pylux using its GUI. This is NYI so please 
-don't.
+Pylux also comes with a graphical user interface. This is currently in 
+development so most features are not yet implemented. When the GUI is 
+launched, you are presented with a window containing a list of the fixtures 
+in the plot. (The only way to load a plot file is using the \texttt{-f} tag 
+at launch as there is currently no menu.) Each of these fixtures has to the 
+right of it three buttons.
+
+The leftmost button is the only currently functional button and launches a 
+window containing a list of the fixture's data tags. You cannot currently 
+edit the data tags. The other two buttons are for cloning and removing the 
+fixture but this functionality is not yet implemented.
 
 \section{Extensions}
 In the previous sections, we have discussed the usage of the base program in 
 Pylux: \texttt{editor}. This is the program that you will use to edit your
 plots, however, beyond that, it doesn't do much. That is why Pylux is also 
 bundled with extensions to provide extra functionality. In the current 
-version, Pylux comes bundled with the \texttt{texlux} extension only.
+version, Pylux comes bundled with the \texttt{texlux} and \texttt{plotter} 
+extensions.
 
 \subsection{\texttt{texlux}}
 \texttt{texlux} is an extension to the base \texttt{editor} program which 
 allows for the creation of reports in the \LaTeX{} format, which can then be 
-post-processed to create a PDF file, or many other formats through the use of 
-an external tool such as Pandoc.
+post-processed to create a PDF file, or many other formats through the use 
+of an external tool such as Pandoc.
 
 \subsubsection{Commands}
 
@@ -250,14 +260,52 @@ title \texttt{\textit{TITLE}}, writing the output to a file with path
 \texttt{texlux} uses built-in functions to generate \LaTeX{} docments with 
 pre-defined structures. Each built-in function has a corresponding \LaTeX{} 
 style file installed in \texttt{\~{}/texmf} which is required to build 
-the PDF report. Currently the only built-in function is \texttt{dimmer}, which 
-produces a report categorised by dimmer and containing power draw totals.
+the PDF report. Currently the only built-in function is \texttt{dimmer}, 
+which produces a report categorised by dimmer and containing power draw 
+totals.
 
-\subsection{\texttt{plotgen}}
-\texttt{plotgen} generates, from the fixture list and the fixture's symbol 
-files, a plan view of the lighting plot in SVG format. Currently WIP but 
-functional. Includes support for positioning, rotation and colouring based 
-on fixture data.
+\subsection{\texttt{plotter}}
+\texttt{plotter} generates, from the fixture list and the fixture's symbol 
+files, a plan view of the lighting plot in SVG format. It will consult the 
+fixture's \texttt{posX} and \texttt{posY} tags to translate the symbol in 
+the output image. It will also refer to the \texttt{rotation} tag to rotate 
+the fixture symbol in the plot. Finally, it will colour the fixture using 
+the hexadecimal colour code in the fixture's \texttt{colour} tag. If the 
+\texttt{rotation} or \texttt{colour} tags are not present, \texttt{plotter} 
+will calculate these when run.
+
+There are also some options that can be set to customise the output of 
+\texttt{plotter}.
+
+\subsubsection{Commands}
+
+\paragraph{\texttt{pn \textit{OUTPUT}}}
+Generates a new SVG plot, writing the output to the file with path 
+\texttt{\textit{OUTPUT}}.
+
+\paragraph{\texttt{os \textit{OPTION VALUE}}}
+Set the value of the option with name \texttt{\textit{OPTION}} to 
+\texttt{\textit{VALUE}}.
+
+\paragraph{\texttt{og \textit{OPTION}}}
+Print the value of \texttt{\textit{OPTION}} to the console.
+
+\paragraph{\texttt{oG}}
+Print the values of all the options.
+
+\subsubsection{Options}
+
+\paragraph{\texttt{beam\_colour}}
+The colour of the beam focus lines. Can be any colour in the legal list of 
+gel colours or \texttt{auto} to make the focus lines the same colour as the 
+fixture from which they come. Default: \texttt{Black}.
+
+\paragraph{\texttt{beam\_width}}
+The thickness of the beam focus lines in SVG points. Default: \texttt{6}.
+
+\paragraph{\texttt{show\_beams}}
+Choose whether or not to display the beam focus lines. Must be \texttt{True} 
+or \texttt{False}. Default: \texttt{True}.
 
 % -------- FILES SECTION ------- %
 \section{Standard Tags} \label{sec:plotfile}
