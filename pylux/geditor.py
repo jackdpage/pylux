@@ -49,11 +49,8 @@ class FixturesWindow(Gtk.Window):
         self.box_container.pack_start(self.menubar, True, True, 0)
         self.menu_file = Gtk.MenuItem(label='File')
 
-        # Create fixture ListBox
-        self.listbox_fixtures = Gtk.ListBox()
-        self.listbox_fixtures.set_selection_mode(Gtk.SelectionMode.NONE)
-        self.box_container.pack_start(self.listbox_fixtures, True, True, 0)
         self.gui_list_fixtures()
+
 
         # Create fixture action buttons
         self.button_fixture_new = Gtk.Button(label='New fixture')
@@ -63,8 +60,6 @@ class FixturesWindow(Gtk.Window):
                                            self.action_fixture_remove)
         self.button_fixture_clone = Gtk.Button(label='Clone fixture')
         self.button_fixture_clone.connect('clicked', self.action_fixture_clone)
-        self.BUTTON_DEBUG_REFRESH = Gtk.Button(label='[DEBUG] refresh')
-        self.BUTTON_DEBUG_REFRESH.connect('clicked', self.debug_refresh_list)
 
         # Pack fixture action buttons into Box
         self.box_fixture_buttons = Gtk.Box(spacing=4)
@@ -75,36 +70,37 @@ class FixturesWindow(Gtk.Window):
                                             True, True, 0)
         self.box_fixture_buttons.pack_start(self.button_fixture_clone, 
                                             True, True, 0)
-        self.box_fixture_buttons.pack_start(self.BUTTON_DEBUG_REFRESH,
-                                            True, True, 0)
-
-    def debug_refresh_list(self, widget):
-        self.gui_list_fixtures()
 
     def gui_list_fixtures(self):
+        """Create an empty ListBox for fixtures."""
+        self.listbox_fixtures = Gtk.ListBox()
+        self.listbox_fixtures.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.box_container.pack_start(self.listbox_fixtures, True, True, 0)
         fixtures = plot.FixtureList(PLOT_FILE)
         for fixture in fixtures.fixtures:
-            listbox_row_fixture = Gtk.ListBoxRow()
-            box_listbox_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, 
-                                       spacing=20)
-            listbox_row_fixture.add(box_listbox_row)
-            if 'name' in fixture.data:
-                fixture_name = fixture.data['name']
-            else:
-                fixture_name = fixture.data['type']
-            label_fixture_name = Gtk.Label(fixture_name)
-            box_listbox_row.pack_start(label_fixture_name, True, True, 0)
-            self.listbox_fixtures.add(listbox_row_fixture)
+            self.gui_add_fixture(fixture)
+
+    def gui_add_fixture(self, fixture):
+        """Add a fixture to the ListBox as a ListBoxRow."""
+        listbox_row_fixture = Gtk.ListBoxRow()
+        box_listbox_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, 
+                                   spacing=20)
+        listbox_row_fixture.add(box_listbox_row)
+        if 'name' in fixture.data:
+            fixture_name = fixture.data['name']
+        else:
+            fixture_name = fixture.data['type']
+        label_fixture_name = Gtk.Label(fixture_name)
+        label_fixture_uuid = Gtk.Label(fixture.uuid)
+        box_listbox_row.pack_start(label_fixture_name, True, True, 0)
+        box_listbox_row.pack_start(label_fixture_uuid, True, True, 0)
+        self.listbox_fixtures.add(listbox_row_fixture)
 
     def action_fixture_new(self, widget):
-        print('Adding a fixture...')
         type_dialog = TextInputDialog(self, 'Fixture Type')
         response = type_dialog.run()
-        if response == Gtk.ResponseType.CANCEL:
-            print('Oh no it was cancelled :(')
-        else:
+        if response == Gtk.ResponseType.OK:
             fixture_type = type_dialog.entry_box.get_text()
-            print('Fixture type is '+fixture_type)
             fixture = plot.Fixture(PLOT_FILE)
             try:
                 fixture.new(fixture_type, '/usr/share/pylux/fixture/')
@@ -113,8 +109,8 @@ class FixturesWindow(Gtk.Window):
             else:
                 fixture.add()
                 fixture.save()
-                
-            
+                self.gui_add_fixture(fixture)
+                self.show_all()
         type_dialog.destroy()
 
     def action_fixture_remove(self, widget):
@@ -122,6 +118,10 @@ class FixturesWindow(Gtk.Window):
 
     def action_fixture_clone(self, widget):
         print('Cloning fixture...')
+
+    def action_fixture_getall(self, widget, fixture):
+        
+        
 
 
 def main():
