@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pylux.plot as plot
+import xml.etree.ElementTree as ET
 import gi.repository
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
@@ -44,24 +45,28 @@ class FixtureInfoWindow(Gtk.Window):
         else:
             fixture_name = fixture.data['type']
         Gtk.Window.__init__(self, title='Editing '+fixture_name)
+        self.set_default_size(300, 350)
+        tree_list_model = Gtk.ListStore(str, str)
+        for info_item in fixture.data:
+            tree_list_model.append([info_item, fixture.data[info_item]])
+        self.fixture_info_tree = Gtk.TreeView(tree_list_model)
+        tree_renderer = Gtk.CellRendererText()
+        tag_column = Gtk.TreeViewColumn('Tag', tree_renderer, text=0)
+        tag_column.set_sort_column_id(0)
+        value_column = Gtk.TreeViewColumn('Value', tree_renderer, text=1)
+        self.fixture_info_tree.append_column(tag_column)
+        self.fixture_info_tree.append_column(value_column)
+        self.add(self.fixture_info_tree)
 
 
 class FixturesWindow(Gtk.Window):
 
     def __init__(self):
         Gtk.Window.__init__(self, title='Fixtures')
+        self.set_default_size(0, 500)
         self.box_container = Gtk.Box(spacing=6, 
                                  orientation=Gtk.Orientation.VERTICAL)
         self.add(self.box_container)
-
-        # Create MenuBar
-        self.menubar = Gtk.MenuBar()
-        self.box_container.pack_start(self.menubar, True, True, 0)
-        self.menu_file = Gtk.MenuItem(label='File')
-
-        # Create Scrollbar
-        self.scrollbar = Gtk.Scrollbar.new(Gtk.Orientation.VERTICAL, None)
-        self.box_container.pack_start(self.scrollbar, True, True, 0)
 
         # Create the fixtures list
         self.gui_list_fixtures()
@@ -88,8 +93,8 @@ class FixturesWindow(Gtk.Window):
     def gui_add_fixture(self, fixture):
         """Add a fixture to the ListBox as a ListBoxRow."""
         listbox_row_fixture = Gtk.ListBoxRow()
-        table_fixture_listbox = Gtk.Table(3, 1, False)
-        listbox_row_fixture.add(table_fixture_listbox)
+        grid_fixture_listbox = Gtk.Grid()
+        listbox_row_fixture.add(grid_fixture_listbox)
         # LHS: name, uuid
         box_listbox_row_LHS = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, 
                                       spacing=5)
@@ -98,10 +103,11 @@ class FixturesWindow(Gtk.Window):
         else:
             fixture_name = fixture.data['type']
         label_fixture_name = Gtk.Label(fixture_name, halign=1)
-        label_fixture_uuid = Gtk.Label(fixture.uuid, halign=1)
+        label_fixture_uuid = Gtk.Label(halign=1)
+        label_fixture_uuid.set_markup('<span font="mono 9">'+fixture.uuid+'</span>')
         box_listbox_row_LHS.pack_start(label_fixture_name, True, True, 0)
         box_listbox_row_LHS.pack_start(label_fixture_uuid, True, True, 0)
-        table_fixture_listbox.attach(box_listbox_row_LHS, 0, 2, 0, 1)
+        grid_fixture_listbox.attach(box_listbox_row_LHS, 0, 0, 2, 1)
         # RHS: action buttons
         box_listbox_row_RHS = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, 
                                       spacing=2)
@@ -114,7 +120,7 @@ class FixturesWindow(Gtk.Window):
         box_listbox_row_RHS.pack_start(button_fixture_getall, True, True, 0)
         box_listbox_row_RHS.pack_start(button_fixture_clone, True, True, 0)
         box_listbox_row_RHS.pack_start(button_fixture_remove, True, True, 0)
-        table_fixture_listbox.attach(box_listbox_row_RHS, 2, 3, 0, 1)
+        grid_fixture_listbox.attach(box_listbox_row_RHS, 2, 0, 1, 1)
         self.listbox_fixtures.add(listbox_row_fixture)
 
     def action_fixture_new(self, widget):
@@ -141,8 +147,13 @@ class FixturesWindow(Gtk.Window):
         print('Cloning fixture...')
 
     def action_fixture_getall(self, widget):
-        print('Listing the things...')
-        
+        fixture_info_box = widget.props.parent.props.parent.get_child_at(0,0)
+        uuid_markup = fixture_info_box.get_children()[1].get_label()
+        fixture_uuid = ET.fromstring(uuid_markup).text
+        fixture = plot.Fixture(PLOT_FILE, uuid=fixture_uuid)
+        info_window = FixtureInfoWindow(fixture)
+        info_window.connect('delete-event', info_window.destroy)
+        info_window.show_all()
 
 
 def main():
