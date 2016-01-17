@@ -1,6 +1,7 @@
 \documentclass[a4paper]{article}
 \usepackage{hyperref}
 \usepackage{longtable}
+\usepackage[table]{xcolor}
 \begin{document}
 \title{Pylux User Manual \\ \large{for Pylux v0.1-alpha2}}
 \author{J. Page}
@@ -448,621 +449,633 @@ Standard HTML/X11 named colours. Taken directly from the HTML colour
 definitions.
 \begin{longtable}{|l|r|}
 \hline
-Pylux Gel Name & Rendered Colour \\ \hline
-AliceBlue & \texttt{\#F0F8FF} \\
-AntiqueWhite & \texttt{\#FAEBD7} \\
-Aqua & \texttt{\#00FFFF} \\
-Aquamarine & \texttt{\#7FFFD4} \\
-Azure & \texttt{\#F0FFFF} \\
-Beige & \texttt{\#F5F5DC} \\
-Bisque & \texttt{\#FFE4C4} \\
-Black & \texttt{\#000000} \\
-BlanchedAlmond & \texttt{\#FFEBCD} \\
-Blue & \texttt{\#0000FF} \\
-BlueViolet & \texttt{\#8A2BE2} \\
-Brown & \texttt{\#A52A2A} \\
-BurlyWood & \texttt{\#DEB887} \\
-CadetBlue & \texttt{\#5F9EA0} \\
-Chartreuse & \texttt{\#7FFF00} \\
-Chocolate & \texttt{\#D2691E} \\
-Coral & \texttt{\#FF7F50} \\
-CornflowerBlue & \texttt{\#6495ED} \\
-Cornsilk & \texttt{\#FFF8DC} \\
-Crimson & \texttt{\#DC143C} \\
-Cyan & \texttt{\#00FFFF} \\
-DarkBlue & \texttt{\#00008B} \\
-DarkCyan & \texttt{\#008B8B} \\
-DarkGoldenrod & \texttt{\#B8860B} \\
-DarkGray & \texttt{\#A9A9A9} \\
-DarkGreen & \texttt{\#006400} \\
-DarkKhaki & \texttt{\#BDB76B} \\
-DarkMagenta & \texttt{\#8B008B} \\
-DarkOliveGreen & \texttt{\#556B2F} \\
-DarkOrange & \texttt{\#FF8C00} \\
-DarkOrchid & \texttt{\#9932CC} \\
-DarkRed & \texttt{\#8B0000} \\
-DarkSalmon & \texttt{\#E9967A} \\
-DarkSeaGreen & \texttt{\#8FBC8F} \\
-DarkSlateBlue & \texttt{\#483D8B} \\
-DarkSlateGray & \texttt{\#2F4F4F} \\
-DarkTurquoise & \texttt{\#00CED1} \\
-DarkViolet & \texttt{\#9400D3} \\
-DeepPink & \texttt{\#FF1493} \\
-DeepSkyBlue & \texttt{\#00BFFF} \\
-DimGray & \texttt{\#696969} \\
-DodgerBlue & \texttt{\#1E90FF} \\
-FireBrick & \texttt{\#B22222} \\
-FloralWhite & \texttt{\#FFFAF0} \\
-ForestGreen & \texttt{\#228B22} \\
-Fuchsia & \texttt{\#FF00FF} \\
-Gainsboro & \texttt{\#DCDCDC} \\
-GhostWhite & \texttt{\#F8F8FF} \\
-Gold & \texttt{\#FFD700} \\
-Goldenrod & \texttt{\#DAA520} \\
-Gray & \texttt{\#808080} \\
-Green & \texttt{\#008000} \\
-GreenYellow & \texttt{\#ADFF2F} \\
-Honeydew & \texttt{\#F0FFF0} \\
-HotPink & \texttt{\#FF69B4} \\
-IndianRed & \texttt{\#CD5C5C} \\
-Indigo & \texttt{\#4B0082} \\
-Ivory & \texttt{\#FFFFF0} \\
-Khaki & \texttt{\#F0E68C} \\
-Lavender & \texttt{\#E6E6FA} \\
-LavenderBlush & \texttt{\#FFF0F5} \\
-LawnGreen & \texttt{\#7CFC00} \\
-LemonChiffon & \texttt{\#FFFACD} \\
-LightBlue & \texttt{\#ADD8E6} \\
-LightCoral & \texttt{\#F08080} \\
-LightCyan & \texttt{\#E0FFFF} \\
-LightGoldenrodYellow & \texttt{\#FAFAD2} \\
-LightGreen & \texttt{\#90EE90} \\
-LightGrey & \texttt{\#D3D3D3} \\
-LightPink & \texttt{\#FFB6C1} \\
-LightSalmon & \texttt{\#FFA07A} \\
-LightSeaGreen & \texttt{\#20B2AA} \\
-LightSkyBlue & \texttt{\#87CEFA} \\
-LightSlateGray & \texttt{\#778899} \\
-LightSteelBlue & \texttt{\#B0C4DE} \\
-LightYellow & \texttt{\#FFFFE0} \\
-Lime & \texttt{\#00FF00} \\
-LimeGreen & \texttt{\#32CD32} \\
-Linen & \texttt{\#FAF0E6} \\
-Magenta & \texttt{\#FF00FF} \\
-Maroon & \texttt{\#800000} \\
-MediumAquamarine & \texttt{\#66CDAA} \\
-MediumBlue & \texttt{\#0000CD} \\
-MediumOrchid & \texttt{\#BA55D3} \\
-MediumPurple & \texttt{\#9370DB} \\
-MediumSeaGreen & \texttt{\#3CB371} \\
-MediumSlateBlue & \texttt{\#7B68EE} \\
-MediumSpringGreen & \texttt{\#00FA9A} \\
-MediumTurquoise & \texttt{\#48D1CC} \\
-MediumVioletRed & \texttt{\#C71585} \\
-MidnightBlue & \texttt{\#191970} \\
-MintCream & \texttt{\#F5FFFA} \\
-MistyRose & \texttt{\#FFE4E1} \\
-Moccasin & \texttt{\#FFE4B5} \\
-NavajoWhite & \texttt{\#FFDEAD} \\
-Navy & \texttt{\#000080} \\
-OldLace & \texttt{\#FDF5E6} \\
-Olive & \texttt{\#808000} \\
-OliveDrab & \texttt{\#6B8E23} \\
-Orange & \texttt{\#FFA500} \\
-OrangeRed & \texttt{\#FF4500} \\
-Orchid & \texttt{\#DA70D6} \\
-PaleGoldenrod & \texttt{\#EEE8AA} \\
-PaleGreen & \texttt{\#98FB98} \\
-PaleTurquoise & \texttt{\#AFEEEE} \\
-PaleVioletRed & \texttt{\#DB7093} \\
-PapayaWhip & \texttt{\#FFEFD5} \\
-PeachPuff & \texttt{\#FFDAB9} \\
-Peru & \texttt{\#CD853F} \\
-Pink & \texttt{\#FFC0CB} \\
-Plum & \texttt{\#DDA0DD} \\
-PowderBlue & \texttt{\#B0E0E6} \\
-Purple & \texttt{\#800080} \\
-Red & \texttt{\#FF0000} \\
-RosyBrown & \texttt{\#BC8F8F} \\
-RoyalBlue & \texttt{\#4169E1} \\
-SaddleBrown & \texttt{\#8B4513} \\
-Salmon & \texttt{\#FA8072} \\
-SandyBrown & \texttt{\#F4A460} \\
-SeaGreen & \texttt{\#2E8B57} \\
-Seashell & \texttt{\#FFF5EE} \\
-Sienna & \texttt{\#A0522D} \\
-Silver & \texttt{\#C0C0C0} \\
-SkyBlue & \texttt{\#87CEEB} \\
-SlateBlue & \texttt{\#6A5ACD} \\
-SlateGray & \texttt{\#708090} \\
-Snow & \texttt{\#FFFAFA} \\
-SpringGreen & \texttt{\#00FF7F} \\
-SteelBlue & \texttt{\#4682B4} \\
-Tan & \texttt{\#D2B48C} \\
-Teal & \texttt{\#008080} \\
-Thistle & \texttt{\#D8BFD8} \\
-Tomato & \texttt{\#FF6347} \\
-Turquoise & \texttt{\#40E0D0} \\
-Violet & \texttt{\#EE82EE} \\
-Wheat & \texttt{\#F5DEB3} \\
-White & \texttt{\#FFFFFF} \\
-WhiteSmoke & \texttt{\#F5F5F5} \\
-Yellow & \texttt{\#FFFF00} \\
-YellowGreen & \texttt{\#9ACD32} \\
+Colour Name & Rendered Colour \\ \hline
+AliceBlue & \texttt{\#F0F8FF} \cellcolor[HTML]{F0F8FF} \\
+AntiqueWhite & \texttt{\#FAEBD7} \cellcolor[HTML]{FAEBD7} \\
+Aqua & \texttt{\#00FFFF} \cellcolor[HTML]{00FFFF} \\
+Aquamarine & \texttt{\#7FFFD4} \cellcolor[HTML]{7FFFD4} \\
+Azure & \texttt{\#F0FFFF} \cellcolor[HTML]{F0FFFF} \\
+Beige & \texttt{\#F5F5DC} \cellcolor[HTML]{F5F5DC} \\
+Bisque & \texttt{\#FFE4C4} \cellcolor[HTML]{FFE4C4} \\
+Black & \texttt{\#000000} \cellcolor[HTML]{000000} \\
+BlanchedAlmond & \texttt{\#FFEBCD} \cellcolor[HTML]{FFEBCD} \\
+Blue & \texttt{\#0000FF} \cellcolor[HTML]{0000FF} \\
+BlueViolet & \texttt{\#8A2BE2} \cellcolor[HTML]{8A2BE2} \\
+Brown & \texttt{\#A52A2A} \cellcolor[HTML]{A52A2A} \\
+BurlyWood & \texttt{\#DEB887} \cellcolor[HTML]{DEB887} \\
+CadetBlue & \texttt{\#5F9EA0} \cellcolor[HTML]{5F9EA0} \\
+Chartreuse & \texttt{\#7FFF00} \cellcolor[HTML]{7FFF00} \\
+Chocolate & \texttt{\#D2691E} \cellcolor[HTML]{D2691E} \\
+Coral & \texttt{\#FF7F50} \cellcolor[HTML]{FF7F50} \\
+CornflowerBlue & \texttt{\#6495ED} \cellcolor[HTML]{6495ED} \\
+Cornsilk & \texttt{\#FFF8DC} \cellcolor[HTML]{FFF8DC} \\
+Crimson & \texttt{\#DC143C} \cellcolor[HTML]{DC143C} \\
+Cyan & \texttt{\#00FFFF} \cellcolor[HTML]{00FFFF} \\
+DarkBlue & \texttt{\#00008B} \cellcolor[HTML]{00008B} \\
+DarkCyan & \texttt{\#008B8B} \cellcolor[HTML]{008B8B} \\
+DarkGoldenrod & \texttt{\#B8860B} \cellcolor[HTML]{B8860B} \\
+DarkGray & \texttt{\#A9A9A9} \cellcolor[HTML]{A9A9A9} \\
+DarkGreen & \texttt{\#006400} \cellcolor[HTML]{006400} \\
+DarkKhaki & \texttt{\#BDB76B} \cellcolor[HTML]{BDB76B} \\
+DarkMagenta & \texttt{\#8B008B} \cellcolor[HTML]{8B008B} \\
+DarkOliveGreen & \texttt{\#556B2F} \cellcolor[HTML]{556B2F} \\
+DarkOrange & \texttt{\#FF8C00} \cellcolor[HTML]{FF8C00} \\
+DarkOrchid & \texttt{\#9932CC} \cellcolor[HTML]{9932CC} \\
+DarkRed & \texttt{\#8B0000} \cellcolor[HTML]{8B0000} \\
+DarkSalmon & \texttt{\#E9967A} \cellcolor[HTML]{E9967A} \\
+DarkSeaGreen & \texttt{\#8FBC8F} \cellcolor[HTML]{8FBC8F} \\
+DarkSlateBlue & \texttt{\#483D8B} \cellcolor[HTML]{483D8B} \\
+DarkSlateGray & \texttt{\#2F4F4F} \cellcolor[HTML]{2F4F4F} \\
+DarkTurquoise & \texttt{\#00CED1} \cellcolor[HTML]{00CED1} \\
+DarkViolet & \texttt{\#9400D3} \cellcolor[HTML]{9400D3} \\
+DeepPink & \texttt{\#FF1493} \cellcolor[HTML]{FF1493} \\
+DeepSkyBlue & \texttt{\#00BFFF} \cellcolor[HTML]{00BFFF} \\
+DimGray & \texttt{\#696969} \cellcolor[HTML]{696969} \\
+DodgerBlue & \texttt{\#1E90FF} \cellcolor[HTML]{1E90FF} \\
+FireBrick & \texttt{\#B22222} \cellcolor[HTML]{B22222} \\
+FloralWhite & \texttt{\#FFFAF0} \cellcolor[HTML]{FFFAF0} \\
+ForestGreen & \texttt{\#228B22} \cellcolor[HTML]{228B22} \\
+Fuchsia & \texttt{\#FF00FF} \cellcolor[HTML]{FF00FF} \\
+Gainsboro & \texttt{\#DCDCDC} \cellcolor[HTML]{DCDCDC} \\
+GhostWhite & \texttt{\#F8F8FF} \cellcolor[HTML]{F8F8FF} \\
+Gold & \texttt{\#FFD700} \cellcolor[HTML]{FFD700} \\
+Goldenrod & \texttt{\#DAA520} \cellcolor[HTML]{DAA520} \\
+Gray & \texttt{\#808080} \cellcolor[HTML]{808080} \\
+Green & \texttt{\#008000} \cellcolor[HTML]{008000} \\
+GreenYellow & \texttt{\#ADFF2F} \cellcolor[HTML]{ADFF2F} \\
+Honeydew & \texttt{\#F0FFF0} \cellcolor[HTML]{F0FFF0} \\
+HotPink & \texttt{\#FF69B4} \cellcolor[HTML]{FF69B4} \\
+IndianRed & \texttt{\#CD5C5C} \cellcolor[HTML]{CD5C5C} \\
+Indigo & \texttt{\#4B0082} \cellcolor[HTML]{4B0082} \\
+Ivory & \texttt{\#FFFFF0} \cellcolor[HTML]{FFFFF0} \\
+Khaki & \texttt{\#F0E68C} \cellcolor[HTML]{F0E68C} \\
+Lavender & \texttt{\#E6E6FA} \cellcolor[HTML]{E6E6FA} \\
+LavenderBlush & \texttt{\#FFF0F5} \cellcolor[HTML]{FFF0F5} \\
+LawnGreen & \texttt{\#7CFC00} \cellcolor[HTML]{7CFC00} \\
+LemonChiffon & \texttt{\#FFFACD} \cellcolor[HTML]{FFFACD} \\
+LightBlue & \texttt{\#ADD8E6} \cellcolor[HTML]{ADD8E6} \\
+LightCoral & \texttt{\#F08080} \cellcolor[HTML]{F08080} \\
+LightCyan & \texttt{\#E0FFFF} \cellcolor[HTML]{E0FFFF} \\
+LightGoldenrodYellow & \texttt{\#FAFAD2} \cellcolor[HTML]{FAFAD2} \\
+LightGreen & \texttt{\#90EE90} \cellcolor[HTML]{90EE90} \\
+LightGrey & \texttt{\#D3D3D3} \cellcolor[HTML]{D3D3D3} \\
+LightPink & \texttt{\#FFB6C1} \cellcolor[HTML]{FFB6C1} \\
+LightSalmon & \texttt{\#FFA07A} \cellcolor[HTML]{FFA07A} \\
+LightSeaGreen & \texttt{\#20B2AA} \cellcolor[HTML]{20B2AA} \\
+LightSkyBlue & \texttt{\#87CEFA} \cellcolor[HTML]{87CEFA} \\
+LightSlateGray & \texttt{\#778899} \cellcolor[HTML]{778899} \\
+LightSteelBlue & \texttt{\#B0C4DE} \cellcolor[HTML]{B0C4DE} \\
+LightYellow & \texttt{\#FFFFE0} \cellcolor[HTML]{FFFFE0} \\
+Lime & \texttt{\#00FF00} \cellcolor[HTML]{00FF00} \\
+LimeGreen & \texttt{\#32CD32} \cellcolor[HTML]{32CD32} \\
+Linen & \texttt{\#FAF0E6} \cellcolor[HTML]{FAF0E6} \\
+Magenta & \texttt{\#FF00FF} \cellcolor[HTML]{FF00FF} \\
+Maroon & \texttt{\#800000} \cellcolor[HTML]{800000} \\
+MediumAquamarine & \texttt{\#66CDAA} \cellcolor[HTML]{66CDAA} \\
+MediumBlue & \texttt{\#0000CD} \cellcolor[HTML]{0000CD} \\
+MediumOrchid & \texttt{\#BA55D3} \cellcolor[HTML]{BA55D3} \\
+MediumPurple & \texttt{\#9370DB} \cellcolor[HTML]{9370DB} \\
+MediumSeaGreen & \texttt{\#3CB371} \cellcolor[HTML]{3CB371} \\
+MediumSlateBlue & \texttt{\#7B68EE} \cellcolor[HTML]{7B68EE} \\
+MediumSpringGreen & \texttt{\#00FA9A} \cellcolor[HTML]{00FA9A} \\
+MediumTurquoise & \texttt{\#48D1CC} \cellcolor[HTML]{48D1CC} \\
+MediumVioletRed & \texttt{\#C71585} \cellcolor[HTML]{C71585} \\
+MidnightBlue & \texttt{\#191970} \cellcolor[HTML]{191970} \\
+MintCream & \texttt{\#F5FFFA} \cellcolor[HTML]{F5FFFA} \\
+MistyRose & \texttt{\#FFE4E1} \cellcolor[HTML]{FFE4E1} \\
+Moccasin & \texttt{\#FFE4B5} \cellcolor[HTML]{FFE4B5} \\
+NavajoWhite & \texttt{\#FFDEAD} \cellcolor[HTML]{FFDEAD} \\
+Navy & \texttt{\#000080} \cellcolor[HTML]{000080} \\
+OldLace & \texttt{\#FDF5E6} \cellcolor[HTML]{FDF5E6} \\
+Olive & \texttt{\#808000} \cellcolor[HTML]{808000} \\
+OliveDrab & \texttt{\#6B8E23} \cellcolor[HTML]{6B8E23} \\
+Orange & \texttt{\#FFA500} \cellcolor[HTML]{FFA500} \\
+OrangeRed & \texttt{\#FF4500} \cellcolor[HTML]{FF4500} \\
+Orchid & \texttt{\#DA70D6} \cellcolor[HTML]{DA70D6} \\
+PaleGoldenrod & \texttt{\#EEE8AA} \cellcolor[HTML]{EEE8AA} \\
+PaleGreen & \texttt{\#98FB98} \cellcolor[HTML]{98FB98} \\
+PaleTurquoise & \texttt{\#AFEEEE} \cellcolor[HTML]{AFEEEE} \\
+PaleVioletRed & \texttt{\#DB7093} \cellcolor[HTML]{DB7093} \\
+PapayaWhip & \texttt{\#FFEFD5} \cellcolor[HTML]{FFEFD5} \\
+PeachPuff & \texttt{\#FFDAB9} \cellcolor[HTML]{FFDAB9} \\
+Peru & \texttt{\#CD853F} \cellcolor[HTML]{CD853F} \\
+Pink & \texttt{\#FFC0CB} \cellcolor[HTML]{FFC0CB} \\
+Plum & \texttt{\#DDA0DD} \cellcolor[HTML]{DDA0DD} \\
+PowderBlue & \texttt{\#B0E0E6} \cellcolor[HTML]{B0E0E6} \\
+Purple & \texttt{\#800080} \cellcolor[HTML]{800080} \\
+Red & \texttt{\#FF0000} \cellcolor[HTML]{FF0000} \\
+RosyBrown & \texttt{\#BC8F8F} \cellcolor[HTML]{BC8F8F} \\
+RoyalBlue & \texttt{\#4169E1} \cellcolor[HTML]{4169E1} \\
+SaddleBrown & \texttt{\#8B4513} \cellcolor[HTML]{8B4513} \\
+Salmon & \texttt{\#FA8072} \cellcolor[HTML]{FA8072} \\
+SandyBrown & \texttt{\#F4A460} \cellcolor[HTML]{F4A460} \\
+SeaGreen & \texttt{\#2E8B57} \cellcolor[HTML]{2E8B57} \\
+Seashell & \texttt{\#FFF5EE} \cellcolor[HTML]{FFF5EE} \\
+Sienna & \texttt{\#A0522D} \cellcolor[HTML]{A0522D} \\
+Silver & \texttt{\#C0C0C0} \cellcolor[HTML]{C0C0C0} \\
+SkyBlue & \texttt{\#87CEEB} \cellcolor[HTML]{87CEEB} \\
+SlateBlue & \texttt{\#6A5ACD} \cellcolor[HTML]{6A5ACD} \\
+SlateGray & \texttt{\#708090} \cellcolor[HTML]{708090} \\
+Snow & \texttt{\#FFFAFA} \cellcolor[HTML]{FFFAFA} \\
+SpringGreen & \texttt{\#00FF7F} \cellcolor[HTML]{00FF7F} \\
+SteelBlue & \texttt{\#4682B4} \cellcolor[HTML]{4682B4} \\
+Tan & \texttt{\#D2B48C} \cellcolor[HTML]{D2B48C} \\
+Teal & \texttt{\#008080} \cellcolor[HTML]{008080} \\
+Thistle & \texttt{\#D8BFD8} \cellcolor[HTML]{D8BFD8} \\
+Tomato & \texttt{\#FF6347} \cellcolor[HTML]{FF6347} \\
+Turquoise & \texttt{\#40E0D0} \cellcolor[HTML]{40E0D0} \\
+Violet & \texttt{\#EE82EE} \cellcolor[HTML]{EE82EE} \\
+Wheat & \texttt{\#F5DEB3} \cellcolor[HTML]{F5DEB3} \\
+White & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+WhiteSmoke & \texttt{\#F5F5F5} \cellcolor[HTML]{F5F5F5} \\
+Yellow & \texttt{\#FFFF00} \cellcolor[HTML]{FFFF00} \\
+YellowGreen & \texttt{\#9ACD32} \cellcolor[HTML]{9ACD32} \\
 \hline
 \end{longtable}
 
-\subsection{Rosco E-colour and Supergel}
-Colour representations taken from \url{http://stagedepot.co.uk}. Gels from the 
-Supergel range are indicated by the preceding \# in the name.
-\begin{longtable}{|l|r|}
+\subsection{Rosco Gels}
+Colour representations taken from The official Rosco website. Both the gel name 
+and manufacturer code can be used. E-Colour+ gels have an R prefixed to their 
+manufacturer code, Supergel gels have an S prefixed to their manufacturer code.
+\subsubsection{E-Colour+}
+\begin{longtable}{|l|l|r|}
 \hline
-Pylux Gel Name & Rendered Colour \\ \hline
-\#24 & \texttt{\#F50014} \\
-127 & \texttt{\#E16273} \\
-166 & \texttt{\#F06165} \\
-24 & \texttt{\#FF5A64} \\
-157 & \texttt{\#FF92A3} \\
-185 & \texttt{\#D5BFC1} \\
-186 & \texttt{\#DCB9BD} \\
-107 & \texttt{\#FFA5AF} \\
-248 & \texttt{\#FFE2E4} \\
-787 & \texttt{\#B9003C} \\
-\#50 & \texttt{\#BB002C} \\
-27 & \texttt{\#C8003C} \\
-\#26 & \texttt{\#D70229} \\
-46 & \texttt{\#DC005A} \\
-29 & \texttt{\#E1003C} \\
-26 & \texttt{\#E6003C} \\
-\#46 & \texttt{\#EB016D} \\
-106 & \texttt{\#F00032} \\
-113 & \texttt{\#FF0064} \\
-\#324 & \texttt{\#F50F39} \\
-\#339 & \texttt{\#FF1283} \\
-\#342 & \texttt{\#FF1562} \\
-\#332 & \texttt{\#FF2957} \\
-332 & \texttt{\#FF3787} \\
-\#343 & \texttt{\#FF397F} \\
-\#43 & \texttt{\#FF3E93} \\
-148 & \texttt{\#FF507D} \\
-748 & \texttt{\#E96785} \\
-\#36 & \texttt{\#FF6D96} \\
-\#336 & \texttt{\#FF73B7} \\
-111 & \texttt{\#FF8CBE} \\
-192 & \texttt{\#FF8CB4} \\
-36 & \texttt{\#FFA0B9} \\
-\#35 & \texttt{\#FFA7BB} \\
-\#337 & \texttt{\#FFAFC2} \\
-110 & \texttt{\#FFB4C8} \\
-247 & \texttt{\#FAC3D7} \\
-\#33 & \texttt{\#FFC2D0} \\
-35 & \texttt{\#FFC8D2} \\
-249 & \texttt{\#FFECF0} \\
-49 & \texttt{\#BE0091} \\
-126 & \texttt{\#BE009B} \\
-\#39 & \texttt{\#E800BC} \\
-\#344 & \texttt{\#FF05D3} \\
-\#346 & \texttt{\#FF2DD5} \\
-341 & \texttt{\#BC7DA8} \\
-793 & \texttt{\#FF3CA0} \\
-795 & \texttt{\#FA46C8} \\
-128 & \texttt{\#FF50B4} \\
-48 & \texttt{\#E66EAF} \\
-328 & \texttt{\#FF64C8} \\
-2 & \texttt{\#FF78DC} \\
-170 & \texttt{\#E6AADC} \\
-136 & \texttt{\#F0BEE6} \\
-794 & \texttt{\#FFAFDC} \\
-\#38 & \texttt{\#FFBBE2} \\
-39 & \texttt{\#FFBDE1} \\
-169 & \texttt{\#FADCF0} \\
-797 & \texttt{\#AF0096} \\
-798 & \texttt{\#A000BE} \\
-\#49 & \texttt{\#C900E6} \\
-\#349 & \texttt{\#F000FF} \\
-\#47 & \texttt{\#CC4EB9} \\
-345 & \texttt{\#CD6ED7} \\
-703 & \texttt{\#D282DC} \\
-704 & \texttt{\#F0AAFA} \\
-705 & \texttt{\#EFAAFA} \\
-707 & \texttt{\#6400B4} \\
-700 & \texttt{\#7D00CD} \\
-343 & \texttt{\#8C00D2} \\
-\#347 & \texttt{\#B101DD} \\
-\#358 & \texttt{\#8E0AEA} \\
-\#348 & \texttt{\#DA2DFF} \\
-701 & \texttt{\#B45ADC} \\
-58 & \texttt{\#B46EF0} \\
-194 & \texttt{\#BE8CF0} \\
-52 & \texttt{\#E6AAFA} \\
-702 & \texttt{\#E6D2F0} \\
-\#54 & \texttt{\#E6C7FF} \\
-\#351 & \texttt{\#EFDCFF} \\
-750 & \texttt{\#F9F1FE} \\
-\#382 & \texttt{\#250070} \\
-181 & \texttt{\#5000AA} \\
-799 & \texttt{\#3C00B4} \\
-\#385 & \texttt{\#4F02CF} \\
-\#74 & \texttt{\#4200FF} \\
-\#374 & \texttt{\#4200FF} \\
-\#59 & \texttt{\#7200FF} \\
-706 & \texttt{\#6E46C8} \\
-\#377 & \texttt{\#7124FF} \\
-\#357 & \texttt{\#8A2BFF} \\
-\#56 & \texttt{\#8C2FFF} \\
-\#58 & \texttt{\#933FFD} \\
-\#359 & \texttt{\#683FFF} \\
-180 & \texttt{\#A064E6} \\
-\#57 & \texttt{\#B482FF} \\
-\#356 & \texttt{\#C38DFF} \\
-\#355 & \texttt{\#A590FF} \\
-137 & \texttt{\#C8B4E6} \\
-\#55 & \texttt{\#C0AAFD} \\
-\#353 & \texttt{\#C4ADFF} \\
-\#52 & \texttt{\#DDBFFF} \\
-\#53 & \texttt{\#E4DCFF} \\
-71 & \texttt{\#0000B4} \\
-\#384 & \texttt{\#0500D0} \\
-\#83 & \texttt{\#0228EC} \\
-508 & \texttt{\#5A46C3} \\
-344 & \texttt{\#6662AE} \\
-\#79 & \texttt{\#1626FF} \\
-\#82 & \texttt{\#4F34F8} \\
-199 & \texttt{\#6464E6} \\
-\#84 & \texttt{\#5767FF} \\
-\#78 & \texttt{\#6F6FFF} \\
-142 & \texttt{\#AAAAF0} \\
-\#371 & \texttt{\#A3A8FF} \\
-709 & \texttt{\#C8C8FA} \\
-\#372 & \texttt{\#D9DCFF} \\
-53 & \texttt{\#E6E6FA} \\
-713 & \texttt{\#003CA0} \\
-120 & \texttt{\#005FBE} \\
-\#85 & \texttt{\#0049CE} \\
-716 & \texttt{\#0064D2} \\
-\#80 & \texttt{\#0048FF} \\
-715 & \texttt{\#3C6EDC} \\
-714 & \texttt{\#5A91D2} \\
-198 & \texttt{\#6478C8} \\
-723 & \texttt{\#5082DC} \\
-\#68 & \texttt{\#447DFF} \\
-\#368 & \texttt{\#448AFF} \\
-\#81 & \texttt{\#486FFF} \\
-224 & \texttt{\#94A2BD} \\
-75 & \texttt{\#64A0F0} \\
-\#361 & \texttt{\#669EFC} \\
-197 & \texttt{\#82AAE6} \\
-710 & \texttt{\#8CA0F0} \\
-711 & \texttt{\#AABEDC} \\
-200 & \texttt{\#91BEF5} \\
-525 & \texttt{\#8EB4FA} \\
-719 & \texttt{\#9BC3F0} \\
-712 & \texttt{\#A0BEF0} \\
-\#62 & \texttt{\#A1CEFF} \\
-500 & \texttt{\#B4D2FF} \\
-708 & \texttt{\#DCEBFA} \\
-\#373 & \texttt{\#E0E9FD} \\
-502 & \texttt{\#E1F0FF} \\
-\#76 & \texttt{\#005773} \\
-\#75 & \texttt{\#007AAC} \\
-85 & \texttt{\#006EB9} \\
-363 & \texttt{\#006EC3} \\
-\#71 & \texttt{\#0096C7} \\
-119 & \texttt{\#0078C8} \\
-195 & \texttt{\#006ED2} \\
-722 & \texttt{\#008CD2} \\
-132 & \texttt{\#00A0DC} \\
-721 & \texttt{\#0082E6} \\
-\#69 & \texttt{\#00A3F7} \\
-\#369 & \texttt{\#00C6FF} \\
-\#65 & \texttt{\#00A9FF} \\
-79 & \texttt{\#3C8CD2} \\
-\#67 & \texttt{\#14A9FF} \\
-\#366 & \texttt{\#29C0F9} \\
-143 & \texttt{\#64BED2} \\
-68 & \texttt{\#46B4F0} \\
-352 & \texttt{\#5AC8E1} \\
-\#367 & \texttt{\#44A5FF} \\
-165 & \texttt{\#5AC8EB} \\
-\#64 & \texttt{\#50AEFD} \\
-\#72 & \texttt{\#55CCFF} \\
-196 & \texttt{\#78D2E6} \\
-\#70 & \texttt{\#6CE5FF} \\
-161 & \texttt{\#7DD2F5} \\
-\#66 & \texttt{\#94EAFF} \\
-366 & \texttt{\#AAD2F0} \\
-\#63 & \texttt{\#A4D3FF} \\
-283 & \texttt{\#AFD9F5} \\
-174 & \texttt{\#AFE1FA} \\
-\#363 & \texttt{\#ABE9FF} \\
-191 & \texttt{\#C9DDE4} \\
-201 & \texttt{\#C3E1FA} \\
-720 & \texttt{\#C3E1FB} \\
-717 & \texttt{\#C3E1FB} \\
-281 & \texttt{\#CDE6FA} \\
-718 & \texttt{\#D5ECFA} \\
-501 & \texttt{\#D7EBFA} \\
-63 & \texttt{\#D2F5FF} \\
-\#61 & \texttt{\#D3EAFF} \\
-202 & \texttt{\#D7F0FF} \\
-61 & \texttt{\#DCF5FF} \\
-\#395 & \texttt{\#00726A} \\
-\#392 & \texttt{\#009493} \\
-\#95 & \texttt{\#009C91} \\
-\#93 & \texttt{\#01A3A0} \\
-729 & \texttt{\#00AFAA} \\
-727 & \texttt{\#00A5B4} \\
-\#73 & \texttt{\#00A4B8} \\
-116 & \texttt{\#00C8B9} \\
-172 & \texttt{\#00DCDC} \\
-\#370 & \texttt{\#01CDDF} \\
-183 & \texttt{\#00D7E3} \\
-141 & \texttt{\#00D2E6} \\
-115 & \texttt{\#00EBC8} \\
-118 & \texttt{\#00E1EB} \\
-354 & \texttt{\#00F0D7} \\
-601 & \texttt{\#90A0A0} \\
-144 & \texttt{\#5AE1E6} \\
-600 & \texttt{\#98A8AA} \\
-353 & \texttt{\#61E8E3} \\
-724 & \texttt{\#69E1EB} \\
-140 & \texttt{\#87F0EB} \\
-117 & \texttt{\#B4FAF5} \\
-725 & \texttt{\#BEF2F3} \\
-203 & \texttt{\#EBFCFF} \\
-\#393 & \texttt{\#007150} \\
-327 & \texttt{\#008C50} \\
-\#94 & \texttt{\#00985D} \\
-325 & \texttt{\#019879} \\
-735 & \texttt{\#00BE78} \\
-124 & \texttt{\#00DC78} \\
-323 & \texttt{\#00E1AA} \\
-322 & \texttt{\#41F5BE} \\
-131 & \texttt{\#64FAD2} \\
-241 & \texttt{\#AADCC3} \\
-\#91 & \texttt{\#005E2C} \\
-219 & \texttt{\#9BDCAF} \\
-190 & \texttt{\#C5E0D1} \\
-728 & \texttt{\#C8EBD2} \\
-504 & \texttt{\#D2F5DC} \\
-730 & \texttt{\#DCFFE6} \\
-\#90 & \texttt{\#007F06} \\
-736 & \texttt{\#00AA00} \\
-90 & \texttt{\#00BE00} \\
-\#389 & \texttt{\#29F433} \\
-89 & \texttt{\#5ADC5A} \\
-\#89 & \texttt{\#51F655} \\
-122 & \texttt{\#78FA6E} \\
-242 & \texttt{\#B9E6B9} \\
-139 & \texttt{\#4BC300} \\
-\#86 & \texttt{\#89FA19} \\
-243 & \texttt{\#CDF5AF} \\
-731 & \texttt{\#E1FAD7} \\
-213 & \texttt{\#E6FCDC} \\
-740 & \texttt{\#5A6E00} \\
-\#386 & \texttt{\#7BD300} \\
-738 & \texttt{\#AAFF00} \\
-\#388 & \texttt{\#D0F54E} \\
-505 & \texttt{\#E3FF5A} \\
-121 & \texttt{\#B4FF64} \\
-88 & \texttt{\#DCFF64} \\
-138 & \texttt{\#DCFFA0} \\
-189 & \texttt{\#D9E6C8} \\
-244 & \texttt{\#E6FABE} \\
-733 & \texttt{\#EBF7CF} \\
-245 & \texttt{\#F0FCD2} \\
-246 & \texttt{\#F5FFE6} \\
-642 & \texttt{\#968200} \\
-643 & \texttt{\#B4A000} \\
-104 & \texttt{\#FFDC00} \\
-\#312 & \texttt{\#FFEA00} \\
-\#10 & \texttt{\#FFF200} \\
-767 & \texttt{\#FFE600} \\
-10 & \texttt{\#FFFF00} \\
-100 & \texttt{\#F5FF00} \\
-101 & \texttt{\#FFF500} \\
-550 & \texttt{\#E3CA3C} \\
-514 & \texttt{\#F5FF5A} \\
-\#96 & \texttt{\#F3FF6B} \\
-513 & \texttt{\#F5FF7D} \\
-7 & \texttt{\#FAFAD2} \\
-\#07 & \texttt{\#FDFAD1} \\
-212 & \texttt{\#FFFAD7} \\
-\#06 & \texttt{\#FCFADB} \\
-746 & \texttt{\#6E3C00} \\
-741 & \texttt{\#826400} \\
-653 & \texttt{\#965500} \\
-777 & \texttt{\#F58200} \\
-\#15 & \texttt{\#FECB00} \\
-15 & \texttt{\#FFCD00} \\
-179 & \texttt{\#FFBE00} \\
-105 & \texttt{\#FFA000} \\
-158 & \texttt{\#FF8700} \\
-768 & \texttt{\#FFC600} \\
-770 & \texttt{\#FFB400} \\
-\#14 & \texttt{\#FCD419} \\
-\#11 & \texttt{\#FFD21A} \\
-650 & \texttt{\#C8A862} \\
-742 & \texttt{\#E19B50} \\
-208 & \texttt{\#E6A550} \\
-20 & \texttt{\#FFBE55} \\
-207 & \texttt{\#F0B46B} \\
-102 & \texttt{\#FFDC5F} \\
-\#313 & \texttt{\#FFE462} \\
-286 & \texttt{\#FFB464} \\
-232 & \texttt{\#EDBE83} \\
-744 & \texttt{\#F8C882} \\
-441 & \texttt{\#FAC084} \\
-204 & \texttt{\#FAC387} \\
-\#09 & \texttt{\#FFCB86} \\
-628 & \texttt{\#FFC88C} \\
-\#13 & \texttt{\#FFD88F} \\
-285 & \texttt{\#FCCD94} \\
-765 & \texttt{\#FFE591} \\
-13 & \texttt{\#FCD89B} \\
-442 & \texttt{\#FCDCAD} \\
-188 & \texttt{\#EEDABF} \\
-205 & \texttt{\#FCD9B1} \\
-764 & \texttt{\#FCE6B4} \\
-103 & \texttt{\#FCEACC} \\
-763 & \texttt{\#FCF0D2} \\
-206 & \texttt{\#FCEAD6} \\
-443 & \texttt{\#FCEFDB} \\
-444 & \texttt{\#FAF3E8} \\
-159 & \texttt{\#FFFAEB} \\
-511 & \texttt{\#963C00} \\
-512 & \texttt{\#CC6100} \\
-507 & \texttt{\#F85000} \\
-781 & \texttt{\#FF5000} \\
-19 & \texttt{\#FF4600} \\
-164 & \texttt{\#FF3200} \\
-135 & \texttt{\#FF5F00} \\
-22 & \texttt{\#FF6900} \\
-778 & \texttt{\#FF7600} \\
-\#23 & \texttt{\#FF5A00} \\
-780 & \texttt{\#FF6F00} \\
-\#22 & \texttt{\#FF430A} \\
-\#19 & \texttt{\#FF390B} \\
-\#21 & \texttt{\#FF6613} \\
-\#317 & \texttt{\#FF7418} \\
-\#20 & \texttt{\#FF871C} \\
-\#40 & \texttt{\#FF4F1F} \\
-\#318 & \texttt{\#FF6F29} \\
-21 & \texttt{\#FF8C32} \\
-652 & \texttt{\#FF8246} \\
-25 & \texttt{\#FF6E46} \\
-\#303 & \texttt{\#FF8A4A} \\
-17 & \texttt{\#E68C64} \\
-287 & \texttt{\#FFA055} \\
-\#30 & \texttt{\#FF7A59} \\
-651 & \texttt{\#FF9B5F} \\
-622 & \texttt{\#FFA064} \\
-134 & \texttt{\#FAA873} \\
-156 & \texttt{\#E1B48C} \\
-624 & \texttt{\#FFAA73} \\
-8 & \texttt{\#FC9B80} \\
-626 & \texttt{\#FFB482} \\
-147 & \texttt{\#FCB98C} \\
-237 & \texttt{\#FCB292} \\
-236 & \texttt{\#FAC795} \\
-184 & \texttt{\#D3C5BC} \\
-187 & \texttt{\#E0C0B3} \\
-\#04 & \texttt{\#F9B09A} \\
-604 & \texttt{\#FFC295} \\
-747 & \texttt{\#F5B99F} \\
-\#01 & \texttt{\#FBB39A} \\
-\#03 & \texttt{\#FBBA9A} \\
-776 & \texttt{\#FCBE9B} \\
-791 & \texttt{\#F6B8A9} \\
-238 & \texttt{\#F5B9AA} \\
-775 & \texttt{\#FCC6A4} \\
-\#304 & \texttt{\#FABCA9} \\
-790 & \texttt{\#FFB4A5} \\
-108 & \texttt{\#FCBEA9} \\
-\#02 & \texttt{\#FFD1AC} \\
-773 & \texttt{\#FCC5B2} \\
-9 & \texttt{\#FCD7B3} \\
-4 & \texttt{\#FFC8B4} \\
-774 & \texttt{\#FCD1BE} \\
-152 & \texttt{\#FFD2C1} \\
-151 & \texttt{\#FFCDC3} \\
-506 & \texttt{\#FFDACE} \\
-162 & \texttt{\#FCDED8} \\
-223 & \texttt{\#FFF3E8} \\
-\#27 & \texttt{\#B00202} \\
-789 & \texttt{\#AA3C32} \\
-\#25 & \texttt{\#E51F00} \\
-182 & \texttt{\#F50000} \\
-\#32 & \texttt{\#FF413C} \\
-193 & \texttt{\#F37873} \\
-\#31 & \texttt{\#FF847F} \\
-779 & \texttt{\#FC9885} \\
-\#331 & \texttt{\#FF9D8D} \\
-176 & \texttt{\#FFAAA0} \\
-\#305 & \texttt{\#F5BAB8} \\
-109 & \texttt{\#FFB2AF} \\
-153 & \texttt{\#FFC8C8} \\
-749 & \texttt{\#FCD3CD} \\
-154 & \texttt{\#FFD5CF} \\
-\#05 & \texttt{\#FFD7D3} \\
-299 & \texttt{\#373536} \\
-211 & \texttt{\#67686A} \\
-210 & \texttt{\#8E8E8E} \\
-225 & \texttt{\#9FA0A2} \\
-602 & \texttt{\#A5A5AA} \\
-\#398 & \texttt{\#B0B4B9} \\
-209 & \texttt{\#BABABA} \\
-270 & \texttt{\#BEBEBE} \\
-275 & \texttt{\#BEBEBE} \\
-603 & \texttt{\#C8CDCD} \\
-298 & \texttt{\#CCCECD} \\
-226 & \texttt{\#F5F2EB} \\
-3 & \texttt{\#FAF0FA} \\
-278 & \texttt{\#F3FFF3} \\
-279 & \texttt{\#FFF3F7} \\
-503 & \texttt{\#F4FAFF} \\
-218 & \texttt{\#F5FFFF} \\
-217 & \texttt{\#F6FEFF} \\
-221 & \texttt{\#F6FEFF} \\
-130 & \texttt{\#FFFFFF} \\
-250 & \texttt{\#FFFFFF} \\
-258 & \texttt{\#FFFFFF} \\
-400 & \texttt{\#FFFFFF} \\
-429 & \texttt{\#FFFFFF} \\
-450 & \texttt{\#FFFFFF} \\
-\#100 & \texttt{\#FFFFFF} \\
-\#122 & \texttt{\#FFFFFF} \\
-228 & \texttt{\#FFFFFF} \\
-251 & \texttt{\#FFFFFF} \\
-269 & \texttt{\#FFFFFF} \\
-401 & \texttt{\#FFFFFF} \\
-430 & \texttt{\#FFFFFF} \\
-452 & \texttt{\#FFFFFF} \\
-\#101 & \texttt{\#FFFFFF} \\
-\#124 & \texttt{\#FFFFFF} \\
-229 & \texttt{\#FFFFFF} \\
-252 & \texttt{\#FFFFFF} \\
-402 & \texttt{\#FFFFFF} \\
-432 & \texttt{\#FFFFFF} \\
-460 & \texttt{\#FFFFFF} \\
-\#104 & \texttt{\#FFFFFF} \\
-\#125 & \texttt{\#FFFFFF} \\
-220 & \texttt{\#FFFFFF} \\
-253 & \texttt{\#FFFFFF} \\
-271 & \texttt{\#FFFFFF} \\
-404 & \texttt{\#FFFFFF} \\
-434 & \texttt{\#FFFFFF} \\
-462 & \texttt{\#FFFFFF} \\
-\#00 & \texttt{\#FFFFFF} \\
-\#113 & \texttt{\#FFFFFF} \\
-\#126 & \texttt{\#FFFFFF} \\
-254 & \texttt{\#FFFFFF} \\
-272 & \texttt{\#FFFFFF} \\
-410 & \texttt{\#FFFFFF} \\
-464 & \texttt{\#FFFFFF} \\
-\#114 & \texttt{\#FFFFFF} \\
-\#127 & \texttt{\#FFFFFF} \\
-214 & \texttt{\#FFFFFF} \\
-255 & \texttt{\#FFFFFF} \\
-273 & \texttt{\#FFFFFF} \\
-414 & \texttt{\#FFFFFF} \\
-480 & \texttt{\#FFFFFF} \\
-\#119 & \texttt{\#FFFFFF} \\
-\#132 & \texttt{\#FFFFFF} \\
-215 & \texttt{\#FFFFFF} \\
-256 & \texttt{\#FFFFFF} \\
-274 & \texttt{\#FFFFFF} \\
-416 & \texttt{\#FFFFFF} \\
-481 & \texttt{\#FFFFFF} \\
-\#120 & \texttt{\#FFFFFF} \\
-\#140 & \texttt{\#FFFFFF} \\
-129 & \texttt{\#FFFFFF} \\
-216 & \texttt{\#FFFFFF} \\
-257 & \texttt{\#FFFFFF} \\
-420 & \texttt{\#FFFFFF} \\
-482 & \texttt{\#FFFFFF} \\
-\#121 & \texttt{\#FFFFFF} \\
-\#160 & \texttt{\#FFFFFF} \\
+Gel Name & Manufacturer Code & Rendered Colour \\ \hline
+Rose Pink & R002 & \texttt{\#FF40B9} \cellcolor[HTML]{FF40B9} \\
+Lavender Tint & R003 & \texttt{\#F5E6FF} \cellcolor[HTML]{F5E6FF} \\
+Medium Bastard Amber & R004 & \texttt{\#FAB8AC} \cellcolor[HTML]{FAB8AC} \\
+Pale Yellow & R007 & \texttt{\#FFFFDE} \cellcolor[HTML]{FFFFDE} \\
+Dark Salmon & R008 & \texttt{\#FF5E48} \cellcolor[HTML]{FF5E48} \\
+Pale Amber Gold & R009 & \texttt{\#FFD28A} \cellcolor[HTML]{FFD28A} \\
+Medium Yellow & R010 & \texttt{\#FFF30D} \cellcolor[HTML]{FFF30D} \\
+Straw Tint & R013 & \texttt{\#FFDBA1} \cellcolor[HTML]{FFDBA1} \\
+Deep Straw & R015 & \texttt{\#FDC819} \cellcolor[HTML]{FDC819} \\
+Surprise Peach & R017 & \texttt{\#CC5F3D} \cellcolor[HTML]{CC5F3D} \\
+Fire & R019 & \texttt{\#ED2000} \cellcolor[HTML]{ED2000} \\
+Medium Amber & R020 & \texttt{\#FF8A24} \cellcolor[HTML]{FF8A24} \\
+Gold Amber & R021 & \texttt{\#FF4800} \cellcolor[HTML]{FF4800} \\
+Dark Amber & R022 & \texttt{\#FF1900} \cellcolor[HTML]{FF1900} \\
+Scarlet & R024 & \texttt{\#F00E25} \cellcolor[HTML]{F00E25} \\
+Sunset Red & R025 & \texttt{\#FF4B2B} \cellcolor[HTML]{FF4B2B} \\
+Bright Red & R026 & \texttt{\#C70011} \cellcolor[HTML]{C70011} \\
+Medium Red & R027 & \texttt{\#A10000} \cellcolor[HTML]{A10000} \\
+Plasa Red & R029 & \texttt{\#BC0010} \cellcolor[HTML]{BC0010} \\
+Light Pink & R035 & \texttt{\#FFB8CE} \cellcolor[HTML]{FFB8CE} \\
+Medium Pink & R036 & \texttt{\#FF6E9E} \cellcolor[HTML]{FF6E9E} \\
+Pink Carnation & R039 & \texttt{\#FAC0D8} \cellcolor[HTML]{FAC0D8} \\
+Dark Magenta & R046 & \texttt{\#C5004F} \cellcolor[HTML]{C5004F} \\
+Rose Purple & R048 & \texttt{\#C43BFF} \cellcolor[HTML]{C43BFF} \\
+Medium Purple & R049 & \texttt{\#BE00D4} \cellcolor[HTML]{BE00D4} \\
+Light Lavender & R052 & \texttt{\#D7BAFF} \cellcolor[HTML]{D7BAFF} \\
+Paler Lavender & R053 & \texttt{\#E5DEFF} \cellcolor[HTML]{E5DEFF} \\
+Lavender & R058 & \texttt{\#9235FD} \cellcolor[HTML]{9235FD} \\
+Mist Blue & R061 & \texttt{\#D6E8FF} \cellcolor[HTML]{D6E8FF} \\
+Pale Blue & R063 & \texttt{\#B0D5F7} \cellcolor[HTML]{B0D5F7} \\
+Sky Blue & R068 & \texttt{\#597DFF} \cellcolor[HTML]{597DFF} \\
+Tokyo Blue & R071 & \texttt{\#3600B1} \cellcolor[HTML]{3600B1} \\
+Evening Blue & R075 & \texttt{\#4C79FF} \cellcolor[HTML]{4C79FF} \\
+Just Blue & R079 & \texttt{\#3700EB} \cellcolor[HTML]{3700EB} \\
+Deeper Blue & R085 & \texttt{\#1A00BF} \cellcolor[HTML]{1A00BF} \\
+Lime Green & R088 & \texttt{\#BEFF85} \cellcolor[HTML]{BEFF85} \\
+Moss Green & R089 & \texttt{\#00CD55} \cellcolor[HTML]{00CD55} \\
+Dark Yellow Green & R090 & \texttt{\#00870B} \cellcolor[HTML]{00870B} \\
+Spring Yellow & R100 & \texttt{\#F2FF30} \cellcolor[HTML]{F2FF30} \\
+Yellow & R101 & \texttt{\#FFEB0F} \cellcolor[HTML]{FFEB0F} \\
+Light Amber & R102 & \texttt{\#FFE74A} \cellcolor[HTML]{FFE74A} \\
+Straw & R103 & \texttt{\#FFE7C4} \cellcolor[HTML]{FFE7C4} \\
+Deep Amber & R104 & \texttt{\#FCD628} \cellcolor[HTML]{FCD628} \\
+Orange & R105 & \texttt{\#FF760D} \cellcolor[HTML]{FF760D} \\
+Primary Red & R106 & \texttt{\#DE0000} \cellcolor[HTML]{DE0000} \\
+Light Rose & R107 & \texttt{\#FF809F} \cellcolor[HTML]{FF809F} \\
+English Rose & R108 & \texttt{\#FAAD96} \cellcolor[HTML]{FAAD96} \\
+Light Salmon & R109 & \texttt{\#FF919C} \cellcolor[HTML]{FF919C} \\
+Middle Rose & R110 & \texttt{\#FFA3CA} \cellcolor[HTML]{FFA3CA} \\
+Dark Pink & R111 & \texttt{\#FF63A4} \cellcolor[HTML]{FF63A4} \\
+Magenta & R113 & \texttt{\#FF004D} \cellcolor[HTML]{FF004D} \\
+Peacock Blue & R115 & \texttt{\#00C9BF} \cellcolor[HTML]{00C9BF} \\
+Medium Blue Green & R116 & \texttt{\#009E96} \cellcolor[HTML]{009E96} \\
+Steel Blue & R117 & \texttt{\#A3E2FF} \cellcolor[HTML]{A3E2FF} \\
+Light Blue & R118 & \texttt{\#00B7FF} \cellcolor[HTML]{00B7FF} \\
+Dark Blue & R119 & \texttt{\#3300D9} \cellcolor[HTML]{3300D9} \\
+Deep Blue & R120 & \texttt{\#2800C9} \cellcolor[HTML]{2800C9} \\
+Leaf Green & R121 & \texttt{\#93FF54} \cellcolor[HTML]{93FF54} \\
+Fern Green & R122 & \texttt{\#74F55D} \cellcolor[HTML]{74F55D} \\
+Dark Green & R124 & \texttt{\#00AB44} \cellcolor[HTML]{00AB44} \\
+Mauve & R126 & \texttt{\#D400DB} \cellcolor[HTML]{D400DB} \\
+Smokey Pink & R127 & \texttt{\#BB334C} \cellcolor[HTML]{BB334C} \\
+Bright Pink & R128 & \texttt{\#FF177F} \cellcolor[HTML]{FF177F} \\
+Heavy Frost & R129 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Clear & R130 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Marine Blue & R131 & \texttt{\#02E3CC} \cellcolor[HTML]{02E3CC} \\
+Medium Blue & R132 & \texttt{\#5286FF} \cellcolor[HTML]{5286FF} \\
+Golden Amber & R134 & \texttt{\#F5632F} \cellcolor[HTML]{F5632F} \\
+Deep Golden Amber & R135 & \texttt{\#FF4A00} \cellcolor[HTML]{FF4A00} \\
+Pale Lavender & R136 & \texttt{\#E2C7FF} \cellcolor[HTML]{E2C7FF} \\
+Special Lavender & R137 & \texttt{\#B695FC} \cellcolor[HTML]{B695FC} \\
+Pale Green & R138 & \texttt{\#B4FFA8} \cellcolor[HTML]{B4FFA8} \\
+Primary Green & R139 & \texttt{\#009107} \cellcolor[HTML]{009107} \\
+Summer Blue & R140 & \texttt{\#38CAFF} \cellcolor[HTML]{38CAFF} \\
+Bright Blue & R141 & \texttt{\#00ACF0} \cellcolor[HTML]{00ACF0} \\
+Pale Violet & R142 & \texttt{\#AA96FF} \cellcolor[HTML]{AA96FF} \\
+Pale Navy Blue & R143 & \texttt{\#007194} \cellcolor[HTML]{007194} \\
+No Color Blue & R144 & \texttt{\#4FC4FF} \cellcolor[HTML]{4FC4FF} \\
+Apricot & R147 & \texttt{\#FF7438} \cellcolor[HTML]{FF7438} \\
+Bright Rose & R148 & \texttt{\#FF1472} \cellcolor[HTML]{FF1472} \\
+Gold Tint & R151 & \texttt{\#FFC0B5} \cellcolor[HTML]{FFC0B5} \\
+Pale Gold & R152 & \texttt{\#FFCAA8} \cellcolor[HTML]{FFCAA8} \\
+Pale Salmon & R153 & \texttt{\#FFB2BA} \cellcolor[HTML]{FFB2BA} \\
+Pale Rose & R154 & \texttt{\#FFB2BA} \cellcolor[HTML]{FFB2BA} \\
+Chocolate & R156 & \texttt{\#C57951} \cellcolor[HTML]{C57951} \\
+Pink & R157 & \texttt{\#FF4551} \cellcolor[HTML]{FF4551} \\
+Deep Orange & R158 & \texttt{\#FF5E00} \cellcolor[HTML]{FF5E00} \\
+No Color Straw & R159 & \texttt{\#FFFAE0} \cellcolor[HTML]{FFFAE0} \\
+Slate Blue & R161 & \texttt{\#4AABFF} \cellcolor[HTML]{4AABFF} \\
+Bastard Amber & R162 & \texttt{\#FFCFA8} \cellcolor[HTML]{FFCFA8} \\
+Flame Red & R164 & \texttt{\#F02225} \cellcolor[HTML]{F02225} \\
+Daylight Blue & R165 & \texttt{\#1CACFF} \cellcolor[HTML]{1CACFF} \\
+Pale Red & R166 & \texttt{\#FF3352} \cellcolor[HTML]{FF3352} \\
+Lilac Tint & R169 & \texttt{\#EBDAF5} \cellcolor[HTML]{EBDAF5} \\
+Deep Lavender & R170 & \texttt{\#DAADFF} \cellcolor[HTML]{DAADFF} \\
+Lagoon Blue & R172 & \texttt{\#00AACC} \cellcolor[HTML]{00AACC} \\
+Dark Steel Blue & R174 & \texttt{\#52B4FF} \cellcolor[HTML]{52B4FF} \\
+Loving Amber & R176 & \texttt{\#FAA498} \cellcolor[HTML]{FAA498} \\
+Chrome Orange & R179 & \texttt{\#FF9900} \cellcolor[HTML]{FF9900} \\
+Dark Lavender & R180 & \texttt{\#8B2BFF} \cellcolor[HTML]{8B2BFF} \\
+Congo Blue & R181 & \texttt{\#29007A} \cellcolor[HTML]{29007A} \\
+Light Red & R182 & \texttt{\#CC0000} \cellcolor[HTML]{CC0000} \\
+Moonlight Blue & R183 & \texttt{\#00BAF2} \cellcolor[HTML]{00BAF2} \\
+Cosmetic Peach & R184 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Cosmetic Burgundy & R185 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Cosmetic Silver Rose & R186 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Cosmetic Rouge & R187 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Cosmetic Highlight & R188 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Cosmetic Silver Moss & R189 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Cosmetic Emerald & R190 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Cosmetic Aqua Blue & R191 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Flesh Pink & R192 & \texttt{\#FF639F} \cellcolor[HTML]{FF639F} \\
+Rosy Amber & R193 & \texttt{\#FF454B} \cellcolor[HTML]{FF454B} \\
+Surprise Pink & R194 & \texttt{\#AC82FF} \cellcolor[HTML]{AC82FF} \\
+Zenith Blue & R195 & \texttt{\#0003CC} \cellcolor[HTML]{0003CC} \\
+True Blue & R196 & \texttt{\#00A1FF} \cellcolor[HTML]{00A1FF} \\
+Alice Blue & R197 & \texttt{\#1958CF} \cellcolor[HTML]{1958CF} \\
+Palace Blue & R198 & \texttt{\#43009C} \cellcolor[HTML]{43009C} \\
+Regal Blue & R199 & \texttt{\#3700EE} \cellcolor[HTML]{3700EE} \\
+Double CT Blue & R200 & \texttt{\#0F5BFF} \cellcolor[HTML]{0F5BFF} \\
+Full CT Blue & R201 & \texttt{\#73A9FF} \cellcolor[HTML]{73A9FF} \\
+1/2 CT Blue & R202 & \texttt{\#B8D5FF} \cellcolor[HTML]{B8D5FF} \\
+1/4 CT Blue & R203 & \texttt{\#E0EDFF} \cellcolor[HTML]{E0EDFF} \\
+Full CT Orange & R204 & \texttt{\#FF9B30} \cellcolor[HTML]{FF9B30} \\
+1/2 CT Orange & R205 & \texttt{\#FFD28F} \cellcolor[HTML]{FFD28F} \\
+1/4 CT Orange & R206 & \texttt{\#FFE6B8} \cellcolor[HTML]{FFE6B8} \\
+CT Orange + .3 Neutral Density & R207 & \texttt{\#A86300} \cellcolor[HTML]{A86300} \\
+CT Orange + .6 Neutral Density & R208 & \texttt{\#974400} \cellcolor[HTML]{974400} \\
+.3 Neutral Density & R209 & \texttt{\#BFBDBD} \cellcolor[HTML]{BFBDBD} \\
+.6 Neutral Density & R210 & \texttt{\#969595} \cellcolor[HTML]{969595} \\
+.9 Neutral Density & R211 & \texttt{\#636262} \cellcolor[HTML]{636262} \\
+LCT Yellow & R212 & \texttt{\#FBFFD9} \cellcolor[HTML]{FBFFD9} \\
+White Flame Green & R213 & \texttt{\#E0FCB3} \cellcolor[HTML]{E0FCB3} \\
+Full Tough Spun & R214 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Half Tough Spun & R215 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+White Diffusion & R216 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Blue Diffusion & R217 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Eighth CT Blue  & R218 & \texttt{\#EBF3FF} \cellcolor[HTML]{EBF3FF} \\
+Fluorescent Green  & R219 & \texttt{\#2EE8CF} \cellcolor[HTML]{2EE8CF} \\
+White Frost & R220 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Blue Frost & R221 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+1/8 CT Orange & R223 & \texttt{\#FFEAD1} \cellcolor[HTML]{FFEAD1} \\
+Daylight Blue Frost & R224 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Neutral Density Frost & R225 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+U.V. Filter & R226 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Brushed Silk & R228 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quarter Tough Spun & R229 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Super Correction WF Green & R232 & \texttt{\#AD6824} \cellcolor[HTML]{AD6824} \\
+HMI To Tungsten & R236 & \texttt{\#FF8438} \cellcolor[HTML]{FF8438} \\
+C.I.D. to Tungsten & R237 & \texttt{\#F08F56} \cellcolor[HTML]{F08F56} \\
+C.S.I. to Tungsten & R238 & \texttt{\#E5B1A0} \cellcolor[HTML]{E5B1A0} \\
+Polarizer & R239 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Fluorescent 5700K & R241 & \texttt{\#1AD8D8} \cellcolor[HTML]{1AD8D8} \\
+Fluorescent 4300K & R242 & \texttt{\#5AE2C7} \cellcolor[HTML]{5AE2C7} \\
+Fluorescent 3600K & R243 & \texttt{\#87E5B6} \cellcolor[HTML]{87E5B6} \\
+Plus Green & R244 & \texttt{\#E0FC90} \cellcolor[HTML]{E0FC90} \\
+Half Plus Green & R245 & \texttt{\#EAFCB8} \cellcolor[HTML]{EAFCB8} \\
+Quarter Plus Green & R246 & \texttt{\#F0FCD2} \cellcolor[HTML]{F0FCD2} \\
+Minus Green & R247 & \texttt{\#FFB8D0} \cellcolor[HTML]{FFB8D0} \\
+Half Minus Green & R248 & \texttt{\#FACDE0} \cellcolor[HTML]{FACDE0} \\
+Quarter Minus Green & R249 & \texttt{\#FADEE8} \cellcolor[HTML]{FADEE8} \\
+Half White Diffusion & R250 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quarter White Diffusion & R251 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Eighth White Diffusion & R252 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Hanover Frost & R253 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+HT New Hanover Frost & R254 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Haarlem Frost & R255 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Half Hanover Frost & R256 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quarter Hanover Frost & R257 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Eighth Hanover Frost & R258 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Heat Shield & R269 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Scrim & R270 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Mirror Silver & R271 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Soft Gold Reflector & R272 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Soft Silver Reflector & R273 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Mirror Gold & R274 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Black Scrim & R275 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Eighth Plus Green & R278 & \texttt{\#F6FFE0} \cellcolor[HTML]{F6FFE0} \\
+Eighth Minus Green & R279 & \texttt{\#FCE8F3} \cellcolor[HTML]{FCE8F3} \\
+Three Quarter CT Blue & R281 & \texttt{\#9CC5FF} \cellcolor[HTML]{9CC5FF} \\
+1.5 CT Blue & R283 & \texttt{\#759EE5} \cellcolor[HTML]{759EE5} \\
+3/4 CT Orange & R285 & \texttt{\#F7AF5C} \cellcolor[HTML]{F7AF5C} \\
+1.5 CT Orange & R286 & \texttt{\#F8963E} \cellcolor[HTML]{F8963E} \\
+Double CT Orange & R287 & \texttt{\#F77F1E} \cellcolor[HTML]{F77F1E} \\
+.15 Neutral Density & R298 & \texttt{\#DCD9D9} \cellcolor[HTML]{DCD9D9} \\
+1.2 Neutral Density & R299 & \texttt{\#474747} \cellcolor[HTML]{474747} \\
+Soft Green & R322 & \texttt{\#02E59A} \cellcolor[HTML]{02E59A} \\
+Jade & R323 & \texttt{\#02E2A3} \cellcolor[HTML]{02E2A3} \\
+Mallard Green & R325 & \texttt{\#005C46} \cellcolor[HTML]{005C46} \\
+Forest Green & R327 & \texttt{\#006539} \cellcolor[HTML]{006539} \\
+Follies Pink & R328 & \texttt{\#FF33A0} \cellcolor[HTML]{FF33A0} \\
+Special Rose Pink & R332 & \texttt{\#FF0D6A} \cellcolor[HTML]{FF0D6A} \\
+Plum & R341 & \texttt{\#CD9BD1} \cellcolor[HTML]{CD9BD1} \\
+Special Medium Lavender & R343 & \texttt{\#7345FF} \cellcolor[HTML]{7345FF} \\
+Violet & R344 & \texttt{\#A98AFF} \cellcolor[HTML]{A98AFF} \\
+Fuschia Pink & R345 & \texttt{\#C953DB} \cellcolor[HTML]{C953DB} \\
+Glacier Blue & R352 & \texttt{\#00A6FF} \cellcolor[HTML]{00A6FF} \\
+Lighter Blue & R353 & \texttt{\#54D5FF} \cellcolor[HTML]{54D5FF} \\
+Special Steel Blue  & R354 & \texttt{\#00BFD8} \cellcolor[HTML]{00BFD8} \\
+Special Medium Blue & R363 & \texttt{\#0236DF} \cellcolor[HTML]{0236DF} \\
+Cornflower & R366 & \texttt{\#5783CF} \cellcolor[HTML]{5783CF} \\
+Rolux & R400 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Light Rolux & R401 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Soft Frost & R402 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Half Soft Frost & R404 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Opal Frost & R410 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Highlight & R414 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Three Quarter White & R416 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Light Opal Frost & R420 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quiet Frost & R429 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Grid Cloth & R430 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Light Grid Cloth & R432 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quarter Grid Cloth & R434 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Full CT Straw & R441 & \texttt{\#F7BF4F} \cellcolor[HTML]{F7BF4F} \\
+Half CT Straw & R442 & \texttt{\#FFCE9C} \cellcolor[HTML]{FFCE9C} \\
+Quarter CT Straw & R443 & \texttt{\#FFE3BA} \cellcolor[HTML]{FFE3BA} \\
+Eighth CT Straw & R444 & \texttt{\#FFF5DC} \cellcolor[HTML]{FFF5DC} \\
+Three Eighths White & R450 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+One Sixteenth White & R452 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quiet Grid Cloth & R460 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quiet Light Grid Cloth & R462 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quiet Quarter Grid Cloth & R464 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Full Atlantic Frost & R480 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Half Atlantic Frost & R481 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quarter Atlantic Frost & R482 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Double New Colour Blue & R500 & \texttt{\#6977FF} \cellcolor[HTML]{6977FF} \\
+New Colour Blue (Robertson Blue) & R501 & \texttt{\#BFC7FB} \cellcolor[HTML]{BFC7FB} \\
+Half New Colour Blue & R502 & \texttt{\#D9E3FF} \cellcolor[HTML]{D9E3FF} \\
+Quarter New Colour Blue & R503 & \texttt{\#F0F5FF} \cellcolor[HTML]{F0F5FF} \\
+Waterfront Green & R504 & \texttt{\#B3DCE3} \cellcolor[HTML]{B3DCE3} \\
+Sally Green & R505 & \texttt{\#BFFF59} \cellcolor[HTML]{BFFF59} \\
+Marlene & R506 & \texttt{\#F7C9A3} \cellcolor[HTML]{F7C9A3} \\
+Madge & R507 & \texttt{\#E93511} \cellcolor[HTML]{E93511} \\
+Midnight Maya & R508 & \texttt{\#1602AA} \cellcolor[HTML]{1602AA} \\
+Argent Blue & R525 & \texttt{\#2261D6} \cellcolor[HTML]{2261D6} \\
+Gold Medal & R550 & \texttt{\#F5AE3F} \cellcolor[HTML]{F5AE3F} \\
+Full CT Eight Five & R604 & \texttt{\#FFC470} \cellcolor[HTML]{FFC470} \\
+Half Mustard Yellow & R642 & \texttt{\#DFAB00} \cellcolor[HTML]{DFAB00} \\
+Quarter Mustard Yellow & R643 & \texttt{\#FDC200} \cellcolor[HTML]{FDC200} \\
+Industry Sodium & R650 & \texttt{\#D9CE73} \cellcolor[HTML]{D9CE73} \\
+HI Sodium & R651 & \texttt{\#FFB95C} \cellcolor[HTML]{FFB95C} \\
+Urban Sodium & R652 & \texttt{\#FF752B} \cellcolor[HTML]{FF752B} \\
+LO Sodium & R653 & \texttt{\#5E2A02} \cellcolor[HTML]{5E2A02} \\
+Perfect Lavender & R700 & \texttt{\#7500EB} \cellcolor[HTML]{7500EB} \\
+Provence & R701 & \texttt{\#9A3BFF} \cellcolor[HTML]{9A3BFF} \\
+Special Pale Lavender & R702 & \texttt{\#DACCFF} \cellcolor[HTML]{DACCFF} \\
+Cold Lavender & R703 & \texttt{\#C587FF} \cellcolor[HTML]{C587FF} \\
+Lily & R704 & \texttt{\#E2BAFF} \cellcolor[HTML]{E2BAFF} \\
+Lily Frost & R705 & \texttt{\#D59EFF} \cellcolor[HTML]{D59EFF} \\
+King Fals Lavender & R706 & \texttt{\#6600FF} \cellcolor[HTML]{6600FF} \\
+Ultimate Violet & R707 & \texttt{\#7500F2} \cellcolor[HTML]{7500F2} \\
+Cool Lavender & R708 & \texttt{\#BFC8FF} \cellcolor[HTML]{BFC8FF} \\
+Electric Lilac & R709 & \texttt{\#7394FF} \cellcolor[HTML]{7394FF} \\
+Spir Special Blue & R710 & \texttt{\#554CFF} \cellcolor[HTML]{554CFF} \\
+Cold Blue & R711 & \texttt{\#224ED4} \cellcolor[HTML]{224ED4} \\
+Bedford Blue & R712 & \texttt{\#3853FF} \cellcolor[HTML]{3853FF} \\
+Winter Blue & R713 & \texttt{\#1F009A} \cellcolor[HTML]{1F009A} \\
+Elysian Blue & R714 & \texttt{\#0F17FF} \cellcolor[HTML]{0F17FF} \\
+Cabanna Blue & R715 & \texttt{\#072EDE} \cellcolor[HTML]{072EDE} \\
+Mikkel Blue & R716 & \texttt{\#2600BF} \cellcolor[HTML]{2600BF} \\
+Shanklin Frost & R717 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+1/2 Shanklin Frost & R718 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Colour Wash Blue & R719 & \texttt{\#2265F5} \cellcolor[HTML]{2265F5} \\
+Daylight Frost & R720 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Berry Blue & R721 & \texttt{\#0036E8} \cellcolor[HTML]{0036E8} \\
+Bray Blue & R722 & \texttt{\#0024C2} \cellcolor[HTML]{0024C2} \\
+Virgin Blue & R723 & \texttt{\#0031F7} \cellcolor[HTML]{0031F7} \\
+Ocean Blue & R724 & \texttt{\#2BC7FF} \cellcolor[HTML]{2BC7FF} \\
+Old Steel Blue & R725 & \texttt{\#8CDFFF} \cellcolor[HTML]{8CDFFF} \\
+QFD Blue & R727 & \texttt{\#007385} \cellcolor[HTML]{007385} \\
+Steel Green & R728 & \texttt{\#95DEDA} \cellcolor[HTML]{95DEDA} \\
+Scuba Blue & R729 & \texttt{\#007070} \cellcolor[HTML]{007070} \\
+Liberty Green & R730 & \texttt{\#A3F7DB} \cellcolor[HTML]{A3F7DB} \\
+Dirty Ice & R731 & \texttt{\#B4F0D2} \cellcolor[HTML]{B4F0D2} \\
+Damp Squib & R733 & \texttt{\#A8E5C7} \cellcolor[HTML]{A8E5C7} \\
+Velvet Green & R735 & \texttt{\#005C1D} \cellcolor[HTML]{005C1D} \\
+Twickenham Green & R736 & \texttt{\#0D5700} \cellcolor[HTML]{0D5700} \\
+Jas Green & R738 & \texttt{\#5FE300} \cellcolor[HTML]{5FE300} \\
+Aurora Borealis Green & R740 & \texttt{\#354D15} \cellcolor[HTML]{354D15} \\
+Mustard Yellow & R741 & \texttt{\#C5A100} \cellcolor[HTML]{C5A100} \\
+Bram Brown & R742 & \texttt{\#8E5324} \cellcolor[HTML]{8E5324} \\
+Dirty White & R744 & \texttt{\#F7C757} \cellcolor[HTML]{F7C757} \\
+Brown  & R746 & \texttt{\#753900} \cellcolor[HTML]{753900} \\
+Easy White & R747 & \texttt{\#CC8C7C} \cellcolor[HTML]{CC8C7C} \\
+Seedy Pink & R748 & \texttt{\#C23061} \cellcolor[HTML]{C23061} \\
+Hanover Rose & R749 & \texttt{\#FFBCBA} \cellcolor[HTML]{FFBCBA} \\
+Durham Frost & R750 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Wheat & R763 & \texttt{\#FFEFBA} \cellcolor[HTML]{FFEFBA} \\
+Sun Colour Straw & R764 & \texttt{\#FFEC94} \cellcolor[HTML]{FFEC94} \\
+Sunlight Yellow & R765 & \texttt{\#FFEC6E} \cellcolor[HTML]{FFEC6E} \\
+Oklahoma Yellow & R767 & \texttt{\#FFDE24} \cellcolor[HTML]{FFDE24} \\
+Egg Yolk Yellow & R768 & \texttt{\#FCC200} \cellcolor[HTML]{FCC200} \\
+Burnt Yellow & R770 & \texttt{\#FF8A0D} \cellcolor[HTML]{FF8A0D} \\
+Cardbox Amber & R773 & \texttt{\#FFB28F} \cellcolor[HTML]{FFB28F} \\
+Soft Amber & R774 & \texttt{\#FFC49C} \cellcolor[HTML]{FFC49C} \\
+Soft Amber 2 & R775 & \texttt{\#FFBA8C} \cellcolor[HTML]{FFBA8C} \\
+Nectarine & R776 & \texttt{\#FF8345} \cellcolor[HTML]{FF8345} \\
+Rust & R777 & \texttt{\#D94F18} \cellcolor[HTML]{D94F18} \\
+Millennium Gold & R778 & \texttt{\#FF4405} \cellcolor[HTML]{FF4405} \\
+Bastard Pink & R779 & \texttt{\#F56A2F} \cellcolor[HTML]{F56A2F} \\
+As Golden Amber & R780 & \texttt{\#FF3B05} \cellcolor[HTML]{FF3B05} \\
+Terry Red & R781 & \texttt{\#FF0F0D} \cellcolor[HTML]{FF0F0D} \\
+Marius Red & R787 & \texttt{\#91001B} \cellcolor[HTML]{91001B} \\
+Blood Red & R789 & \texttt{\#99000D} \cellcolor[HTML]{99000D} \\
+Moroccan Pink & R790 & \texttt{\#FF919C} \cellcolor[HTML]{FF919C} \\
+Moroccan Frost & R791 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Vanity Fair & R793 & \texttt{\#FF12AC} \cellcolor[HTML]{FF12AC} \\
+Pretty N Pink & R794 & \texttt{\#FF82DE} \cellcolor[HTML]{FF82DE} \\
+Magical Magenta & R795 & \texttt{\#FF00C8} \cellcolor[HTML]{FF00C8} \\
+Deep Purple & R797 & \texttt{\#AD00CC} \cellcolor[HTML]{AD00CC} \\
+Chrysalis Pink & R798 & \texttt{\#7B0FFF} \cellcolor[HTML]{7B0FFF} \\
+Special K.H. Lavender & R799 & \texttt{\#120096} \cellcolor[HTML]{120096} \\
+Damson Violet & R5084 & \texttt{\#8800C7} \cellcolor[HTML]{8800C7} \\
+French Lilac & R5085 & \texttt{\#6D00F2} \cellcolor[HTML]{6D00F2} \\
+Max Blue & R5202 & \texttt{\#B8D4FF} \cellcolor[HTML]{B8D4FF} \\
+Ice Blue & R5211 & \texttt{\#E8F4FF} \cellcolor[HTML]{E8F4FF} \\
+Venetian Blue & R5264 & \texttt{\#96C9FF} \cellcolor[HTML]{96C9FF} \\
+Fuji Blue & R5287 & \texttt{\#002DE3} \cellcolor[HTML]{002DE3} \\
+Aztec Gold & R5336 & \texttt{\#F2CF88} \cellcolor[HTML]{F2CF88} \\
+Wisteria & R5404 & \texttt{\#DFCFFF} \cellcolor[HTML]{DFCFFF} \\
+Olympia Green & R5454 & \texttt{\#009C72} \cellcolor[HTML]{009C72} \\
+Tarragon & R5455 & \texttt{\#7DFFB1} \cellcolor[HTML]{7DFFB1} \\
+Grotto Green & R5461 & \texttt{\#02BF9C} \cellcolor[HTML]{02BF9C} \\
+Prussian Green & R5463 & \texttt{\#00A6B5} \cellcolor[HTML]{00A6B5} \\
+\hline
+\end{longtable}
+\subsubsection{Supergel}
+\begin{longtable}{|l|l|r|}
+\hline
+Gel Name & Manufacturer Code & Rendered Colour \\ \hline
+Dempster Open White & S00 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Light Bastard Amber & S01 & \texttt{\#FBB39A} \cellcolor[HTML]{FBB39A} \\
+Bastard Amber & S02 & \texttt{\#FFD1AC} \cellcolor[HTML]{FFD1AC} \\
+Dark Bastard Amber & S03 & \texttt{\#FBBA9A} \cellcolor[HTML]{FBBA9A} \\
+Warm Peach & S303 & \texttt{\#FF8A4A} \cellcolor[HTML]{FF8A4A} \\
+Medium Bastard Amber & S04 & \texttt{\#F9B09A} \cellcolor[HTML]{F9B09A} \\
+Pale Apricot & S304 & \texttt{\#FABCA9} \cellcolor[HTML]{FABCA9} \\
+Rose Tint & S05 & \texttt{\#FFD7D3} \cellcolor[HTML]{FFD7D3} \\
+Rose Gold & S305 & \texttt{\#F5BAB8} \cellcolor[HTML]{F5BAB8} \\
+No Color Straw & S06 & \texttt{\#FCFADB} \cellcolor[HTML]{FCFADB} \\
+Pale Yellow  & S07 & \texttt{\#FDFAD1} \cellcolor[HTML]{FDFAD1} \\
+Pale Amber Gold & S09 & \texttt{\#FFCB86} \cellcolor[HTML]{FFCB86} \\
+Medium Yellow & S10 & \texttt{\#FFF200} \cellcolor[HTML]{FFF200} \\
+Light Straw & S11 & \texttt{\#FFD21A} \cellcolor[HTML]{FFD21A} \\
+Canary & S312 & \texttt{\#FFEA00} \cellcolor[HTML]{FFEA00} \\
+Straw Tint  & S13 & \texttt{\#FFD88F} \cellcolor[HTML]{FFD88F} \\
+Light Relief Yellow & S313 & \texttt{\#FFE462} \cellcolor[HTML]{FFE462} \\
+Medium Straw & S14 & \texttt{\#FCD419} \cellcolor[HTML]{FCD419} \\
+Deep Straw  & S15 & \texttt{\#FECB00} \cellcolor[HTML]{FECB00} \\
+Apricot & S317 & \texttt{\#FF7418} \cellcolor[HTML]{FF7418} \\
+Mayan Sun & S318 & \texttt{\#FF6F29} \cellcolor[HTML]{FF6F29} \\
+Fire & S19 & \texttt{\#FF390B} \cellcolor[HTML]{FF390B} \\
+Medium Amber & S20 & \texttt{\#FF871C} \cellcolor[HTML]{FF871C} \\
+Golden Amber & S21 & \texttt{\#FF6613} \cellcolor[HTML]{FF6613} \\
+Deep Amber & S22 & \texttt{\#FF430A} \cellcolor[HTML]{FF430A} \\
+Orange & S23 & \texttt{\#FF5A00} \cellcolor[HTML]{FF5A00} \\
+Scarlet & S24 & \texttt{\#F50014} \cellcolor[HTML]{F50014} \\
+Gypsy Red & S324 & \texttt{\#F50F39} \cellcolor[HTML]{F50F39} \\
+Orange Red & S25 & \texttt{\#E51F00} \cellcolor[HTML]{E51F00} \\
+Light Red & S26 & \texttt{\#D70229} \cellcolor[HTML]{D70229} \\
+Medium Red & S27 & \texttt{\#B00202} \cellcolor[HTML]{B00202} \\
+Light Salmon Pink & S30 & \texttt{\#FF7A59} \cellcolor[HTML]{FF7A59} \\
+Salmon Pink & S31 & \texttt{\#FF847F} \cellcolor[HTML]{FF847F} \\
+Shell Pink & S331 & \texttt{\#FF9D8D} \cellcolor[HTML]{FF9D8D} \\
+Medium Salmon Pink & S32 & \texttt{\#FF413C} \cellcolor[HTML]{FF413C} \\
+Cherry Rose & S332 & \texttt{\#FF2957} \cellcolor[HTML]{FF2957} \\
+No Color Pink & S33 & \texttt{\#FFC2D0} \cellcolor[HTML]{FFC2D0} \\
+Light Pink & S35 & \texttt{\#FFA7BB} \cellcolor[HTML]{FFA7BB} \\
+Medium Pink & S36 & \texttt{\#FF6D96} \cellcolor[HTML]{FF6D96} \\
+Billington Pink & S336 & \texttt{\#FF73B7} \cellcolor[HTML]{FF73B7} \\
+True Pink & S337 & \texttt{\#FFAFC2} \cellcolor[HTML]{FFAFC2} \\
+Light Rose & S38 & \texttt{\#FFBBE2} \cellcolor[HTML]{FFBBE2} \\
+Broadway Pink & S339 & \texttt{\#FF1283} \cellcolor[HTML]{FF1283} \\
+Skelton Exotic Sangria & S39 & \texttt{\#E800BC} \cellcolor[HTML]{E800BC} \\
+Light Salmon & S40 & \texttt{\#FF4F1F} \cellcolor[HTML]{FF4F1F} \\
+Rose Pink & S342 & \texttt{\#FF1562} \cellcolor[HTML]{FF1562} \\
+Deep Pink & S43 & \texttt{\#FF3E93} \cellcolor[HTML]{FF3E93} \\
+Neon Pink & S343 & \texttt{\#FF397F} \cellcolor[HTML]{FF397F} \\
+Follies Pink & S344 & \texttt{\#FF05D3} \cellcolor[HTML]{FF05D3} \\
+Rose & S45 & \texttt{\#EB016D} \cellcolor[HTML]{EB016D} \\
+Magenta & S46 & \texttt{\#BD045D} \cellcolor[HTML]{BD045D} \\
+Tropical Magenta & S346 & \texttt{\#FF2DD5} \cellcolor[HTML]{FF2DD5} \\
+Light Rose Purple & S47 & \texttt{\#CC4EB9} \cellcolor[HTML]{CC4EB9} \\
+Belladonna Rose & S347 & \texttt{\#B101DD} \cellcolor[HTML]{B101DD} \\
+Rose Purple & S48 & \texttt{\#C800CF} \cellcolor[HTML]{C800CF} \\
+Purple Jazz & S348 & \texttt{\#DA2DFF} \cellcolor[HTML]{DA2DFF} \\
+Medium Purple & S49 & \texttt{\#C900E6} \cellcolor[HTML]{C900E6} \\
+Fisher Fuchsia & S349 & \texttt{\#F000FF} \cellcolor[HTML]{F000FF} \\
+Mauve & S50 & \texttt{\#BB002C} \cellcolor[HTML]{BB002C} \\
+Lavender Mist & S351 & \texttt{\#EFDCFF} \cellcolor[HTML]{EFDCFF} \\
+Light Lavender & S52 & \texttt{\#DDBFFF} \cellcolor[HTML]{DDBFFF} \\
+Pale Lavender & S53 & \texttt{\#E4DCFF} \cellcolor[HTML]{E4DCFF} \\
+Lilly Lavender & S353 & \texttt{\#C4ADFF} \cellcolor[HTML]{C4ADFF} \\
+Special Lavender & S54 & \texttt{\#E6C7FF} \cellcolor[HTML]{E6C7FF} \\
+Lilac & S55 & \texttt{\#C0AAFD} \cellcolor[HTML]{C0AAFD} \\
+Pale Violet & S355 & \texttt{\#A590FF} \cellcolor[HTML]{A590FF} \\
+Gypsy Lavender & S56 & \texttt{\#8C2FFF} \cellcolor[HTML]{8C2FFF} \\
+Middle Lavender & S356 & \texttt{\#C38DFF} \cellcolor[HTML]{C38DFF} \\
+Lavender & S57 & \texttt{\#B482FF} \cellcolor[HTML]{B482FF} \\
+Royal Lavender & S357 & \texttt{\#8A2BFF} \cellcolor[HTML]{8A2BFF} \\
+Deep Lavender & S58 & \texttt{\#933FFD} \cellcolor[HTML]{933FFD} \\
+Rose Indigo & S358 & \texttt{\#8E0AEA} \cellcolor[HTML]{8E0AEA} \\
+Indigo & S59 & \texttt{\#7200FF} \cellcolor[HTML]{7200FF} \\
+Medium Violet & S359 & \texttt{\#683FFF} \cellcolor[HTML]{683FFF} \\
+Mist Blue & S61 & \texttt{\#D3EAFF} \cellcolor[HTML]{D3EAFF} \\
+Hemsley Blue & S361 & \texttt{\#669EFC} \cellcolor[HTML]{669EFC} \\
+Booster Blue & S62 & \texttt{\#A1CEFF} \cellcolor[HTML]{A1CEFF} \\
+Pale Blue & S63 & \texttt{\#A4D3FF} \cellcolor[HTML]{A4D3FF} \\
+Aquamarine & S363 & \texttt{\#ABE9FF} \cellcolor[HTML]{ABE9FF} \\
+Light Steel Blue & S64 & \texttt{\#50AEFD} \cellcolor[HTML]{50AEFD} \\
+Daylight Blue & S65 & \texttt{\#00A9FF} \cellcolor[HTML]{00A9FF} \\
+Cool Blue & S66 & \texttt{\#94EAFF} \cellcolor[HTML]{94EAFF} \\
+Jordan Blue & S366 & \texttt{\#29C0F9} \cellcolor[HTML]{29C0F9} \\
+Light Sky Blue & S67 & \texttt{\#14A9FF} \cellcolor[HTML]{14A9FF} \\
+Slate Blue & S367 & \texttt{\#44A5FF} \cellcolor[HTML]{44A5FF} \\
+Parry Sky Blue & S68 & \texttt{\#447DFF} \cellcolor[HTML]{447DFF} \\
+Winkler Blue & S368 & \texttt{\#448AFF} \cellcolor[HTML]{448AFF} \\
+Brilliant Blue & S69 & \texttt{\#00A3F7} \cellcolor[HTML]{00A3F7} \\
+Tahitian Blue & S369 & \texttt{\#00C6FF} \cellcolor[HTML]{00C6FF} \\
+Nile Blue & S70 & \texttt{\#6CE5FF} \cellcolor[HTML]{6CE5FF} \\
+Italian Blue & S370 & \texttt{\#01CDDF} \cellcolor[HTML]{01CDDF} \\
+Sea Blue & S71 & \texttt{\#0096C7} \cellcolor[HTML]{0096C7} \\
+Theatre Booster 1 & S371 & \texttt{\#A3A8FF} \cellcolor[HTML]{A3A8FF} \\
+Azure Blue & S72 & \texttt{\#55CCFF} \cellcolor[HTML]{55CCFF} \\
+Theatre Booster 2 & S372 & \texttt{\#D9DCFF} \cellcolor[HTML]{D9DCFF} \\
+Peacock Blue & S73 & \texttt{\#00A4B8} \cellcolor[HTML]{00A4B8} \\
+Theatre Booster 3 & S373 & \texttt{\#E0E9FD} \cellcolor[HTML]{E0E9FD} \\
+Night Blue & S74 & \texttt{\#4200FF} \cellcolor[HTML]{4200FF} \\
+Sea Green & S374 & \texttt{\#01A4A6} \cellcolor[HTML]{01A4A6} \\
+Twilight Blue & S75 & \texttt{\#007AAC} \cellcolor[HTML]{007AAC} \\
+Light Green Blue & S76 & \texttt{\#005773} \cellcolor[HTML]{005773} \\
+Iris Purple & S377 & \texttt{\#7124FF} \cellcolor[HTML]{7124FF} \\
+Trudy Blue & S78 & \texttt{\#6F6FFF} \cellcolor[HTML]{6F6FFF} \\
+Bright Blue & S79 & \texttt{\#1626FF} \cellcolor[HTML]{1626FF} \\
+Primary Blue & S80 & \texttt{\#0048FF} \cellcolor[HTML]{0048FF} \\
+Urban Blue & S81 & \texttt{\#486FFF} \cellcolor[HTML]{486FFF} \\
+Surprise Blue & S82 & \texttt{\#4F34F8} \cellcolor[HTML]{4F34F8} \\
+Congo Blue & S382 & \texttt{\#250070} \cellcolor[HTML]{250070} \\
+Medium Blue & S83 & \texttt{\#0228EC} \cellcolor[HTML]{0228EC} \\
+Sapphire Blue & S383 & \texttt{\#0022D1} \cellcolor[HTML]{0022D1} \\
+Zephyr Blue & S84 & \texttt{\#5767FF} \cellcolor[HTML]{5767FF} \\
+Midnight Blue & S384 & \texttt{\#0500D0} \cellcolor[HTML]{0500D0} \\
+Deep Blue & S85 & \texttt{\#0049CE} \cellcolor[HTML]{0049CE} \\
+Royal Blue & S385 & \texttt{\#4F02CF} \cellcolor[HTML]{4F02CF} \\
+Pea Green & S86 & \texttt{\#89FA19} \cellcolor[HTML]{89FA19} \\
+Leaf Green & S386 & \texttt{\#7BD300} \cellcolor[HTML]{7BD300} \\
+Gaslight Green & S388 & \texttt{\#D0F54E} \cellcolor[HTML]{D0F54E} \\
+Moss Green & S89 & \texttt{\#51F655} \cellcolor[HTML]{51F655} \\
+Chroma Green & S389 & \texttt{\#29F433} \cellcolor[HTML]{29F433} \\
+Dark Yellow Green & S90 & \texttt{\#007F06} \cellcolor[HTML]{007F06} \\
+Primary Green & S91 & \texttt{\#005E2C} \cellcolor[HTML]{005E2C} \\
+Pacific Green & S392 & \texttt{\#009493} \cellcolor[HTML]{009493} \\
+Blue Green & S93 & \texttt{\#01A3A0} \cellcolor[HTML]{01A3A0} \\
+Emerald Green & S393 & \texttt{\#007150} \cellcolor[HTML]{007150} \\
+Kelly Green & S94 & \texttt{\#00985D} \cellcolor[HTML]{00985D} \\
+Medium Blue Green & S95 & \texttt{\#009C91} \cellcolor[HTML]{009C91} \\
+Teal Green & S395 & \texttt{\#00726A} \cellcolor[HTML]{00726A} \\
+Lime & S96 & \texttt{\#F3FF6B} \cellcolor[HTML]{F3FF6B} \\
+Neutral Grey & S398 & \texttt{\#B0B4B9} \cellcolor[HTML]{B0B4B9} \\
+Frost & S100 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Light Frost & S101 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Tough Silk & S104 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Matte Silk & S113 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Hamburg Frost & S114 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Light Hamburg Frost & S119 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Red Diffusion & S120 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Blue Diffusion & S121 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Green Diffusion & S122 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Red Cyc Silk & S124 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Blue Cyc Silk & S125 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Green Cyc Silk & S126 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Amber Cyc Silk & S127 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Quarter Hamburg Frost & S132 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Subtle Hamburg Frost & S140 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
+Light Tough Silk & S160 & \texttt{\#FFFFFF} \cellcolor[HTML]{FFFFFF} \\
 \hline
 \end{longtable}
 
