@@ -233,6 +233,34 @@ def registry_list(inputs):
         print('You need to specify a DMX registry!')
 
 
+def cue_list(inputs):
+    cues = plot.CueList(PLOT_FILE)
+    INTERFACE.clear()
+    i = 1
+    for cue in cues.cues:
+        cue_type = cue.data['type']
+        cue_location = cue.data['location']
+        print('\033[4m'+str(i)+'\033[0m ('+cue_type+') at '+
+              cue_location)
+        INTERFACE.append(i, cue)
+        i = i+1
+
+
+def cue_new(inputs):
+    cue = plot.Cue(PLOT_FILE)
+    cue.data['type'] = inputs[1]
+    cue.data['location'] = clihelper.resolve_input(inputs, 2)[-1]
+    print(cue.data)
+    cue.save(PLOT_FILE)
+
+
+def cue_remove(inputs):
+    cues = plot.CueList(PLOT_FILE)
+    removal_candidates = INTERFACE.get(inputs[1])
+    for rc in removal_candidates:
+        cues.remove(PLOT_FILE, rc.uuid)
+
+
 def utility_help(inputs):
     text = ""
     with open('help.txt') as man:
@@ -269,7 +297,7 @@ def main():
         'fW': file_writeas,
         'fg': file_get,
         'fn': file_new,
-        'ml': metadata_list,
+        'mG': metadata_list,
         'ms': metadata_set,
         'mr': metadata_remove,
         'mg': metadata_get,
@@ -284,6 +312,12 @@ def main():
         'xa': fixture_address,
         'xp': fixture_purge,
         'rl': registry_list,
+        'ql': cue_list,
+        'qn': cue_new,
+#        'qr': cue_remove,
+#        'qs': cue_set,
+#        'qg': cue_get,
+#        'qG': cue_getall,
         'h': utility_help,
         'c': utility_clear,
         'q': utility_quit,
@@ -309,12 +343,12 @@ def main():
             except FileNotFoundError:
                 print('No extension with this name!')
 
+        if inputs[0] in functions_dict:
+            functions_dict[inputs[0]](inputs)
+
         else:
-            try:
-                functions_dict[inputs[0]](inputs)
-            except KeyError:
-                print('Error: Command doesn\'t exist.') 
-                print('Type \'h\' for a list of available commands.')
+            print('Error: Command doesn\'t exist.') 
+            print('Type \'h\' for a list of available commands.')
 
 if __name__ == 'pylux_root':
     main()
