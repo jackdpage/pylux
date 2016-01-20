@@ -15,6 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Interact with Pylux plot files without an XML parser.
+
+Manipulate Pylux plot files without having to use an XML parser, 
+instead use the series of objects defined by plot which allow 
+for quicker editing of plots, and management of the XML tree.
+Also provides some utility functions to make writing extensions 
+for Pylux quicker and easier.
+"""
+
 import xml.etree.ElementTree as ET
 import uuid
 import math
@@ -499,10 +508,9 @@ class Cue:
                 new_data_item.text = self.data[data_item]
             # Otherwise edit existing data
             else:
-                for data_item_xml_test in xml_cue:
-                    if data_item_xml_test.tag == data_item:
-                        data_item_xml = data_item_xml_test
-                    data_item_xml.text = self.data[data_item]
+                for data_item_xml in xml_cue:
+                    if data_item_xml.tag == data_item:
+                        data_item_xml.text = self.data[data_item]
         # Iterate through data in XML and remove empty
         for data_item_xml in xml_cue:
             if self.data[data_item_xml.tag] is None:
@@ -510,9 +518,25 @@ class Cue:
 
 
 class CueList:
-    """Manage all the cues. At the same time. On all your devices (c) Apple"""
+    """Manage all the cues in the document.
+
+    Create a list contaning cue objects for every cue in the document. 
+    Also manage the keys of cues by moving cues relative to one 
+    another and remove cues entirely.
+
+    Attributes:
+        cues: a list of all the cue objects in the document.
+    """
 
     def __init__(self, plot_file):
+        """Generate a list of all the cues present.
+
+        Search through the plot file for any cue tags, create a Cue
+        object for them, then add to a list.
+
+        Args:
+            plot_file: the PlotFile object containing the document.
+        """
         self.cues = []
         for xml_cue in plot_file.root.findall('cue'):
             cue_uuid = xml_cue.get('uuid')
@@ -520,9 +544,118 @@ class CueList:
             self.cues.append(cue)
 
     def remove(self, plot_file, UUID):
+        """Remove a cue from the plot entirely.
+
+        Args:
+            plot_file: the PlotFile object containing the document.
+            UUID: the UUID of the cue to be deleted.
+        """
         for xml_cue in plot_file.root.findall('cue'):
             if xml_cue.get('uuid') == UUID:
                 plot_file.root.remove(xml_cue)
+
+    def move_after(self, plot_file, origin, dest):
+        """Move a cue after another in the list.
+
+        Manipulate the key attributes of any necessary cues to 
+        rearrange the list such that origin is placed immediately 
+        after dest.
+
+        Args:
+            plot_file: the PlotFile object containing the document.
+            origin: the key of the cue to be moved.
+            dest: the key of the cue after which this cue should be 
+                  immediately located.
+        """
+        if dest > origin:
+            for cue in self.cues:
+                if cue.key == origin:
+                    cue.key = dest
+                elif origin < cue.key <= dest:
+                    cue.key = cue.key-1
+                cue.save(plot_file)
+        if dest < origin:
+            for cue in self.cues:
+                if dest < cue.key < origin:
+                    cue.key = cue.key+1
+                elif cue.key == origin:
+                    cue.key = dest+1
+                cue.save(plot_file)
+
+    def move_before(self, plot_file, origin, dest):
+        """Move a cue before another in the list.
+
+        Manipulate the key attributes of any necessary cues to 
+        rearrange the list such that origin is placed immediately
+        before dest.
+
+        Args:
+            plot_file: the PlotFile object containing the document.
+            origin: the key of the cue to be moved.
+            dest: the key of the cue before which this cue should be 
+                  immediately located.
+        """
+        if dest > origin:
+            for cue in self.cues:
+                if cue.key == origin:
+                    cue.key = dest
+                elif dest >= cue.key > origin:
+                    cue.key = cue.key-1
+                cue.save(plot_file)
+        if dest < origin:
+            for cue in self.cues:
+                if origin > cue.key >= dest:
+                    cue.key = cue.key+1
+                elif cue.key == origin:
+                    cue.key = dest
+                cue.save(plot_file)
+
+
+class Scene:
+    """Scenes store DMX output states."""
+
+    def __init__(self, plot_file, UUID=None):
+        """Create an empty scene."""
+        self.dmx_data = {}
+        if UUID is None:
+            self.uuid = str(uuid.uuid4())
+            xml_cue = ET.Element('scene')
+            xml_cue.set('uuid', self.uuid)
+            plot_file.root.append(xml_cue)
+        else:
+            self.uuid = UUID
+            for xml_scene in plot_file.root.findall('scene'):
+                if xml_scene.get('uuid') == self.uuid:
+                    for dmx_info_xml in xml_scene.findall('dmx'):
+                        address = dmx_info_xml.get('address')
+                        output = int(dmx_info_xml.text)
+                        self.dmx_data[address] = output
+
+    def save(self, plot_file):
+        """Save the scene to XML."""
+        for xml_scene_test in plot_file.root.findall('scene'):
+            if xml_scene_test.get('uuid') == self.uuid:
+                xml_scene = xml_scene_test
+        # Find DMX info already in XML
+        dmx_in_xml = []
+        for dmx_info_xml in xml_scene.findall('dmx'):
+            dmx_in_xml.append(dmx_info_xml.get('address'))
+        # Iterate through data in DMX dict
+        for dmx_info in self.dmx_data:
+            # If DMX not in XML, make a new sub element
+            if dmx_info not in dmx_in_xml:
+                new_dmx_info = ET.SubElement(xml_scene, 'dmx')
+                new_dmx_info.text = self.dmx_data[dmx_info]
+                new_dmx_info.set('address', dmx_info)
+            # Otherwise edit existing data
+            else:
+                for dmx_info_xml in xml_scene:
+                    if dmx_info_xml.tag == dmx_info:
+                        dmx_info_xml.text = self.dmx_data[dmx_info]
+        # Iterate through data in XML and remove empty
+        for dmx_info_xml in xml_scene:
+            if self.dmx_data[dmx_info_xml.tag] is None:
+                xml_scene.remove(dmx_info_xml)
 
 
 class FixtureSymbol:

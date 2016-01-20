@@ -282,41 +282,13 @@ def cue_getall(inputs):
 
 
 def cue_moveafter(inputs):
-    if len(INTERFACE.get(inputs[1])) > 1 or len(INTERFACE.get(inputs[2])) > 1:
-        print('Error: You can only move one fixture at a time')
-    else:
-        cue_to_move = INTERFACE.get(inputs[1])[0]
-        dest_cue = INTERFACE.get(inputs[2])[0]
-        cues = plot.CueList(PLOT_FILE)
-        for cue in cues.cues:
-            if cue.key >= dest_cue.key+1:
-                cue.key = cue.key+1
-                cue.save(PLOT_FILE)
-        cue_to_move.key = dest_cue.key+1
-        cue_to_move.save(PLOT_FILE)
+    cues = plot.CueList(PLOT_FILE)
+    cues.move_after(PLOT_FILE, int(inputs[1]), int(inputs[2]))
 
 
 def cue_movebefore(inputs):
-    if len(INTERFACE.get(inputs[1])) > 1 or len(INTERFACE.get(inputs[2])) > 1:
-        print('Error: You can only move one fixture at a time')
-    else:
-        cue_to_move = INTERFACE.get(inputs[1])[0]
-        dest_cue = INTERFACE.get(inputs[2])[0]
-        origin_key = cue_to_move.key
-        dest_key = dest_cue.key-1
-        cues = plot.CueList(PLOT_FILE)
-        if origin_key < dest_key:
-            for cue in cues.cues:
-                if origin_key < cue.key < dest_key:
-                    cue.key = cue.key-1
-                    cue.save(PLOT_FILE)
-            cue_to_move.key = dest_key
-        if origin_key > dest_key:
-            for cue in cues.cues:
-                if origin_key > cue.key > dest_key:
-                    cue.key = cue.key+1
-                    cue.save(PLOT_FILE)
-            cue_to_move.key = dest_key+1
+    cues = plot.CueList(PLOT_FILE)
+    cues.move_before(PLOT_FILE, int(inputs[1]), int(inputs[2]))
 
 
 def utility_help(inputs):

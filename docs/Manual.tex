@@ -18,10 +18,9 @@ you grant the same freedoms to any recipients of your modifications.
 % ------- END HEADER MATERIAL ------- %
 \section{Introduction}
 \subsection{About Pylux}
-Pylux is a program written in Python for the manipulation of OpenLighting Plot
-documents. Pylux currently allows for the basic editing of the OpenLighting
-Plot XML files, including referencing OpenLighting Fixture files to obtain
-additional data.
+Pylux is a program written in Python for the manipulation of XML plot files. 
+These plot files can contain information about fixtures, cues, scenes and DMX 
+universes. 
 
 In the future, Pylux will be extended with modules that allow for the exporting
 of documentation in the \LaTeX{} format, and creating lighting plots in SVG 
@@ -459,6 +458,11 @@ Sets \texttt{dimmer\_uuid} to the uuid of the dimmer represented by
 \texttt{\textit{REF}} and \texttt{dimmer\_channel} to \texttt{\textit{CHAN}}.
 
 \subsection{Standard Cue Tags}
+Cues are different to fixtures in that their order is important. Pylux can't 
+tell which order cues should go in based on the cue line, and it doesn't 
+understand page numbers. Therefore, each cue has a special attributed called 
+\texttt{key} which determines which order it goes in in the cue list. Use the 
+\texttt{qm} and \texttt{qM} commands to manipulate keys.
 
 \paragraph{\texttt{type}}
 The type of cue, either \texttt{LX}, \texttt{SX} or \texttt{VX}.
