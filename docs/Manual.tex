@@ -212,6 +212,39 @@ List all the used channels in \texttt{\textit{UNIVERSE}}. This will list the
 DMX address, fixture UUID and function of every channel in the DMX registry 
 with identifier \texttt{\textit{UNIVERSE}}.
 
+\subsection{Cue Commands}
+
+\paragraph{\texttt{qn \textit{TYPE LOCATION}}}
+Append a cue to the cue list. Set the type to \texttt{\textit{TYPE}} which is 
+either \texttt{LX}, \texttt{SX} or \texttt{VX} and the \texttt{location} tag 
+to \texttt{\textit{LOCATION}}. \texttt{\textit{LOCATION}} is the cue line or 
+visual in the script.
+
+\paragraph{\texttt{ql}}
+List all the cues in the cue list, listing their type, location and sort key.
+
+\paragraph{\texttt{qs \textit{CUE TAG VALUE}}}
+Set the value of \texttt{\textit{TAG}} to \texttt{\textit{VALUE}} for 
+\texttt{\textit{CUE}}, where \texttt{\textit{CUE}} is an interface reference 
+list.
+
+\paragraph{\texttt{qg \textit{CUE TAG}}}
+Print the value of \texttt{\textit{TAG}} for \texttt{\textit{CUE}}.
+
+\paragraph{\texttt{qG \textit{CUE}}}
+Print the value of all tags for \texttt{\textit{CUE}}.
+
+\paragraph{\texttt{qr \textit{CUE}}}
+Remove \texttt{\textit{CUE}} from the cue list.
+
+\paragraph{\texttt{qm \textit{CUE AFTER}}}
+Adjust the sort keys of the cues so that \texttt{\textit{CUE}} comes 
+immediately after the cue \texttt{\textit{AFTER}} in the cue list.
+
+\paragraph{\texttt{qM \textit{CUE BEFORE}}}
+Adjust the sort keys of the cues so that \texttt{\textit{CUE}} comes 
+immediately before the cue \texttt{\textit{BEFORE}} in the cue list.
+
 \subsection{Using Extensions}
 You cannot directly interact with extensions from the \texttt{editor} 
 interface, you must first load the extension using the \texttt{:} command.
@@ -410,7 +443,7 @@ and the named HTML (X11) colours.
 A hexadecimal colour code indicating the colour which best represents the gel 
 in this fixture. Can be automatically calculated if gel is present.
 
-\subsubsection{Pseudo Fixture Tags}
+\subsection{Pseudo Fixture Tags}
 These tags can be used to set multiple attributes of a fixture at once.
 
 \paragraph{\texttt{position \textit{X},\textit{Y}}}
@@ -424,6 +457,20 @@ Sets \texttt{focusX} to \texttt{\textit{X}} and \texttt{focusY} to
 \paragraph{\texttt{dimmer \textit{REF} \textit{CHAN}}}
 Sets \texttt{dimmer\_uuid} to the uuid of the dimmer represented by 
 \texttt{\textit{REF}} and \texttt{dimmer\_channel} to \texttt{\textit{CHAN}}.
+
+\subsection{Standard Cue Tags}
+
+\paragraph{\texttt{type}}
+The type of cue, either \texttt{LX}, \texttt{SX} or \texttt{VX}.
+
+\paragraph{\texttt{location}}
+The cue in the script, could be a line or visual cue.
+
+\paragraph{\texttt{description}}
+A human-readable description of what should happen.
+
+\paragraph{\texttt{scene}}
+If this is a lighting cue, the UUID of the scene which is used for it.
 
 \appendix
 \section{Included Fixture Templates}

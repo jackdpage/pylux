@@ -467,6 +467,7 @@ class Cue:
         self.data = {}
         if UUID is None:
             self.uuid = str(uuid.uuid4())
+            self.key = len(CueList(plot_file).cues)+1
             xml_cue = ET.Element('cue')
             xml_cue.set('uuid', self.uuid)
             plot_file.root.append(xml_cue)
@@ -474,6 +475,7 @@ class Cue:
             self.uuid = UUID
             for xml_cue in plot_file.root.findall('cue'):
                 if xml_cue.get('uuid') == self.uuid:
+                    self.key = int(xml_cue.get('key'))
                     for cue_data in xml_cue:
                         self.data[cue_data.tag] = cue_data.text
 
@@ -487,6 +489,8 @@ class Cue:
         data_in_xml = []
         for data_item_xml in xml_cue:
             data_in_xml.append(data_item_xml.tag)
+        # Set the sorting key
+        xml_cue.set('key', str(self.key))
         # Iterate through data in dict
         for data_item in self.data:
             # If data not in XML, make a new sub element
