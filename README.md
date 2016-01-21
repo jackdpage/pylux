@@ -23,6 +23,10 @@ Texlux does not require LaTeX to be installed to produce the reports, as they
 are produced as LaTeX source, however, you will need a LaTeX distribution, such 
 as TeX Live, installed in order to build PDF files from this source.
 
+Python dependencies (all installable using pip3):
++ ``tqdm``
++ ``jinja2``
+
 ## Contributing
 If you are interested in contributing towards this project, there are many ways 
 in which you can help:

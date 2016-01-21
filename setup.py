@@ -7,9 +7,11 @@ HOME = os.path.expanduser('~/')
 FIXTURES = os.listdir('fixture/')
 EXTENSIONS = os.listdir('extension/')
 SYMBOLS = os.listdir('symbol/')
+TEMPLATES = os.listdir('template/')
 FIXFILES = []
 EXTFILES = []
 SYMFILES = []
+TEMFILES = []
 
 INSFILES = [(TARGET, ['pylux.conf'])]
 for fixfile in FIXTURES:
@@ -21,9 +23,13 @@ for extfile in EXTENSIONS:
 for symfile in SYMBOLS:
     SYMFILES.append('symbol/'+symfile)
     print('Found fixture symbol '+symfile)
+for temfile in TEMPLATES:
+    TEMFILES.append('template/'+temfile)
+    print('Found template '+temfile)
 INSFILES.append((TARGET+'fixture/', FIXFILES))
 INSFILES.append((TARGET+'extension/', EXTFILES))
 INSFILES.append((TARGET+'symbol/', SYMFILES))
+INSFILES.append((TARGET+'template/', TEMFILES))
 setup(name='Pylux',
       version=__version__,
       description='Suite for the management of lighting documentation',
