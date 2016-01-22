@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 # texlux.py is part of Pylux
 #
 # Pylux is a program for the management of lighting documentation
@@ -29,12 +27,13 @@ from jinja2 import Environment, FileSystemLoader
 import os
 import plot
 import clihelper
+from pylux import get_data
 
 
 class Report:
 
     def __init__(self):
-        self.environment = Environment(loader=FileSystemLoader('/usr/share/pylux/template'))
+        self.environment = Environment(loader=FileSystemLoader(get_data('template')))
 
     def generate(self, template):
         template = self.environment.get_template(template)
