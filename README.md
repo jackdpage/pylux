@@ -1,66 +1,45 @@
 # Pylux
 
-Pylux is a suite for the management of lighting documentation. It comes with 
-a base program, ``plotter``, which is used to edit its plot XML files. From 
-the base program, you can also call extensions which perform other functions.
-Current extensions in development are ``texlux`` for producing LaTeX reports 
-and ``plotgen`` for producing SVG plots.
+Pylux is a program for the management of lighting documentation written 
+in Python. It uses its XML files called plots to store information about a 
+lighting project.
 
-``plotter`` currently is only functional on the CLI, but a GUI is in 
-development.
+Currently Pylux consists of a program for editing these plot files, 
+``editor``, a couple of extensions and some bundled lighting fixture data.
+
+The ``plotter`` extension produces lighting plot diagrams in SVG format 
+and the ``texlux`` extension produces documentation based on Jinja 
+templates. This is intended for but not limited to LaTeX documentation.
+
+Pylux is currently only functional on the CLI. A GUI is planned but is not 
+a priority.
 
 ## Installation and Dependencies
 
-THIS PROGRAM IS NOT FUNCTIONAL ON WINDOWS. The program installs and searches 
-for content in ``/usr/share/pylux``, so you will need a UNIX based computer. 
-I will make it work on Windows when I can be bothered.
+Pylux is written in Python 3, so the Python 3 interpreter is required. You 
+will also need pip and setuptools. These are all available from  
+http://python.org, or you can install them using your package manager:
 
-Pylux is written in Python 3, so the Python 3 interpreter is required.
+`sudo apt install python3 python3-pip python3-setuptools`
 
-To install, run ``sudo python setup.py install``.
+`sudo pacman -S python python-pip python-setuptools`
 
-Texlux does not require LaTeX to be installed to produce the reports, as they 
-are produced as LaTeX source, however, you will need a LaTeX distribution, such 
-as TeX Live, installed in order to build PDF files from this source.
+Once you have installed the basic Python dependencies, download the latest 
+version of Pylux and to install, run ``sudo python setup.py install``.
 
-Python dependencies (all installable using pip3):
-+ ``tqdm``
-+ ``jinja2``
+This will download any additional dependencies from the PyPI.
+
+To use Pylux, simply run ``pylux`` in a shell.
 
 ## Contributing
 If you are interested in contributing towards this project, there are many ways 
 in which you can help:
 
-### Writing code
-If you know Python you can contribute by either adding to the base program and 
-API or by writing your own extensions which can be implemented into the 
-program. The manual (found in the ``docs`` folder) fully documents how to use 
-the API to write your own extensions. Most of Pylux is documented using 
-docstrings but the manual will be more up-to-date.
-
-### Making new fixtures
-If you know XML, you can write new fixture files, short XML files used by 
-Pylux to create new fixtures based on an existing template. These are located 
-in the ``fixture`` folder.
-
-### Writing documentation
-If you know LaTeX and understand how Pylux works, you can write documentation. 
-There is currently a single manual for the whole of Pylux (including bundled 
-extensions) in the ``docs`` folder.
-
-### Creating fixture symbols
-If you know SVG (or Inkscape if that's your thing), you can create new 
-fixture symbols to implement into SVG plots (which are NYI). If you can find 
-some free SVG symbols somewhere that would be even better.
-
-### Submitting bugs and feature requests
-If you know English, you can still help by submitting any bugs you come 
-across to the GitHub issues tracker for this repository. Feel free to submit 
-feature requests also (but not too many).
-
-See ``TODO.txt`` to see what needs to be done.
-Everything (including fixture files and symbols) should be edited on a fork 
-and then a pull request submitted.
++ [Python] writing code;
++ [XML] making fixture templates;
++ [SVG] making fixture symbols;
++ [LaTeX/Jinja] making ``texlux`` templates;
++ [English] submitting bug reports and feature requests.
 
 ## License
 
