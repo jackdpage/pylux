@@ -96,6 +96,20 @@ This points to the last used reference, so will pipe in the same object or
 objects that were used for the last command, unless the reference list has 
 changed since (i.e. a listing command has been run again).
 
+\subsection{Contexts}
+Pylux has too many functions to be able to have a sensible two character 
+mnemonic for every command. For that reason, Pylux uses a system of contexts 
+to facilitate its growing command list.
+
+Essentially, using a context is just like loading a different command list. 
+The default context is indicated by the prompt \texttt{(pylux)}, other 
+contexts will have the prompt \texttt{(pylux:\textit{CONTEXT})}. To enter a 
+different context, use the command \texttt{:\textit{CONTEXT}}. To escape 
+from the current context to the default context, type \texttt{::}.
+
+The subsections below detail the commands you will come across in the default 
+context, where you will spend most of your time.
+
 \subsection{Utility Commands}
 
 \paragraph{\texttt{h}}
@@ -244,43 +258,11 @@ immediately after the cue \texttt{\textit{AFTER}} in the cue list.
 Adjust the sort keys of the cues so that \texttt{\textit{CUE}} comes 
 immediately before the cue \texttt{\textit{BEFORE}} in the cue list.
 
-\subsection{Using Extensions}
-You cannot directly interact with extensions from the \texttt{editor} 
-interface, you must first load the extension using the \texttt{:} command.
-For example, to load the \texttt{texlux} extension, use \texttt{:texlux}. 
-This will then present you with the interface as defined by that extension 
-which may vary but in practise should be a prompt of the form 
-\texttt{pylux:extension} to indicate to you which extension you are 
-operating in and some commands, much like in the \texttt{editor} interface.
-The extension defines its own way of returning to \texttt{editor} but this 
-should in general be \texttt{::} or \texttt{q}.
-
-\section{Using the Graphical User Interface}
-Pylux also comes with a graphical user interface. This is currently in 
-development so most features are not yet implemented. When the GUI is 
-launched, you are presented with a window containing a list of the fixtures 
-in the plot. (The only way to load a plot file is using the \texttt{-f} tag 
-at launch as there is currently no menu.) Each of these fixtures has to the 
-right of it three buttons.
-
-The leftmost button is the only currently functional button and launches a 
-window containing a list of the fixture's data tags. You cannot currently 
-edit the data tags. The other two buttons are for cloning and removing the 
-fixture but this functionality is not yet implemented.
-
-\section{Extensions}
-In the previous sections, we have discussed the usage of the base program in 
-Pylux: \texttt{editor}. This is the program that you will use to edit your
-plots, however, beyond that, it doesn't do much. That is why Pylux is also 
-bundled with extensions to provide extra functionality. In the current 
-version, Pylux comes bundled with the \texttt{texlux} and \texttt{plotter} 
-extensions.
+\section{Other Contexts}
 
 \subsection{\texttt{texlux}}
-\texttt{texlux} is an extension to the base \texttt{editor} program which 
-allows for the creation of reports in the \LaTeX{} format, which can then be 
-post-processed to create a PDF file, or many other formats through the use 
-of an external tool such as Pandoc.
+\texttt{texlux} is a context which allows for the creation of reports in the 
+\LaTeX{} format, which can then be post-processed to create a PDF file.
 
 \subsubsection{Commands}
 
@@ -340,6 +322,28 @@ The thickness of the beam focus lines in SVG points. Default: \texttt{6}.
 \paragraph{\texttt{show\_beams}}
 Choose whether or not to display the beam focus lines. Must be \texttt{True} 
 or \texttt{False}. Default: \texttt{True}.
+
+\section{Using the Graphical User Interface}
+Pylux also comes with a graphical user interface. This is currently in 
+development so most features are not yet implemented. When the GUI is 
+launched, you are presented with a window containing a list of the fixtures 
+in the plot. (The only way to load a plot file is using the \texttt{-f} tag 
+at launch as there is currently no menu.) Each of these fixtures has to the 
+right of it three buttons.
+
+The leftmost button is the only currently functional button and launches a 
+window containing a list of the fixture's data tags. You cannot currently 
+edit the data tags. The other two buttons are for cloning and removing the 
+fixture but this functionality is not yet implemented.
+
+\section{Extensions}
+In the previous sections, we have discussed the usage of the base program in 
+Pylux: \texttt{editor}. This is the program that you will use to edit your
+plots, however, beyond that, it doesn't do much. That is why Pylux is also 
+bundled with extensions to provide extra functionality. In the current 
+version, Pylux comes bundled with the \texttt{texlux} and \texttt{plotter} 
+extensions.
+
 
 % -------- FILES SECTION ------- %
 \section{Standard Tags} \label{sec:plotfile}

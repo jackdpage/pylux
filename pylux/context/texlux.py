@@ -25,8 +25,8 @@ PDF files.
 
 from jinja2 import Environment, FileSystemLoader
 import os
-import plot
-import clihelper
+import pylux.plot as plot
+import pylux.clihelper as clihelper
 from pylux import get_data
 
 
@@ -37,18 +37,28 @@ class Report:
 
     def generate(self, template):
         template = self.environment.get_template(template)
-        self.content = template.render(cues=sorted(plot.CueList(PLOT_FILE).cues,
-                                       key=lambda cue: cue.key))
+        cue_list = sorted(plot.CueList(GLOBALS['PLOT_FILE']).cues,
+                          key=lambda cue: cue.key)
+        fixture_list = plot.FixtureList(GLOBALS['PLOT_FILE']).fixtures
+        self.content = template.render(cues=cue_list, fixtures=fixture_list)
 
 
-def main():
-    while True:
-        inputs = input('command').split(' ')
-        if inputs[0] == 'dog':
-            report = Report()
-            report.generate(inputs[1]+'.tex')
-            with open('tests/TEXSTS.tex', 'w') as output_file:
-                output_file.write(report.content)
+def process_input(inputs):
+    functions_dict = {
+        'rn': report_new,
+        'rN': report_new_print,
+        'rw': report_write}
 
-if __name__ == 'pyext':
-    main()
+    
+
+    if inputs[0] == 'rn':
+        report = Report()
+        report.generate(inputs[1]+'.tex')
+        print('Report saved internally, ready to save to file.')
+
+    if inputs[0] == '
+
+
+def set_globals(globals_dict):
+    global GLOBALS
+    GLOBALS = globals_dict

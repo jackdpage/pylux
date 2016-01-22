@@ -32,7 +32,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     keywords='lighting theatre stage tech',
-    packages=['pylux'],
+    packages=['pylux', 'pylux.context'],
     install_requires=['jinja2', 'tqdm'],
     package_data={
         'pylux': ['settings.conf', 

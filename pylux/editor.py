@@ -28,6 +28,7 @@ import pylux.clihelper as clihelper
 import runpy
 import logging
 from pylux import get_data
+from importlib import import_module
 
 
 def file_open(inputs):
@@ -300,6 +301,20 @@ def utility_help(inputs):
     print(text)
 
 
+#def extension_run(inputs):
+#    init_globals = {
+#        'PLOT_FILE': PLOT_FILE,
+#        'CONFIG': CONFIG,
+#        'LOG_LEVEL': LOG_LEVEL}
+#    extensions_dir = '/usr/share/pylux/extension/'
+#    module_name = inputs[0].split(':')[1]
+#    try:
+#        runpy.run_path(extensions_dir+module_name+'.py',
+#                       init_globals=init_globals, run_name='pyext')
+#    except FileNotFoundError:
+#        print('No extension with this name!')
+
+
 def utility_clear(inputs):
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -351,6 +366,7 @@ def main():
         'qG': cue_getall,
         'qm': cue_moveafter,
         'qM': cue_movebefore,
+#        'Xr': extension_run,
         'h': utility_help,
         'c': utility_clear,
         'q': utility_quit,
@@ -368,15 +384,23 @@ def main():
                 'PLOT_FILE': PLOT_FILE,
                 'CONFIG': CONFIG,
                 'LOG_LEVEL': LOG_LEVEL}
-            extensions_dir = '/usr/share/pylux/extension/'
-            module_name = inputs[0].split(':')[1]
+            context_name = inputs[0].split(':')[1]
+            module_name = 'pylux.context.'+inputs[0].split(':')[1]
             try:
-                runpy.run_path(extensions_dir+module_name+'.py',
-                               init_globals=init_globals, run_name='pyext')
-            except FileNotFoundError:
-                print('No extension with this name!')
+                context = import_module(module_name)
+            except ImportError:
+                print('Error: Context does not exist')
+            else:
+                context.set_globals(init_globals)
+                while True:
+                    user_input = input('(pylux:'+context_name+') ')
+                    inputs = user_input.split(' ')
+                    if inputs[0] == '::':
+                        break
+                    else:
+                        context.process_input(inputs)
 
-        if inputs[0] in functions_dict:
+        elif inputs[0] in functions_dict:
             functions_dict[inputs[0]](inputs)
 
         else:
