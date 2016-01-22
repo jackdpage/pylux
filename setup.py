@@ -1,41 +1,48 @@
-from pylux import __version__
-from distutils.core import setup
-import os 
+"""Install Pylux."""
 
-TARGET = '/usr/share/pylux/'
-HOME = os.path.expanduser('~/')
-FIXTURES = os.listdir('fixture/')
-EXTENSIONS = os.listdir('extension/')
-SYMBOLS = os.listdir('symbol/')
-TEMPLATES = os.listdir('template/')
-FIXFILES = []
-EXTFILES = []
-SYMFILES = []
-TEMFILES = []
+from setuptools import setup, find_packages
+from codecs import open
+from os import path
 
-INSFILES = [(TARGET, ['pylux.conf'])]
-for fixfile in FIXTURES:
-    FIXFILES.append('fixture/'+fixfile)
-    print('Found fixture file '+fixfile)
-for extfile in EXTENSIONS:
-    EXTFILES.append('extension/'+extfile)
-    print('Found extension '+extfile)
-for symfile in SYMBOLS:
-    SYMFILES.append('symbol/'+symfile)
-    print('Found fixture symbol '+symfile)
-for temfile in TEMPLATES:
-    TEMFILES.append('template/'+temfile)
-    print('Found template '+temfile)
-INSFILES.append((TARGET+'fixture/', FIXFILES))
-INSFILES.append((TARGET+'extension/', EXTFILES))
-INSFILES.append((TARGET+'symbol/', SYMFILES))
-INSFILES.append((TARGET+'template/', TEMFILES))
-setup(name='Pylux',
-      version=__version__,
-      description='Suite for the management of lighting documentation',
-      author='J. Page',
-      author_email='jdpboc98@gmail.com',
-      url='https://github.com/jackdpage/pylux',
-      packages=['pylux'],
-      data_files=INSFILES
-      )
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the README file
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
+setup(
+    name='pylux',
+    version='0.1-alpha3',
+    description='A program for managing lighting documentation.',
+    long_description=long_description,
+    url='http://os.pwrg.uk/software/pylux',
+    author='Jack Page',
+    author_email='jdpboc98@gmail.com',
+    license='GPLv3+',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Information Technology',
+        'Topic :: Office/Business',
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+    ],
+    keywords='lighting theatre stage tech',
+    packages=['pylux'],
+    install_requires=['jinja2', 'tqdm'],
+    package_data={
+        'pylux': ['settings.conf', 
+                  'fixture/*.xml', 
+                  'template/*.tex', 
+                  'symbol/*.svg']
+    },
+    entry_points={
+        'console_scripts': [
+            'pylux=pylux.__main__:main',
+        ],
+    },
+)

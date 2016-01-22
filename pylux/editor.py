@@ -27,6 +27,7 @@ import pylux.plot as plot
 import pylux.clihelper as clihelper
 import runpy
 import logging
+from pylux import get_data
 
 
 def file_open(inputs):
@@ -319,7 +320,7 @@ def main():
     global INTERFACE
     INTERFACE = clihelper.Interface()
     global FIXTURES_DIR 
-    FIXTURES_DIR = '/usr/share/pylux/fixture/'
+    FIXTURES_DIR = get_data('fixture')
 
     functions_dict = {
         'fo': file_open,
@@ -359,7 +360,7 @@ def main():
     # Begin the main loop
     logging.basicConfig(level=LOG_LEVEL)
     while True:
-        user_input = input(CONFIG['Settings']['prompt']+' ')
+        user_input = input(CONFIG['cli']['prompt']+' ')
         inputs = user_input.split(' ')
 
         if inputs[0][0] == ':':

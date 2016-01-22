@@ -38,8 +38,8 @@ class Report:
 
     def generate(self, template):
         template = self.environment.get_template(template)
-        print(template.render(cues=sorted(plot.CueList(PLOT_FILE).cues, 
-                                          key=lambda cue: cue.key)))
+        self.content = template.render(cues=sorted(plot.CueList(PLOT_FILE).cues,
+                                       key=lambda cue: cue.key))
 
 
 def main():
@@ -48,6 +48,8 @@ def main():
         if inputs[0] == 'dog':
             report = Report()
             report.generate(inputs[1]+'.tex')
+            with open('tests/TEXSTS.tex', 'w') as output_file:
+                output_file.write(report.content)
 
 if __name__ == 'pyext':
     main()

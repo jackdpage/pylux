@@ -4,6 +4,7 @@
 *.toc
 *.swp
 __pycache__/
+pylux.egg-info/
 x.tex
 build/
 dist/

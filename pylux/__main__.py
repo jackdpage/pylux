@@ -25,9 +25,9 @@ import configparser
 import sys
 import runpy
 import logging
-import plot
+import pylux.plot as plot
 
-from __init__ import __version__
+from pylux import __version__, get_data
 
 
 def main():
@@ -46,7 +46,7 @@ def main():
         help='set the verbosity of output')
     launch_args = parser.parse_args()
     # Load configuration
-    config_file = '/usr/share/pylux/pylux.conf'
+    config_file = get_data('settings.conf')
     config = configparser.ConfigParser()
     config.read(config_file)
     print('Using configuration file '+config_file)
