@@ -347,23 +347,6 @@ containing the four words separately, you can then run it through the
 \texttt{resolve\_input} function, with the number of arguments being two and 
 it will return \texttt{['ms', 'production', 'Oedipus Rex']}.
 
-\section{Creating Extensions}
-Currently, when Pylux runs an extension, it looks for extensions in the 
-\texttt{/usr/share/pylux/extension} folder. This will change soon to allow for 
-Windows support. Your extension will not be imported into the Pylux program 
-itself, instead, \texttt{runpy} is used to execute your extension. This means 
-that any top-level code in your extension will be executed every time your 
-extension is called. When your extension is called, it will be given the 
-name \texttt{pyext}. Therefore, you should have a statement that only runs 
-your main code when \texttt{\_\_name\_\_} is \texttt{pyext}.
-
-Once your extension is called, it has control over everything. Pylux will no 
-longer provide an interface, or any way to exit your extension. You need to 
-provide all of this in your extension. If your extension is completely 
-command-line driven, you should have the prompt \texttt{(pylux:EXTENSION)} to 
-indicate to the user where they are. You should also be able to terminate 
-your main loop and return to Pylux using the \texttt{::} action.
-
 \section{Creating Fixture Files}
 A fixture file is simply an XML file giving a template of a fixture that can 
 be used multiple times by the user to speed up the fixture configuration 

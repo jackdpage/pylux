@@ -3,6 +3,16 @@
 *.out
 *.toc
 *.swp
+*.4ct
+*.4tc
+*.dvi
+*.idv
+*.tmp
+*.lg
+*.html
+*.css
+*.xref
+*.zip
 __pycache__/
 pylux.egg-info/
 x.tex

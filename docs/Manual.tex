@@ -3,7 +3,7 @@
 \usepackage{longtable}
 \usepackage[table]{xcolor}
 \begin{document}
-\title{Pylux User Manual \\ \large{for Pylux v0.1-alpha2}}
+\title{Pylux User Manual \\ \large{for Pylux v0.1.0}}
 \author{J. Page}
 \date{2016}
 \maketitle
@@ -22,9 +22,8 @@ Pylux is a program written in Python for the manipulation of XML plot files.
 These plot files can contain information about fixtures, cues, scenes and DMX 
 universes. 
 
-In the future, Pylux will be extended with modules that allow for the exporting
-of documentation in the \LaTeX{} format, and creating lighting plots in SVG 
-format.
+Pylux can create SVG diagrams of lighting plots and documentation using 
+Jinja2 templates.
 
 Bugs and feature requests should be submitted to 
 \url{https://github.com/jackdpage/pylux/issues}.
@@ -102,31 +101,30 @@ mnemonic for every command. For that reason, Pylux uses a system of contexts
 to facilitate its growing command list.
 
 Essentially, using a context is just like loading a different command list. 
-The default context is indicated by the prompt \texttt{(pylux)}, other 
-contexts will have the prompt \texttt{(pylux:\textit{CONTEXT})}. To enter a 
-different context, use the command \texttt{:\textit{CONTEXT}}. To escape 
-from the current context to the default context, type \texttt{::}.
+Your current context is indicated by the prompt, contexts  will have the 
+prompt \texttt{(pylux:\textit{CONTEXT})}. To enter a different context, use 
+the command \texttt{:\textit{CONTEXT}}. To escape from the current context 
+to the default context, type \texttt{::}.
 
-The subsections below detail the commands you will come across in the default 
-context, where you will spend most of your time.
+You can specify the default context in the configuration file. By default it 
+is \texttt{editor}.
 
-\subsection{Utility Commands}
-
-\paragraph{\texttt{h}}
-Display a list of the available commands for the interactive prompt. This 
-prints the contents of \texttt{help.txt}  to the output.
+There are some commands which are available in all contexts, for ease of 
+access:
 
 \paragraph{\texttt{c}}
 Clears the screen of previous input and output. This uses the system screen 
 clearing command. (\texttt{clear} on UNIX, \texttt{cls} on Windows)
 
-\paragraph{\texttt{q}}
-Exit the program and autosave any changes that have been made to the tree.
-
 \paragraph{\texttt{Q}}
 Exit the program without saving any changes to disk.
 
-\subsection{File Commands}
+\subsection{The \texttt{editor} Context}
+The \texttt{editor} context is used to directly edit the contents of the 
+plot files. It does not produce any useful output and is just used to edit 
+plot files to feed into other contexts for processing.
+
+\subsubsection{File Commands}
 
 \paragraph{\texttt{fo \textit{FILE}}}
 Open the file with path \texttt{\textit{FILE}} as the plot file. This will 
@@ -147,7 +145,7 @@ Print the path of the file that is currently loaded.
 Create an new empty plot file at the location with path \texttt{\textit{PATH}} 
 and load it as the new plot file
 
-\subsection{Metadata Commands}
+\subsubsection{Metadata Commands}
 
 \paragraph{\texttt{mG}}
 List all the metadata tags associated with the currently loaded plot file.
@@ -165,7 +163,7 @@ Remove the piece of metadata from the file which has the name
 Get the value of a piece of metadata. Prints the value of the metadata with
 name \texttt{\textit{TAG}} on the screen.
 
-\subsection{Fixture Commands}
+\subsubsection{Fixture Commands}
 
 \paragraph{\texttt{xn \textit{TEMPLATE}}}
 Add a new fixture to the plot. This will load the contents of the fixture 
@@ -218,14 +216,14 @@ number or auto to allow Pylux to choose the most appropriate start address.
 Remove the fixture with interface reference \texttt{\textit{REF}} from the 
 plot and also remove any DMX channels associated with it.
 
-\subsection{DMX Registry Commands}
+\subsubsection{DMX Registry Commands}
 
 \paragraph{\texttt{rl \textit{UNIVERSE}}}
 List all the used channels in \texttt{\textit{UNIVERSE}}. This will list the 
 DMX address, fixture UUID and function of every channel in the DMX registry 
 with identifier \texttt{\textit{UNIVERSE}}.
 
-\subsection{Cue Commands}
+\subsubsection{Cue Commands}
 
 \paragraph{\texttt{qn \textit{TYPE LOCATION}}}
 Append a cue to the cue list. Set the type to \texttt{\textit{TYPE}} which is 
@@ -258,46 +256,19 @@ immediately after the cue \texttt{\textit{AFTER}} in the cue list.
 Adjust the sort keys of the cues so that \texttt{\textit{CUE}} comes 
 immediately before the cue \texttt{\textit{BEFORE}} in the cue list.
 
-\section{Other Contexts}
-
-\subsection{\texttt{texlux}}
-\texttt{texlux} is a context which allows for the creation of reports in the 
-\LaTeX{} format, which can then be post-processed to create a PDF file.
-
-\subsubsection{Commands}
-
-\paragraph{\texttt{rn \textit{TEMPLATE OUTPUT TITLE}}}
-Generates a report using the template \texttt{\textit{TEMPLATE}}, with the 
-title \texttt{\textit{TITLE}}, writing the output to a file with path 
-\texttt{\textit{OUTPUT}}.
-
-\subsubsection{Processing}
-
-\texttt{texlux} uses built-in functions to generate \LaTeX{} docments with 
-pre-defined structures. Each built-in function has a corresponding \LaTeX{} 
-style file installed in \texttt{\~{}/texmf} which is required to build 
-the PDF report. Currently the only built-in function is \texttt{dimmer}, 
-which produces a report categorised by dimmer and containing power draw 
-totals.
-
-\subsection{\texttt{plotter}}
-\texttt{plotter} generates, from the fixture list and the fixture's symbol 
-files, a plan view of the lighting plot in SVG format. It will consult the 
-fixture's \texttt{posX} and \texttt{posY} tags to translate the symbol in 
-the output image. It will also refer to the \texttt{rotation} tag to rotate 
-the fixture symbol in the plot. Finally, it will colour the fixture using 
-the hexadecimal colour code in the fixture's \texttt{colour} tag. If the 
-\texttt{rotation} or \texttt{colour} tags are not present, \texttt{plotter} 
-will calculate these when run.
-
-There are also some options that can be set to customise the output of 
-\texttt{plotter}.
+\subsection{The \texttt{plotter} Context}
+The \texttt{plotter} context is used to produce 2D SVG representations of the 
+plot. It does this using the position and focus data associated with fixtures, 
+as well as gel colours.
 
 \subsubsection{Commands}
 
-\paragraph{\texttt{pn \textit{OUTPUT}}}
-Generates a new SVG plot, writing the output to the file with path 
-\texttt{\textit{OUTPUT}}.
+\paragraph{\texttt{pn}}
+Generates a new SVG plot from the current plot file and options. The file is 
+saved internally.
+
+\paragraph{\texttt{pw \textit{PATH}}}
+Write the internal plot buffer to \texttt{\textit{PATH}}.
 
 \paragraph{\texttt{os \textit{OPTION VALUE}}}
 Set the value of the option with name \texttt{\textit{OPTION}} to 
@@ -323,27 +294,17 @@ The thickness of the beam focus lines in SVG points. Default: \texttt{6}.
 Choose whether or not to display the beam focus lines. Must be \texttt{True} 
 or \texttt{False}. Default: \texttt{True}.
 
-\section{Using the Graphical User Interface}
-Pylux also comes with a graphical user interface. This is currently in 
-development so most features are not yet implemented. When the GUI is 
-launched, you are presented with a window containing a list of the fixtures 
-in the plot. (The only way to load a plot file is using the \texttt{-f} tag 
-at launch as there is currently no menu.) Each of these fixtures has to the 
-right of it three buttons.
+\subsection{The \texttt{reporter} Context}
+The \texttt{reporter} context is used to create various types of 
+documentation from Jinja2 templates.
 
-The leftmost button is the only currently functional button and launches a 
-window containing a list of the fixture's data tags. You cannot currently 
-edit the data tags. The other two buttons are for cloning and removing the 
-fixture but this functionality is not yet implemented.
+\subsubsection{Commands}
 
-\section{Extensions}
-In the previous sections, we have discussed the usage of the base program in 
-Pylux: \texttt{editor}. This is the program that you will use to edit your
-plots, however, beyond that, it doesn't do much. That is why Pylux is also 
-bundled with extensions to provide extra functionality. In the current 
-version, Pylux comes bundled with the \texttt{texlux} and \texttt{plotter} 
-extensions.
+\paragraph{\texttt{rn \textit{TEMPLATE}}}
+Generates a report using the template \texttt{\textit{TEMPLATE}}. 
 
+\paragraph{\texttt{rw \textit{PATH}}}
+Write the contents of the internal report buffer to \texttt{\textit{PATH}}.
 
 % -------- FILES SECTION ------- %
 \section{Standard Tags} \label{sec:plotfile}
