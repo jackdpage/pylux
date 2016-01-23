@@ -16,20 +16,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import math
+"""Generate SVG lighting plots.
+
+Context that provides commands to create lighting plot images in 
+SVG format.
+"""
+
+from pylux.context.context import Context
+import os.path
 import logging
 from tqdm import tqdm
 import xml.etree.ElementTree as ET
 import pylux.plot as plot
 import pylux.clihelper as clihelper
 import pylux.reference as reference
-
+from pylux import get_data
 
 class ImagePlot:
 
-    def __init__(self, options):    
-        self.fixtures = plot.FixtureList(PLOT_FILE)
+    def __init__(self, plot_file, options):    
+        self.fixtures = plot.FixtureList(plot_file)
         self.image_plot = ET.Element('svg')
         self.options = options
 
@@ -63,8 +69,7 @@ class ImagePlot:
                 posY = fixture.data['posY']
                 rotation = fixture.data['rotation']
                 colour = fixture.data['colour']
-                symbol = plot.FixtureSymbol('/usr/share/pylux/symbol/'+
-                    symbol_name+'.svg')
+                symbol = plot.FixtureSymbol(get_data('symbol/'+symbol_name+'.svg'))
                 symbol.prepare(posX, posY, rotation, colour)
                 self.image_plot.append(symbol.image_group)
             else:
@@ -90,43 +95,57 @@ class ImagePlot:
                 beam.set('stroke-width', self.options['beam_width'])
             
 
-def default_options():
-    options = {
-        'beam_colour': 'Black',
-        'beam_width': '6',
-        'show_beams': 'true'}
-    return options
+class PlotOptions():
 
-def run_pylux_extension():
-    logging.basicConfig(level=LOG_LEVEL)
-    options = default_options()
-    while True:
-        user_input = input('(pylux:plotter) ')
-        inputs = user_input.split(' ')
+    def __init__(self):
+        self.options = {
+            'beam_colour': 'Black',
+            'beam_width': '6',
+            'show_beams': 'true'}
 
-        if inputs[0] == 'os':
-            options[inputs[1]] = clihelper.resolve_input(inputs, 2)[-1]
+    def set(self, option, value):
+        self.options[option] = value
 
-        elif inputs[0] == 'og':
-            print(inputs[1]+': '+options[inputs[1]])
-
-        elif inputs[0] == 'oG':
-            for option in options:
-                print(option+': '+options[option])
-
-        elif inputs[0] == 'pn':
-            image_plot = ImagePlot(options)
-            if options['show_beams'] == 'true':
-                image_plot.add_beams()
-            image_plot.add_fixtures()
-            output_tree = ET.ElementTree(image_plot.image_plot)
-            output_tree.write(os.path.expanduser(inputs[1]))
-
-        elif inputs[0] == '::':
-            break
-
+    def get(self, option):
+        if option in self.options:
+            return self.options[option]
         else:
-            print('That command doesn\'t exist!')
+            return None
 
-if __name__ == 'pyext':
-    run_pylux_extension()
+class PlotterContext(Context):
+
+    def __init__(self):
+        self.name = 'plotter'
+        self.init_commands()
+        self.register('pn', self.plot_new, 0)
+        self.register('pw', self.plot_write, 1)
+        self.register('os', self.option_set, 2)
+        self.register('og', self.option_get, 1)
+        self.register('ol', self.option_list, 0)
+        self.init_plot()
+
+    def init_plot(self):
+        self.options = PlotOptions()
+
+    def plot_new(self, parsed_input):
+        self.image_plot = ImagePlot(self.plot_file, self.options.options)
+        if self.options.options['show_beams'] == 'true':
+            self.image_plot.add_beams()
+        self.image_plot.add_fixtures()
+
+    def plot_write(self, parsed_input):
+        output_tree = ET.ElementTree(self.image_plot.image_plot)
+        output_tree.write(os.path.expanduser(parsed_input[0]))
+
+    def option_set(self, parsed_input):
+        options.set(parsed_input[0], parsed_input[1])
+
+    def option_get(self, parsed_input):
+        print(options.get(parsed_input[0]))
+
+    def option_list(self):
+        for option in options.options:
+            print(option+': '+options.options[option])
+
+def get_context():
+    return PlotterContext()

@@ -37,7 +37,7 @@ setup(
     package_data={
         'pylux': ['settings.conf', 
                   'fixture/*.xml', 
-                  'template/*.tex', 
+                  'template/*.jinja', 
                   'symbol/*.svg']
     },
     entry_points={

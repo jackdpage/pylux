@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 # gplotter.py is part of Pylux
 #
 # Pylux is a program for the management of lighting documentation

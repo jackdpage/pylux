@@ -293,7 +293,7 @@ class Fixture:
                 if uuid == xml_fixture.get('uuid'):
                     self.load(xml_fixture)
 
-    def new(self, template, fixtures_dir):
+    def new(self, template_file):
         """Make this fixture as a brand new fixture.
 
         Given template name, assign a UUID and load the constants from the 
@@ -303,7 +303,7 @@ class Fixture:
             template: the name of the template the new fixture should copy.
         """
         self.uuid = str(uuid.uuid4()) # Random UUID assigned
-        src_tree = ET.parse(fixtures_dir+template+'.xml')
+        src_tree = ET.parse(template_file)
         self.src_root = src_tree.getroot()
         dmx_xml = self.src_root.find('dmx_functions')
         for channel in dmx_xml:

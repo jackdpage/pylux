@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 # __main__.py is part of Pylux
 #
 # Pylux is a program for the management of lighting documentation
@@ -75,7 +73,7 @@ def main():
                          run_name='pylux_root')
     else:
         print('Running in CLI mode\n')
-        runpy.run_module('pylux.editor', init_globals=init_globals, 
+        runpy.run_module('pylux.cli', init_globals=init_globals, 
                          run_name='pylux_root')
 
 
