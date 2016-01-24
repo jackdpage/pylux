@@ -3,6 +3,7 @@ Pylux
 
 [![PyPI](https://img.shields.io/pypi/v/pylux.svg)](https://pypi.python.org/pypi/pylux/)
 [![PyPI](https://img.shields.io/pypi/format/pylux.svg)](https://pypi.python.org/pypi/pylux#license)
+[![Documentation Status](https://readthedocs.org/projects/pylux/badge/?version=latest)](http://pylux.readthedocs.org/en/latest/?badge=latest)
 
 Pylux is a program for the management of lighting documentation written 
 in Python. It uses its XML files called plots to store information about a 
