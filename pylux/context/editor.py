@@ -102,12 +102,12 @@ class EditorContext(Context):
     def metadata_set(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
         metadata.meta[parsed_input[0]] = parsed_input[1]
-        metadata.save()
+        metadata.save(self.plot_file)
 
     def metadata_remove(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
         metadata.meta[parsed_input[0]] = None
-        metadata.save()
+        metadata.save(self.plot_file)
 
     def metadata_get(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)

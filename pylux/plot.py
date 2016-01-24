@@ -429,25 +429,26 @@ class Metadata:
         self.xml_meta = plot_file.root.findall('metadata')
         self.meta = {}
         for metaitem in self.xml_meta:
-            self.meta[metaitem.tag] = metaitem.text
+            self.meta[metaitem.get('name')] = metaitem.text
 
     def save(self, plot_file):
         """Save the metadata dictionary to XML."""
         # Add a new meta item
         def add_xml_meta(self, name, value):
-            new_metadata = ET.Element(name)    
+            new_metadata = ET.Element('metadata')    
+            new_metadata.set('name', name)
             new_metadata.text = value
-            plot_file.append(new_metadata)
+            plot_file.root.append(new_metadata)
 
         # Edit an existing meta item
-        def edit_xml_meta(self, name, new_value):
-            self.xml_meta.find(name).text = new_value
+        def edit_xml_meta(self, xml_meta, new_value):
+            xml_meta.text = new_value
 
         # Search for meta in XML
         def get_xml_meta(self, name):
             try:
                 for metaitem in self.xml_meta:
-                    if metaitem.find('name').tag == metaitem:
+                    if metaitem.get('name') == metaitem:
                         return metaitem
                 else:
                     return None
@@ -460,12 +461,12 @@ class Metadata:
             if xml_meta == None:
                 add_xml_meta(self, metaitem, self.meta[metaitem])
             else:
-                edit_xml_meta(self, metaitem, self.meta[metaitem])
+                edit_xml_meta(self, xml_meta, self.meta[metaitem])
         # Iterate over XML meta object to remove empty values
         for metaitem in self.xml_meta:
-            name = metaitem.find('name').tag
+            name = metaitem.get('name')
             if self.meta[name] == None:
-                plot_file.remove(metaitem)
+                plot_file.root.remove(metaitem)
 
 
 class Cue:

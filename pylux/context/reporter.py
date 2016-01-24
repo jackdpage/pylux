@@ -34,7 +34,8 @@ from pylux.context.context import Context
 class Report:
 
     def __init__(self, plot_file):
-        self.environment = Environment(loader=FileSystemLoader(get_data('template/')))
+        self.environment = Environment(lstrip_blocks=True, trim_blocks=True, 
+                                loader=FileSystemLoader(get_data('template/')))
         self.plot_file = plot_file
 
     def find_template(self, template):
@@ -51,7 +52,9 @@ class Report:
         cue_list = sorted(plot.CueList(self.plot_file).cues,
                           key=lambda cue: cue.key)
         fixture_list = plot.FixtureList(self.plot_file).fixtures
-        self.content = template.render(cues=cue_list, fixtures=fixture_list)
+        metadata_list = plot.Metadata(self.plot_file).meta
+        self.content = template.render(cues=cue_list, fixtures=fixture_list,
+                                       meta=metadata_list)
 
 
 class ReporterContext(Context):
@@ -66,7 +69,9 @@ class ReporterContext(Context):
     def report_new(self, parsed_input):
         self.report = Report(self.plot_file)
         possible_templates = self.report.find_template(parsed_input[0])
-        if len(possible_templates) == 1:
+        if len(possible_templates) == 0:
+            print('Error: No templates with that name')
+        elif len(possible_templates) == 1:
             self.report.generate(possible_templates.iteritems()[0])
         else:
             print('The template you entered has '+

@@ -1,5 +1,4 @@
-docs/Manual.pdf
-docs/Developer.pdf
+_build/
 *.log
 *.aux
 *.out
