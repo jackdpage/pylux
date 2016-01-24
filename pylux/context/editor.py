@@ -214,8 +214,8 @@ class EditorContext(Context):
                 fixture.data['focusX'] = value.split(',')[0]
                 fixture.data['focusY'] = value.split(',')[1]
             elif tag == 'dimmer':
-                fixture.data['dimmer_uuid'] = self.interface.get(parsed_input[2])[0].uuid
-                fixture.data['dimmer_channel'] = parsed_input[3]
+                fixture.data['dimmer_uuid'] = self.interface.get(value.split(',')[0])[0].uuid
+                fixture.data['dimmer_channel'] = value.split(',')[1]
             # Otherwise just set it
             else:
                 fixture.data[tag] = value

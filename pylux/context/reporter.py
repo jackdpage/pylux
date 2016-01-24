@@ -37,6 +37,15 @@ class Report:
         self.environment = Environment(loader=FileSystemLoader(get_data('template/')))
         self.plot_file = plot_file
 
+    def find_template(self, template):
+        all_templates = os.listdir(get_data('template'))
+        discovered = {}
+        for template_file in all_templates:
+            if template_file.split('.')[0] == template:
+                discovered[template_file.split('.')[1]] = template_file
+        return discovered
+        
+
     def generate(self, template):
         template = self.environment.get_template(template)
         cue_list = sorted(plot.CueList(self.plot_file).cues,
@@ -56,8 +65,16 @@ class ReporterContext(Context):
 
     def report_new(self, parsed_input):
         self.report = Report(self.plot_file)
-        self.report.generate(parsed_input[0]+'.jinja')
-
+        possible_templates = self.report.find_template(parsed_input[0])
+        if len(possible_templates) == 1:
+            self.report.generate(possible_templates.iteritems()[0])
+        else:
+            print('The template you entered has '+
+                  str(len(possible_templates))+' matches: ')
+            print(possible_templates)
+            using_template = input('Choose an extension to continue: ')
+            self.report.generate(possible_templates[using_template])
+            
     def report_get(self, parsed_input):
         print(self.report.content)
 

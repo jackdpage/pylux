@@ -442,8 +442,11 @@ A human-readable description of what should happen.
 If this is a lighting cue, the UUID of the scene which is used for it.
 
 \appendix
-\section{Included Fixture Templates}
-Here follows a list of the included fixture templates.
+\section{Included Templates}
+For any template file that Pylux uses, you can use your own, but it comes 
+with a few to get you started.
+
+\subsection{Fixture Templates}
 \begin{longtable}{|l|r|}
 \hline
 Fixture Type & Pylux Short Name \\ \hline
@@ -453,6 +456,15 @@ LEDJ RGB PAR & ledjrgbpar \\
 PAR64 MFL & par64mfl \\
 Strand Patt.23 & patt23 \\
 Zero88 Betapack 2 & betapack2 \\
+\hline
+\end{longtable}
+
+\subsection{Jinja Templates}
+\begin{longtable}{|l|l|}
+\hline
+Template Name & Format \\ \hline
+cuelist & .tex \\
+dimmerlist & .tex \\
 \hline
 \end{longtable}
 
