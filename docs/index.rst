@@ -1,21 +1,35 @@
-.. Pylux documentation master file, created by
-   sphinx-quickstart on Sun Jan 24 21:02:11 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Documentation for Pylux
+=======================
 
-Welcome to Pylux's documentation!
-=================================
+This documentation is aimed at both users and developers.
 
-Contents:
+.. WARNING::
+    Pylux is still in the early stages of development. The API or UI could 
+    change at any time and render this documentation out of date.
 
 .. toctree::
     :maxdepth: 2
+    :caption: User Documentation
 
     introduction
     installation
     invoking
     cli_features
     contexts
+    standard_tags
+
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Developer Documentation
+
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Appendicies
+
+    included_fixtures
+    included_gels
 
 Indices and tables
 ==================
