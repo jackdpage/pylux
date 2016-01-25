@@ -10,7 +10,6 @@ _build/
 *.idv
 *.tmp
 *.lg
-*.html
 *.css
 *.xref
 *.zip
