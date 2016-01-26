@@ -92,7 +92,7 @@ class EditorContext(Context):
     def file_new(self, parsed_input):
         self.plot_file.generate(os.path.expanduser(parsed_input[0]))
         self.plot_file.load(os.path.expanduser(parsed_input[0]))
-        file_get(self, parsed_input)
+        self.file_get(parsed_input)
 
     def metadata_list(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
@@ -247,7 +247,12 @@ class EditorContext(Context):
             for channel in registry.registry:
                 uuid = registry.registry[channel][0]
                 func = registry.registry[channel][1]
-                print(str(format(channel, '03d'))+' uuid: '+uuid+', func: '+func)
+                fixture = plot.Fixture(self.plot_file, uuid=uuid)
+                if 'name' in fixture.data:
+                    print_name = fixture.data['name']
+                else:
+                    print_name = fixture.data['type']
+                print(str(format(channel, '03d'))+' '+print_name+', function: '+func)
         except IndexError:
             print('You need to specify a DMX registry!')
 

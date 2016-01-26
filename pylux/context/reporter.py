@@ -72,7 +72,7 @@ class ReporterContext(Context):
         if len(possible_templates) == 0:
             print('Error: No templates with that name')
         elif len(possible_templates) == 1:
-            self.report.generate(possible_templates.iteritems()[0])
+            self.report.generate(list(possible_templates.values())[0])
         else:
             print('The template you entered has '+
                   str(len(possible_templates))+' matches: ')

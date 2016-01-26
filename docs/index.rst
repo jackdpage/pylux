@@ -23,6 +23,9 @@ This documentation is aimed at both users and developers.
     :maxdepth: 2
     :caption: Developer Documentation
 
+    developer_introduction
+    plot_module
+    clihelper
 
 .. toctree::
     :maxdepth: 2

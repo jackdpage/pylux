@@ -19,6 +19,7 @@
 from pylux.clihelper import resolve_input, Interface 
 from importlib import import_module
 import sys
+import os
 
 
 class Context:
@@ -109,7 +110,6 @@ class Context:
     def utility_clear(self, parsed_input):
         """Utility to clear the screen using system call."""
         os.system('cls' if os.name == 'nt' else 'clear')
-        sys.exit()
 
     def utility_kill(self, parsed_input):
         """Utility to exit the program without warning."""
