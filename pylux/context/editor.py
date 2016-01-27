@@ -57,6 +57,7 @@ class EditorContext(Context):
         self.register('xa', self.fixture_address, 3)
         self.register('xp', self.fixture_purge, 1)
         self.register('rl', self.registry_list, 1)
+        self.register('rL', self.registry_probe, 1)
         self.register('ql', self.cue_list, 0)
         self.register('qn', self.cue_new, 2)
         self.register('qr', self.cue_remove, 1)
@@ -242,19 +243,36 @@ class EditorContext(Context):
             fixture_list.remove(fixture)
 
     def registry_list(self, parsed_input):
-        try:
-            registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
-            for channel in registry.registry:
-                uuid = registry.registry[channel][0]
-                func = registry.registry[channel][1]
-                fixture = plot.Fixture(self.plot_file, uuid=uuid)
-                if 'name' in fixture.data:
-                    print_name = fixture.data['name']
-                else:
-                    print_name = fixture.data['type']
-                print(str(format(channel, '03d'))+' '+print_name+', function: '+func)
-        except IndexError:
-            print('You need to specify a DMX registry!')
+        registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
+        for channel in registry.registry:
+            uuid = registry.registry[channel][0]
+            func = registry.registry[channel][1]
+            fixture = plot.Fixture(self.plot_file, uuid=uuid)
+            if 'name' in fixture.data:
+                print_name = fixture.data['name']
+            else:
+                print_name = fixture.data['type']
+            print(str(format(channel, '03d'))+' '+print_name+', func: '+func)
+
+    def registry_probe(self, parsed_input):
+        registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
+        for channel in registry.registry:
+            uuid = registry.registry[channel][0]
+            func = registry.registry[channel][1]
+            fixture = plot.Fixture(self.plot_file, uuid=uuid)
+            print_name = clihelper.get_fixture_print(fixture)
+            print(str(format(channel, '03d'))+' '+print_name+', func: '+func)
+            if ('is_dimmer' in fixture.data and 
+                fixture.data['is_dimmer'] == 'True'):
+                dimmer_chan = func.replace('channel_', '')
+                fixture_list = plot.FixtureList(self.plot_file)
+                for fixture in fixture_list.fixtures:
+                    if ('dimmer_uuid' in fixture.data and 
+                        fixture.data['dimmer_uuid'] == uuid and 
+                        fixture.data['dimmer_channel'] == dimmer_chan):
+                        print_name = clihelper.get_fixture_print(fixture)
+                        print('⤷ '+print_name)
+        
 
     def cue_list(self, parsed_input):
         cues = plot.CueList(self.plot_file)
@@ -300,11 +318,13 @@ class EditorContext(Context):
 
     def cue_moveafter(self, parsed_input):
         cues = plot.CueList(self.plot_file)
-        cues.move_after(self.plot_file, int(parsed_input[0]), int(parsed_input[1]))
+        cues.move_after(self.plot_file, int(parsed_input[0]), 
+                        int(parsed_input[1]))
 
     def cue_movebefore(self, parsed_input):
         cues = plot.CueList(self.plot_file)
-        cues.move_before(self.plot_file, int(parsed_input[0]), int(parsed_input[1]))
+        cues.move_before(self.plot_file, int(parsed_input[0]), 
+                         int(parsed_input[1]))
 
 
 def get_context():

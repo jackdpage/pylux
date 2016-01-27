@@ -45,22 +45,22 @@ def main():
         user_input = input('(pylux:'+context.name+') ')
         inputs = user_input.split(' ')
 
-        if inputs[0] == '::':
-            globals_dict = context.get_globals()
-            context = get_context('editor')
-            context.set_globals(globals_dict)
+        if len(user_input) > 0:
+            if inputs[0] == '::':
+                globals_dict = context.get_globals()
+                context = get_context('editor')
+                context.set_globals(globals_dict)
 
-        elif inputs[0][0] == ':':
-            globals_dict = context.get_globals()
-            context = get_context(inputs[0].split(':')[1])
-            context.set_globals(globals_dict)
+            elif inputs[0][0] == ':':
+                globals_dict = context.get_globals()
+                context = get_context(inputs[0].split(':')[1])
+                context.set_globals(globals_dict)
 
-        elif inputs[0] in context.commands:
-            context.process(inputs)
+            elif inputs[0] in context.commands:
+                context.process(inputs)
 
-        else:
-            print('Error: Command doesn\'t exist.') 
-            print('Type \'h\' for a list of available commands.')
+            else:
+                print('Error: Command doesn\'t exist.') 
 
 
 if __name__ == 'pylux_root':

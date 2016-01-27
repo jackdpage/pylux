@@ -155,3 +155,18 @@ def resolve_input(inputs_list, number_args):
         i = i+1
     args_list.append(multiword_input)
     return args_list
+
+
+def get_fixture_print(fixture):
+    """Return a string that represents this fixture the best.
+
+    If the fixture has a name tag, return that, if not and it has a 
+    type tag, return that, otherwise return the uuid.
+    """
+    if 'name' in fixture.data:
+        return fixture.data['name']
+    elif 'type' in fixture.data:
+        return fixture.data['type']
+    else:
+        return fixture.uuid
+
