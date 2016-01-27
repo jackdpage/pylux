@@ -26,6 +26,7 @@ from pylux.context.context import Context
 import os.path
 import logging
 from tqdm import tqdm
+import base64
 import xml.etree.ElementTree as ET
 import pylux.plot as plot
 import pylux.clihelper as clihelper
@@ -93,6 +94,21 @@ class ImagePlot:
                         reference.gel_colours[self.options['beam_colour']])
                 beam.set('stroke-dasharray', '10,10')
                 beam.set('stroke-width', self.options['beam_width'])
+
+    def add_background(self):
+        """Set the background image.
+
+        Read the bytes from the file given in the background 
+        image option, encode in base64 then add as an image 
+        element.
+        """
+        with open(self.options['background_image'], 'rb') as bgfile:
+            background_bytes = bgfile.read()
+        background_image = ET.SubElement(self.image_plot, 'image')
+        background_image.set('href', 'data:image/png;base64,'+
+                             str(base64.b64encode(background_bytes)))
+        background_image.set('width', self.options['xrange'])
+        background_image.set('height', self.options['yrange'])
             
 
 class PlotOptions():
@@ -101,7 +117,10 @@ class PlotOptions():
         self.options = {
             'beam_colour': 'Black',
             'beam_width': '6',
-            'show_beams': 'true'}
+            'show_beams': 'True',
+            'background_image': 'None',
+            'xrange': '0',
+            'yrange': '0'}
 
     def set(self, option, value):
         self.options[option] = value
@@ -129,7 +148,9 @@ class PlotterContext(Context):
 
     def plot_new(self, parsed_input):
         self.image_plot = ImagePlot(self.plot_file, self.options.options)
-        if self.options.options['show_beams'] == 'true':
+        if self.options.options['background_image'] != 'None':
+            self.image_plot.add_background()
+        if self.options.options['show_beams'] == 'True':
             self.image_plot.add_beams()
         self.image_plot.add_fixtures()
 
@@ -138,14 +159,14 @@ class PlotterContext(Context):
         output_tree.write(os.path.expanduser(parsed_input[0]))
 
     def option_set(self, parsed_input):
-        options.set(parsed_input[0], parsed_input[1])
+        self.options.set(parsed_input[0], parsed_input[1])
 
     def option_get(self, parsed_input):
-        print(options.get(parsed_input[0]))
+        print(self.options.get(parsed_input[0]))
 
-    def option_list(self):
-        for option in options.options:
-            print(option+': '+options.options[option])
+    def option_list(self, parsed_input):
+        for option in self.options.options:
+            print(option+': '+self.options.options[option])
 
 def get_context():
     return PlotterContext()
