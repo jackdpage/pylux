@@ -27,6 +27,7 @@ import os.path
 import logging
 from tqdm import tqdm
 import base64
+import math
 import xml.etree.ElementTree as ET
 import pylux.plot as plot
 import pylux.clihelper as clihelper
@@ -60,56 +61,34 @@ class ImagePlot:
     def add_fixtures(self):
         for fixture in tqdm(self.fixtures.fixtures):
             if self.verify_fixture(fixture) == True:
+                fixture_group = ET.SubElement(self.image_plot, 'g')
                 fixture.data['rotation'] = fixture.generate_rotation()
                 if not fixture.generate_colour():
                     fixture.data['colour'] = '#000000'
                 else:
                     fixture.data['colour'] = fixture.generate_colour()
-                symbol_name = fixture.data['symbol']
-                posX = fixture.data['posX']
-                posY = fixture.data['posY']
-                rotation = fixture.data['rotation']
-                colour = fixture.data['colour']
-                symbol = plot.FixtureSymbol(get_data('symbol/'+symbol_name+'.svg'))
-                symbol.prepare(posX, posY, rotation, colour)
-                self.image_plot.append(symbol.image_group)
+                symbol_instance = FixtureSymbol(fixture)
+                fixture_symbol = symbol_instance.get_fixture_group()
+                fixture_beam = symbol_instance.get_fixture_beam()
+                fixture_circuit = symbol_instance.get_circuit_icon()
+                fixture_group.append(fixture_circuit)
+                fixture_group.append(fixture_beam)
+                fixture_group.append(fixture_symbol)
             else:
                 pass
-
-    def add_beams(self):
-        beam_group = ET.SubElement(self.image_plot, 'g')
-        beam_group.set('class', 'beam-group')
-        for fixture in self.fixtures.fixtures:
-            if self.verify_fixture(fixture) == True:
-                posX = str(float(fixture.data['posX'])*1000)
-                posY = str(float(fixture.data['posY'])*1000)
-                focusX = str(float(fixture.data['focusX'])*1000)
-                focusY = str(float(fixture.data['focusY'])*1000)
-                beam = ET.SubElement(beam_group, 'path')
-                beam.set('d', 'M '+posX+' '+posY+' L '+focusX+' '+focusY)
-                if self.options['beam_colour'] == 'auto':
-                    beam.set('stroke', fixture.data['colour'])
-                else:
-                    beam.set('stroke', 
-                        reference.gel_colours[self.options['beam_colour']])
-                beam.set('stroke-dasharray', '10,10')
-                beam.set('stroke-width', self.options['beam_width'])
 
     def add_background(self):
         """Set the background image.
 
-        Read the bytes from the file given in the background 
-        image option, encode in base64 then add as an image 
-        element.
+        Literally just imports the first group from the background 
+        image file.
         """
-        with open(self.options['background_image'], 'rb') as bgfile:
-            background_bytes = bgfile.read()
-        background_image = ET.SubElement(self.image_plot, 'image')
-        background_image.set('href', 'data:image/png;base64,'+
-                             str(base64.b64encode(background_bytes)))
-        background_image.set('width', self.options['xrange'])
-        background_image.set('height', self.options['yrange'])
-            
+        tree = ET.parse(self.options['background_image'])
+        root = tree.getroot()
+        ns = {'ns0': 'http://www.w3.org/2000/svg'}
+        image_group = root.find('ns0:g', ns)
+        self.image_plot.append(image_group)
+
 
 class PlotOptions():
 
@@ -119,8 +98,7 @@ class PlotOptions():
             'beam_width': '6',
             'show_beams': 'True',
             'background_image': 'None',
-            'xrange': '0',
-            'yrange': '0'}
+            'show_circuits': 'True'}
 
     def set(self, option, value):
         self.options[option] = value
@@ -130,6 +108,73 @@ class PlotOptions():
             return self.options[option]
         else:
             return None
+
+
+class FixtureSymbol:
+    """Manages the SVG symbols for fixtures."""
+
+    def __init__(self, fixture):
+        """Load the fixture symbol file."""
+        self.fixture = fixture
+        symbol_name = fixture.data['symbol']
+        tree = ET.parse(get_data('symbol/'+symbol_name+'.svg'))
+        root = tree.getroot()
+        self.ns = {'ns0': 'http://www.w3.org/2000/svg'}
+        self.image_group = root.find('ns0:g', self.ns)
+
+    def get_fixture_group(self):
+        """Return a transformed symbol g element."""
+        posX_mm = float(self.fixture.data['posX'])*1000
+        posY_mm = float(self.fixture.data['posY'])*1000
+        rotation_deg = self.fixture.data['rotation']
+        colour = self.fixture.data['colour']
+        self.image_group.set('transform', 'translate('+
+            str(posX_mm)+' '+str(posY_mm)+') rotate('+str(rotation_deg)+')')
+        for path in self.image_group:
+            if path.get('class') == 'outer':
+                path.set('fill', colour)
+        return self.image_group
+
+    def get_fixture_beam(self):
+        """Return a beam path element."""
+        posX_mm = str(float(self.fixture.data['posX'])*1000)
+        posY_mm = str(float(self.fixture.data['posY'])*1000)
+        focusX_mm = str(float(self.fixture.data['focusX'])*1000)
+        focusY_mm = str(float(self.fixture.data['focusY'])*1000)
+        beam = ET.Element('path')
+        beam.set('d', 'M '+posX_mm+' '+posY_mm+' L '+focusX_mm+' '+focusY_mm)
+        beam.set('stroke', 'black')
+        beam.set('stroke-width', '6')
+        beam.set('stroke-dasharray', '10,10')
+        return beam
+
+    def get_circuit_icon(self):
+        """Return a circuit and connector g element."""
+        rotation_deg = self.fixture.data['rotation']
+        posX_mm = float(self.fixture.data['posX'])*1000
+        posY_mm = float(self.fixture.data['posY'])*1000
+        connector_endX = posX_mm-200*math.cos(math.radians(rotation_deg))
+        connector_endY = posY_mm-200*math.sin(math.radians(rotation_deg))
+        icon_group = ET.Element('g')
+        connector = ET.SubElement(icon_group, 'path')
+        connector.set('d', 'M '+str(posX_mm)+' '+str(posY_mm)+
+                      ' L '+str(connector_endX)+' '+str(connector_endY))
+        connector.set('stroke', 'black')
+        connector.set('stroke-width', '3')
+        circle = ET.SubElement(icon_group, 'circle')
+        circle.set('cx', str(connector_endX))
+        circle.set('cy', str(connector_endY))
+        circle.set('r', '60')
+        circle.set('stroke', 'black')
+        circle.set('stroke-width', '6')
+        circle.set('fill', 'white')
+        text = ET.SubElement(icon_group, 'text')
+        text.text = self.fixture.data['circuit']
+        text.set('x', str(connector_endX))
+        text.set('y', str(connector_endY))
+        text.set('font-size', '60')
+        return icon_group
+
 
 class PlotterContext(Context):
 
@@ -150,8 +195,6 @@ class PlotterContext(Context):
         self.image_plot = ImagePlot(self.plot_file, self.options.options)
         if self.options.options['background_image'] != 'None':
             self.image_plot.add_background()
-        if self.options.options['show_beams'] == 'True':
-            self.image_plot.add_beams()
         self.image_plot.add_fixtures()
 
     def plot_write(self, parsed_input):

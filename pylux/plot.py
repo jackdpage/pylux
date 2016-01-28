@@ -657,23 +657,3 @@ class Scene:
         for dmx_info_xml in xml_scene:
             if self.dmx_data[dmx_info_xml.tag] is None:
                 xml_scene.remove(dmx_info_xml)
-
-
-class FixtureSymbol:
-    """Manages the SVG symbols for fixtures."""
-
-    def __init__(self, path):
-        tree = ET.parse(path)
-        root = tree.getroot()
-        self.ns = {'ns0': 'http://www.w3.org/2000/svg'}
-        self.image_group = root.find('ns0:g', self.ns)
-
-    def prepare(self, posX, posY, rotation, colour):
-        posX = str(float(posX)*1000)
-        posY = str(float(posY)*1000)
-        rotation = str(rotation)
-        self.image_group.set('transform', 'translate('+
-            posX+' '+posY+') rotate('+rotation+')')
-        for path in self.image_group:
-            if path.get('class') == 'outer':
-                path.set('fill', colour)

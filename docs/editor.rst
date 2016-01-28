@@ -110,7 +110,11 @@ certain DMX addresses in a certain universe.
 
 ``rl UNIVERSE``
     List the used channels in the registry with universe name ``UNIVERSE``. 
-    This will list both the fixture UUID and the function of the channel.
+    This will list both the fixture name and the function of the channel.
+
+``rL UNIVERSE``
+		List the used channels in the registry with universe name ``UNIVERSE``, 
+		and also probe any dimmer channels to display the fixtures they control. 
 
 Cue Commands
 ------------
