@@ -3,7 +3,7 @@
 (B) 2015-12-20 Auto completion +Base
 (B) 2015-12-30 Error message when removing non-existant meta +Bugfix
 (B) 2016-01-07 Make unaddressing fixtures independent of fixture XML +Clean
-(B) 2016-01-21 Rewrite TeXlux to use Jinja +Extensions
+x 2016-01-21 2016-01-21 Rewrite TeXlux to use Jinja +Extensions
 (C) 2015-12-30 add() in Fixture shouldn't exist +Clean
 (C) 2016-01-14 Set DMX output states +Extensions
 x 2015-12-14 2015-12-12 Automatic DMX start address assignment +Base

@@ -76,50 +76,34 @@ class PlotFile:
 
 
 class DmxRegistry:
-    """Manages DMX registries.
-
-    Attributes:
-        registry: the registry as a Python dictionary.
-        universe: the universe id of the registry.
-        xml_registry: the XML tree of the registry. Is False if the 
-            registry doesn't exist in XML.
+    """Manage DMX registries.
+    
+    Now with multiple functions per channel! Exclusive!!
     """
 
     def __init__(self, plot_file, universe):
-        """Create a new Python registry.
-
-        Creates a new Python registry with the id universe. Then 
-        searches the project file for a registry with the same id. If 
-        one is found, loads that data into the Python registry, if 
-        the registry doesn't exist in XML, creates one and adds it to 
-        the tree.
-
-        Args:
-            universe: the universe id of the registry to be created.
-        """
-        self.plot_file = plot_file
         self.registry = {}
         self.universe = universe
         self.xml_registry = False
-        # Search for this universe in the XML file
-        xml_registries = self.plot_file.root.findall('registry')
-        for xml_registry in xml_registries: 
-            testing_universe = xml_registry.get('universe')
-            if testing_universe == self.universe:
+        # Find the corresponding XML registry
+        for xml_registry in plot_file.root.findall('registry'):
+            if xml_registry.get('universe') == self.universe:
                 self.xml_registry = xml_registry
-                break # Return XML registry if it exists
-        # Create a new XML registry if one doesn't exist
-        if self.xml_registry == False:
+                break
+        # If there isn't one make a new one
+        if not self.xml_registry:
             self.xml_registry = ET.Element('registry')
             self.xml_registry.set('universe', self.universe)
-            self.plot_file.root.append(self.xml_registry)
-        # Populate the Python registry if an XML registry was found
-        else:            
-            for channel in xml_registry:
-                address = int(channel.get('address'))
-                uuid = channel.find('fixture_uuid').text
-                function = channel.find('function').text
-                self.registry[address] = (uuid, function)
+            plot_file.root.append(self.xml_registry)
+        # Otherwise populate the Python registry
+        else:
+            for xml_channel in xml_registry.findall('channel'):
+                address = int(xml_channel.get('address'))
+                self.registry[address] = []
+                for xml_function in xml_channel.findall('function'):
+                    fixture_uuid = xml_function.get('uuid')
+                    function = xml_function.text
+                    self.registry[address].append((fixture_uuid, function))
 
     def save(self):
         """Saves the Python registry to the XML tree.
@@ -128,40 +112,37 @@ class DmxRegistry:
         XML and deletes any XML channels that no longer exist in the 
         Python registry.
         """
-        # Add a new XML entry
-        def add_xml_entry(self, address, uuid, function):
-            self.registry[address] = (uuid, function)
-            new_channel = ET.Element('channel')
-            new_channel.set('address', str(address))
-            new_uuid = ET.SubElement(new_channel, 'fixture_uuid')
-            new_uuid.text = uuid
-            new_function = ET.SubElement(new_channel, 'function')
-            new_function.text = function
-            self.xml_registry.append(new_channel)
-    
-        # Edit an existing XML entry
-        def edit_xml_entry(self, xml_channel, new_uuid, new_function):
-            xml_channel.find('fixture_uuid').text = new_uuid
-            xml_channel.find('function').text = function
-
         # Search a channel with address in XML
         def get_xml_channel(self, address):
-            for channel in self.xml_registry:
+            for channel in self.xml_registry.findall('channel'):
                 found_address = channel.get('address')
                 if found_address == str(address):
                     return channel
-                    break
+
+        # Add an empty channel object
+        def add_xml_channel(self, address):
+            new_channel = ET.SubElement(self.xml_registry, 'channel')
+            new_channel.set('address', str(address))
 
         # Iterate over the Python registry
         for address in self.registry:
             if self.registry[address] != None:
-                uuid = self.registry[address][0]
-                function = self.registry[address][1]
                 xml_channel = get_xml_channel(self, address)
+                # If there is no channel with this address, make one
                 if xml_channel == None:
-                    add_xml_entry(self, address, uuid, function)
+                    add_xml_channel(self, address)
+                    xml_channel = get_xml_channel(self, address)
+                # Clear the channel if it does exist
                 else:
-                    edit_xml_entry(self, xml_channel, uuid, function)
+                    for function in xml_channel.findall('function'):
+                        xml_channel.remove(function)
+                # Iterate over functions and add to XML
+                for function in self.registry[address]:
+                    fixture_uuid = function[0]
+                    fixture_function = function[1]
+                    xml_function = ET.SubElement(xml_channel, 'function')
+                    xml_function.set('uuid', fixture_uuid)
+                    xml_function.text = fixture_function
             else:
                 self.xml_registry.remove(get_xml_channel(self, address))
 
@@ -174,7 +155,8 @@ class DmxRegistry:
         """
         occupied = []
         for address in self.registry:
-            occupied.append(address)
+            if self.registry[address] != None:
+                occupied.append(address)
         occupied.sort()
         return occupied
 
@@ -209,39 +191,38 @@ class DmxRegistry:
                     str(free_from))
                 return free_from
 
-    def address(self, fixture, start_address):
-        """Address a fixture."""
-        required_channels = int(fixture.data['dmx_channels'])
-        if start_address == 'auto':
-            address = self.get_start_address(required_channels)
-        else:
-            address = int(start_address)
-        try:
-            fixture.data['universe']
-        except KeyError:
-            pass
-        else:
-            old_start_addr = int(fixture.data['dmx_start_address'])
-            i = old_start_addr
-            while i < old_start_addr+required_channels:
-                self.registry[i] = None
-                i = i+1
-        fixture.data['dmx_start_address'] = str(address)
-        fixture.data['universe'] = self.universe
-        for function in fixture.dmx_functions:
-            self.registry[address] = (fixture.uuid, function)
-            address = int(address)+1
-        fixture.save()
-        self.save()
 
-    def unaddress(self, fixture):
-        """Remove a fixture from the registry"""
-        start_address = int(fixture.data['dmx_start_address'])
-        i = start_address
-        while i < start_address+int(fixture.data['dmx_channels']):
-            self.registry[i] = None
-            i = i+1
-        self.save()
+    def add_function(self, address, fixture_uuid, function):
+        if address in self.registry:
+            self.registry[address].append((fixture_uuid, function))
+        else:
+            self.registry[address] = [(fixture_uuid, function)]
+
+    def remove_function(self, address, uuid):
+        """Remove a function from an address.
+
+        Remove the function from the channel that has the given 
+        fixture UUID.
+        """
+        for function in self.registry[address]:
+            if function[0] == uuid:
+                self.registry[address].remove(function)
+
+    def get_functions(self, address):
+        if address in self.registry:
+            return self.registry[address]
+        else:
+            return None
+        
+
+class RegistryList:
+
+    def __init__(self, plot_file):
+        xml_registries = plot_file.root.findall('registry')
+        self.registries = []
+        for xml_registry in xml_registries:
+            registry = DmxRegistry(plot_file, xml_registry.get('universe'))
+            self.registries.append(registry)
 
 
 class FixtureList:
@@ -257,7 +238,7 @@ class FixtureList:
 
     def remove(self, fixture):
         """Remove a fixture from the plot."""
-        self.xml_fixture_list.remove(fixture.xml_fixture)
+        self.xml_fixtures.remove(fixture.xml_fixture)
 
     def get_data_values(self, data_type):
         """Returns a list containing the values of data...etc""" 
@@ -270,6 +251,7 @@ class FixtureList:
         data_values = list(set(data_values))
         data_values.sort()
         return data_values
+
 
 class Fixture:
     """Manage individual fixtures.
@@ -288,8 +270,8 @@ class Fixture:
         self.data = {}
         self.dmx_functions = []
         if uuid != None:
-            xml_fixtures_list = plot_file.root.findall('fixture')
-            for xml_fixture in xml_fixtures_list:
+            xml_fixtures = plot_file.root.findall('fixture')
+            for xml_fixture in xml_fixtures:
                 if uuid == xml_fixture.get('uuid'):
                     self.load(xml_fixture)
 
@@ -397,6 +379,20 @@ class Fixture:
             data_name = data_item.tag
             if data_name != 'dmx_functions' and self.data[data_name] == "" :
                 self.xml_fixture.remove(data_item)
+
+    def address(self, registry, start_address):
+        address = start_address
+        for function in self.dmx_functions:
+            registry.add_function(address, self.uuid, function)
+            address = address+1
+        registry.save()
+
+    def unaddress(self, plot_file):
+        registries = RegistryList(plot_file)
+        for registry in registries.registries:
+            for address in registry.registry:
+                registry.remove_function(address, self.uuid)
+        registry.save()
 
     def generate_rotation(self):
         posX = float(self.data['posX'])

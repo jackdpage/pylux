@@ -55,7 +55,7 @@ class EditorContext(Context):
         self.register('xG', self.fixture_getall, 1)
         self.register('xs', self.fixture_set, 3)
         self.register('xa', self.fixture_address, 3)
-        self.register('xp', self.fixture_purge, 1)
+        self.register('xA', self.fixture_unaddress, 1)
         self.register('rl', self.registry_list, 1)
         self.register('rL', self.registry_probe, 1)
         self.register('ql', self.cue_list, 0)
@@ -70,8 +70,6 @@ class EditorContext(Context):
     def file_open(self, parsed_input):
         try:
             self.plot_file.load(parsed_input[0])
-        except IndexError:
-            print('Error: You need to specify a file path to load')
         except AttributeError:
             pass
 
@@ -82,10 +80,7 @@ class EditorContext(Context):
             print('Error: No file is loaded')
 
     def file_writeas(self, parsed_input):
-        try:
-            self.plot_file.saveas(parsed_input[0])
-        except IndexError:
-            print('Error: You need to specify a destination path!')
+        self.plot_file.saveas(parsed_input[0])
 
     def file_get(self, parsed_input):
         print('Using plot file '+self.plot_file.file)
@@ -149,32 +144,30 @@ class EditorContext(Context):
             i = i+1
 
     def fixture_filter(self, parsed_input):
-        try:
-            key = parsed_input[0]
-            value = parsed_input[1]
-            fixtures = plot.FixtureList(self.plot_file)
-            self.interface.clear()
-            i = 1
-            for fixture in fixtures.fixtures:
-                if key in fixture.data:
-                    if fixture.data[key] == value:
-                        if 'name' in fixture.data:
-                            name = fixture.data['name']
-                        else:
-                            name = fixture.data['type']
-                        print('\033[4m'+str(i)+'\033[0m '+name+
-                              ', id: '+fixture.uuid+', '+key+': '+value)
-                        self.interface.append(i, fixture)
-                        i = i+1
-                else:
-                    pass
-        except IndexError:
-            print('Error: You need to specify a key and value!')
+        key = parsed_input[0]
+        value = parsed_input[1]
+        fixtures = plot.FixtureList(self.plot_file)
+        self.interface.clear()
+        i = 1
+        for fixture in fixtures.fixtures:
+            if key in fixture.data:
+                if fixture.data[key] == value:
+                    if 'name' in fixture.data:
+                        name = fixture.data['name']
+                    else:
+                        name = fixture.data['type']
+                    print('\033[4m'+str(i)+'\033[0m '+name+
+                          ', id: '+fixture.uuid+', '+key+': '+value)
+                    self.interface.append(i, fixture)
+                    i = i+1
+            else:
+                pass
 
     def fixture_remove(self, parsed_input):
         fixture_list = plot.FixtureList(self.plot_file)
         fixtures = self.interface.get(parsed_input[0])
         for fixture in fixtures:
+            fixture.unaddress(self.plot_file)
             fixture_list.remove(fixture)
 
     def fixture_get(self, parsed_input):
@@ -225,54 +218,52 @@ class EditorContext(Context):
 
     def fixture_address(self, parsed_input):
         fixtures = self.interface.get(parsed_input[0])
-        if len(fixtures) > 1 and parsed_input[2] != 'auto':
-            print('Error: You must specify auto if you address more than '
-                  'one fixture.')
+        if len(fixtures) > 1 :
+            print('Error: You cannot specify more than one fixture. \n'
+                  'Using the first fixture in the list.')
+        registry = plot.DmxRegistry(self.plot_file, parsed_input[1])
+        required_channels = fixtures[0].data['dmx_channels']
+        if parsed_input[2] == 'auto':
+            start_address = registry.get_start_address(required_channels)
         else:
-            registry = plot.DmxRegistry(self.plot_file, parsed_input[1])
-            for fixture in fixtures:
-                registry.address(fixture, parsed_input[2])
+            start_address = int(parsed_input[2])
+        fixtures[0].address(registry, start_address) 
         self.interface.update_this(parsed_input[0])
 
-    def fixture_purge(self, parsed_input):
+    def fixture_unaddress(self, parsed_input):
         fixtures = self.interface.get(parsed_input[0])
         for fixture in fixtures:
-            registry = plot.DmxRegistry(self.plot_file, fixture.data['universe'])
-            registry.unaddress(fixture)
-            fixture_list = plot.FixtureList(self.plot_file)
-            fixture_list.remove(fixture)
+            fixture.unaddress(self.plot_file)
 
     def registry_list(self, parsed_input):
         registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
         for channel in registry.registry:
-            uuid = registry.registry[channel][0]
-            func = registry.registry[channel][1]
-            fixture = plot.Fixture(self.plot_file, uuid=uuid)
-            if 'name' in fixture.data:
-                print_name = fixture.data['name']
-            else:
-                print_name = fixture.data['type']
-            print(str(format(channel, '03d'))+' '+print_name+', func: '+func)
+            functions = registry.get_functions(channel)
+            for function in functions:
+                fixture = plot.Fixture(self.plot_file, uuid=function[0])
+                print_name = clihelper.get_fixture_print(fixture)
+                print(str(format(channel, '03d'))+' '+print_name+' ('+
+                      function[1]+')')
 
     def registry_probe(self, parsed_input):
         registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
         for channel in registry.registry:
-            uuid = registry.registry[channel][0]
-            func = registry.registry[channel][1]
-            fixture = plot.Fixture(self.plot_file, uuid=uuid)
-            print_name = clihelper.get_fixture_print(fixture)
-            print(str(format(channel, '03d'))+' '+print_name+', func: '+func)
-            if ('is_dimmer' in fixture.data and 
-                fixture.data['is_dimmer'] == 'True'):
-                dimmer_chan = func.replace('channel_', '')
-                fixture_list = plot.FixtureList(self.plot_file)
-                for fixture in fixture_list.fixtures:
-                    if ('dimmer_uuid' in fixture.data and 
-                        fixture.data['dimmer_uuid'] == uuid and 
-                        fixture.data['dimmer_channel'] == dimmer_chan):
-                        print_name = clihelper.get_fixture_print(fixture)
-                        print('⤷ '+print_name)
-        
+            functions = registry.get_functions(channel)
+            for function in functions:
+                fixture = plot.Fixture(self.plot_file, uuid=function[0])
+                print_name = clihelper.get_fixture_print(fixture)
+                print(str(format(channel, '03d'))+' '+print_name+' ('+
+                      function[1]+')')
+                if ('is_dimmer' in fixture.data and 
+                    fixture.data['is_dimmer'] == 'True'):
+                    dimmer_chan = function[1].replace('channel_', '')
+                    fixtures = plot.FixtureList(self.plot_file)
+                    for lantern in fixtures.fixtures:
+                        if ('dimmer_uuid' in lantern.data and 
+                            lantern.data['dimmer_uuid'] == function[0] and 
+                            lantern.data['dimmer_channel'] == dimmer_chan):
+                            print_name = clihelper.get_fixture_print(lantern)
+                            print('    ⤷ '+print_name)
 
     def cue_list(self, parsed_input):
         cues = plot.CueList(self.plot_file)
