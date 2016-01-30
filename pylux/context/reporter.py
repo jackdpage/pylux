@@ -28,7 +28,7 @@ import os
 import pylux.plot as plot
 import pylux.clihelper as clihelper
 from pylux import get_data
-from pylux.context.context import Context
+from pylux.context.context import Context, Command
 
 
 class Report:
@@ -47,14 +47,20 @@ class Report:
         return discovered
         
 
-    def generate(self, template):
+    def generate(self, template, options):
+        """Generate a report.
+
+        Args
+            template: full name, including extension of the template
+            options: dict of options
+        """
         template = self.environment.get_template(template)
         cue_list = sorted(plot.CueList(self.plot_file).cues,
                           key=lambda cue: cue.key)
         fixture_list = plot.FixtureList(self.plot_file).fixtures
         metadata_list = plot.Metadata(self.plot_file).meta
         self.content = template.render(cues=cue_list, fixtures=fixture_list,
-                                       meta=metadata_list)
+                                       meta=metadata_list, options=options)
 
 
 class ReporterContext(Context):
@@ -62,23 +68,42 @@ class ReporterContext(Context):
     def __init__(self):
         self.name = 'reporter'
         self.init_commands()
-        self.register('rn', self.report_new, 1)
-        self.register('rg', self.report_get, 1)
-        self.register('rw', self.report_write, 1)
+        self.register(Command('rn', self.report_new, ['template', 'options'], 
+                      synopsis='Create a new report from the Jinja template ' 
+                               'and pass in the options.'))
+        self.register(Command('rg', self.report_get, [], 
+                      synopsis='Print the report buffer.'))
+        self.register(Command('rw', self.report_write, ['path'], 
+                      synopsis='Write the report buffer to a file.'))
 
     def report_new(self, parsed_input):
         self.report = Report(self.plot_file)
-        possible_templates = self.report.find_template(parsed_input[0])
-        if len(possible_templates) == 0:
-            print('Error: No templates with that name')
-        elif len(possible_templates) == 1:
-            self.report.generate(list(possible_templates.values())[0])
-        else:
-            print('The template you entered has '+
-                  str(len(possible_templates))+' matches: ')
-            print(possible_templates)
-            using_template = input('Choose an extension to continue: ')
-            self.report.generate(possible_templates[using_template])
+
+        def get_options(parsed_input):
+            if len(parsed_input) > 1:
+                options = {}
+                options_input = parsed_input[1].split(';')
+                for option in options_input:
+                    options[option.split('=')[0]] = option.split('=')[1]
+                return options
+
+        def get_template(self, parsed_input):
+            possible_templates = self.report.find_template(parsed_input[0])
+            if len(possible_templates) == 0:
+                return None
+            elif len(possible_templates) == 1:
+                return list(possible_templates.values())[0]
+            else:
+                print('The template you entered has '+
+                      str(len(possible_templates))+' matches: ')
+                print(possible_templates)
+                ext = input('Choose an extension to continue: ')
+                return possible_templates[ext]
+        
+        options = get_options(parsed_input)
+        template = get_template(self, parsed_input)
+        if template != None:
+            self.report.generate(template, options)
             
     def report_get(self, parsed_input):
         print(self.report.content)

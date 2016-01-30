@@ -26,7 +26,7 @@ import os
 import pylux.plot as plot
 import pylux.clihelper as clihelper
 import logging
-from pylux.context.context import Context
+from pylux.context.context import Context, Command
 from pylux import get_data
 
 
@@ -37,35 +37,75 @@ class EditorContext(Context):
         self.name = 'editor'
         self.init_commands()
         # Register commands
-        self.register('fo', self.file_open, 1)
-        self.register('fw', self.file_write, 0)
-        self.register('fW', self.file_writeas, 1)
-        self.register('fg', self.file_get, 0)
-        self.register('fn', self.file_new, 1)
-        self.register('ml', self.metadata_list, 0)
-        self.register('ms', self.metadata_set, 2)
-        self.register('mr', self.metadata_remove, 1)
-        self.register('mg', self.metadata_get, 1)
-        self.register('xn', self.fixture_new, 1)
-        self.register('xc', self.fixture_clone, 1)
-        self.register('xl', self.fixture_list, 0)
-        self.register('xf', self.fixture_filter, 2)
-        self.register('xr', self.fixture_remove, 1)
-        self.register('xg', self.fixture_get, 2)
-        self.register('xG', self.fixture_getall, 1)
-        self.register('xs', self.fixture_set, 3)
-        self.register('xa', self.fixture_address, 3)
-        self.register('xA', self.fixture_unaddress, 1)
-        self.register('rl', self.registry_list, 1)
-        self.register('rL', self.registry_probe, 1)
-        self.register('ql', self.cue_list, 0)
-        self.register('qn', self.cue_new, 2)
-        self.register('qr', self.cue_remove, 1)
-        self.register('qs', self.cue_set, 3)
-        self.register('qg', self.cue_get, 2)
-        self.register('qG', self.cue_getall, 1)
-        self.register('qm', self.cue_moveafter, 2)
-        self.register('qM', self.cue_movebefore, 2)
+        self.register(Command('fo', self.file_open, ['path'], 
+                      synopsis='Open a plot file.'))
+        self.register(Command('fw', self.file_write, [], 
+                      synopsis='Write the buffer to the original location.'))
+        self.register(Command('fW', self.file_writeas, ['path'], 
+                      synopsis='Write the buffer to a different location.'))
+        self.register(Command('fg', self.file_get, [], 
+                      synopsis='Print the location of the plot file.'))
+        self.register(Command('fn', self.file_new, ['path'],
+                      synopsis='Create a new plot file.'))
+        self.register(Command('ml', self.metadata_list, [], 
+                      synopsis='List all metadata values.'))
+        self.register(Command('ms', self.metadata_set, ['name', 'value'], 
+                      synopsis='Set the value of one piece of metadata.'))
+        self.register(Command('mr', self.metadata_remove, ['name'], 
+                      synopsis='Remove a piece of metadata'))
+        self.register(Command('mg', self.metadata_get, ['name'],
+                      synopsis='Print the value of a piece of metadata.'))
+        self.register(Command('xn', self.fixture_new, ['template'], 
+                      synopsis='Create a new fixture from a template.'))
+        self.register(Command('xc', self.fixture_clone, ['fixture'], 
+                      synopsis='Create a new fixture from an existing ' 
+                               'fixture.'))
+        self.register(Command('xl', self.fixture_list, [], 
+                      synopsis='List all fixtures.'))
+        self.register(Command('xf', self.fixture_filter, ['tag', 'value'], 
+                      synopsis='List all fixtures that match certain ' 
+                               'criteria.'))
+        self.register(Command('xr', self.fixture_remove, ['fixture'], 
+                      synopsis='Remove a fixture.'))
+        self.register(Command('xg', self.fixture_get, ['fixture', 'tag'], 
+                      synopsis='Print the value of a fixture\'s tag.'))
+        self.register(Command('xG', self.fixture_getall, ['fixture'], 
+                      synopsis='Print the values of all of a fixture\'s '
+                               'tags.'))
+        self.register(Command('xs', self.fixture_set, 
+                              ['fixture', 'tag', 'value'], 
+                              synopsis='Set the value of a fixture\'s tag.'))
+        self.register(Command('xa', self.fixture_address,
+                              ['fixture', 'universe', 'address'], 
+                              synopsis='Assign DMX addresses to a fixture.'))
+        self.register(Command('xA', self.fixture_unaddress, ['fixture'], 
+                              synopsis='Remove the DMX addresses assigned '
+                                       'to a fixture.'))
+        self.register(Command('rl', self.registry_list, ['universe'], 
+                              synopsis='List the functions of the DMX '
+                                       'channels in a universe.'))
+        self.register(Command('rL', self.registry_probe, ['universe'], 
+                              synopsis='List the functions of the DMX '
+                                       'channels in a universe and, if there '
+                                       'are any dimmers, list the fixtures '
+                                       'that they control.'))
+        self.register(Command('ql', self.cue_list, [], 
+                              synopsis='List all the cues.'))
+        self.register(Command('qn', self.cue_new, ['type', 'location'], 
+                              synopsis='Add a new cue.'))
+        self.register(Command('qr', self.cue_remove, ['cue'], 
+                              synopsis='Remove a cue.'))
+        self.register(Command('qs', self.cue_set, ['cue', 'tag', 'value'], 
+                              synopsis='Set the value of a cue\'s tag.'))
+        self.register(Command('qg', self.cue_get, ['cue', 'tag'], 
+                              synopsis='Print the value of a cue\'s tag.'))
+        self.register(Command('qG', self.cue_getall, ['cue'], 
+                              synopsis='Print the values of all of a cue\'s '
+                                       'tags.'))
+        self.register(Command('qm', self.cue_moveafter, ['cue', 'dest_cue'], 
+                              synopsis='Move a cue after another.'))
+        self.register(Command('qM', self.cue_movebefore, ['cue', 'dest_cue'], 
+                              synopsis='Move a cue before another.'))
 
     def file_open(self, parsed_input):
         try:

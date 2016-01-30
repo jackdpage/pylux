@@ -27,6 +27,7 @@ def get_context(context_name):
         context_module = import_module(module_name)
     except ImportError:
         print('Error: Context does not exist')
+        return None
     else:
         context_class = context_module.get_context()
         return context_class
@@ -53,8 +54,9 @@ def main():
 
             elif inputs[0][0] == ':':
                 globals_dict = context.get_globals()
-                context = get_context(inputs[0].split(':')[1])
-                context.set_globals(globals_dict)
+                if get_context(inputs[0].split(':')[1]) is not None:
+                    context = get_context(inputs[0].split(':')[1])
+                    context.set_globals(globals_dict)
 
             elif inputs[0] in context.commands:
                 context.process(inputs)

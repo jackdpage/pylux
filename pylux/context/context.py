@@ -18,6 +18,7 @@
 
 from pylux.clihelper import resolve_input, Interface 
 from importlib import import_module
+from tabulate import tabulate
 import sys
 import os
 
@@ -43,8 +44,12 @@ class Context:
     def init_commands(self):
         """Add the universal commands to the commands dictionary."""
         self.commands = {}
-        self.register('c', self.utility_clear, 0)
-        self.register('Q', self.utility_kill, 0)
+        self.register(Command('c', self.utility_clear, [], 
+                      synopsis='Clear the screen.'))
+        self.register(Command('h', self.utility_help, ['command'], 
+                      synopsis='Get information about a command.'))
+        self.register(Command('Q', self.utility_kill, [], 
+                      synopsis='Exit the program without saving any changes.'))
 
     def process(self, inputs):
         """From input, perform the required function call.
@@ -57,9 +62,9 @@ class Context:
         Args:
             inputs: the user input, split by <space>.
         """
-        function_definition = self.commands[inputs[0]]
-        parsed_input = resolve_input(inputs, function_definition[1])
-        function_definition[0](parsed_input)
+        command = self.commands[inputs[0]]
+        parsed_input = resolve_input(inputs, command.nargs)
+        command.function(parsed_input)
 
     def set_globals(self, globals_dict):
         """Set globals from a dictionary.
@@ -92,20 +97,12 @@ class Context:
             'LOG_LEVEL': self.log_level}
         return globals_dict
 
-    def register(self, mnemonic, function, nargs):
+    def register(self, command):
         """Register a command in the command dictionary.
 
         Add a command to the list of commands the user can invoke.
-
-        Args:
-            mnemonic: the mnemonic the user should type to invoke 
-                this command. In general should be only two 
-                characters long.
-            function: a reference to the function that this command 
-                calls.
-            nargs: the number of arguments this command takes.
         """
-        self.commands[mnemonic] = (function, nargs)
+        self.commands[command.mnemonic] = command
 
     def utility_clear(self, parsed_input):
         """Utility to clear the screen using system call."""
@@ -116,3 +113,42 @@ class Context:
         print('Ignoring changes and exiting...')
         sys.exit()
 
+    def utility_help(self, parsed_input):
+        """Print a list of all available commands."""
+        if len(parsed_input) > 1:
+            if parsed_input[0] not in self.commands:
+                print('Error: Command does not exist')
+            else:
+                command = self.commands[parsed_input[0]]
+                print('Usage:')
+                usage = '    '+command.mnemonic
+                for arg in command.arguments:
+                    usage = usage+' '+arg
+                print(usage)
+                print('Description:')
+                print('    '+str(command.synopsis))
+        else:
+            command_table = []
+            for mnemonic in self.commands:
+                table_row = []
+                command = self.commands[mnemonic]
+                usage = mnemonic
+                for arg in command.arguments:
+                    usage = usage+' '+arg
+                table_row.append(usage)
+                table_row.append(command.function.__name__)
+                command_table.append(table_row)
+            command_table.sort(key=lambda command: command[1])
+            print(tabulate(command_table, 
+                           headers=['Usage', 'Function'],
+                           tablefmt=self.config['cli']['help-table-format']))
+
+
+class Command:
+
+    def __init__(self, mnemonic, function, arguments, synopsis=None):
+        self.mnemonic = mnemonic
+        self.function = function
+        self.arguments = arguments
+        self.nargs = len(self.arguments)
+        self.synopsis = synopsis

@@ -154,6 +154,8 @@ def resolve_input(inputs_list, number_args):
             multiword_input = multiword_input+' '+inputs_list[i]
         i = i+1
     args_list.append(multiword_input)
+    if args_list[-1] == '':
+        args_list.pop(-1)
     return args_list
 
 

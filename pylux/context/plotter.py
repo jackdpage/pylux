@@ -22,7 +22,7 @@ Context that provides commands to create lighting plot images in
 SVG format.
 """
 
-from pylux.context.context import Context
+from pylux.context.context import Context, Command
 import os.path
 import logging
 from tqdm import tqdm
@@ -181,11 +181,16 @@ class PlotterContext(Context):
     def __init__(self):
         self.name = 'plotter'
         self.init_commands()
-        self.register('pn', self.plot_new, 0)
-        self.register('pw', self.plot_write, 1)
-        self.register('os', self.option_set, 2)
-        self.register('og', self.option_get, 1)
-        self.register('ol', self.option_list, 0)
+        self.register(Command('pn', self.plot_new, [], 
+                              synopsis='Create a new plot.'))
+        self.register(Command('pw', self.plot_write, ['path'], 
+                              synopsis='Write the plot buffer to a file.'))
+        self.register(Command('os', self.option_set, ['name', 'value'], 
+                              synopsis='Set the value of an option.'))
+        self.register(Command('og', self.option_get, ['name'], 
+                              synopsis='Print the value of an option.'))
+        self.register(Command('ol', self.option_list, [],
+                              synopsis='Print the value of all options.'))
         self.init_plot()
 
     def init_plot(self):
