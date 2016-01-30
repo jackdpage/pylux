@@ -110,11 +110,42 @@ certain DMX addresses in a certain universe.
 
 ``rl UNIVERSE``
     List the used channels in the registry with universe name ``UNIVERSE``. 
-    This will list both the fixture name and the function of the channel.
+    This will list both the fixture name and the function of the channel. 
+    Sample output::
+
+        001 Betapack 1 (channel_1)
+        002 Betapack 1 (channel_2)
+        003 Betapack 1 (channel_3)
+        003 Betapack 2 (channel_1)
+        004 Betapack 1 (channel_4)
+        004 Betapack 2 (channel_2)
+        005 Betapack 1 (channel_5)
+        005 Betapack 2 (channel_3)
+        006 Betapack 1 (channel_6)
+        006 Betapack 2 (channel_4)
+        007 Betapack 2 (channel_5)
+        008 Betapack 2 (channel_6)
 
 ``rL UNIVERSE``
-		List the used channels in the registry with universe name ``UNIVERSE``, 
-		and also probe any dimmer channels to display the fixtures they control. 
+    List the used channels in the registry with universe name ``UNIVERSE``, 
+    and also probe any dimmer channels to display the fixtures they control. 
+    Sample output::
+
+        001 Betapack 1 (channel_1)
+        002 Betapack 1 (channel_2)
+        003 Betapack 1 (channel_3)
+            ⤷ Hutton P650
+        003 Betapack 2 (channel_1)
+            ⤷ PAR64 MFL
+        004 Betapack 1 (channel_4)
+        004 Betapack 2 (channel_2)
+        005 Betapack 1 (channel_5)
+        005 Betapack 2 (channel_3)
+        006 Betapack 1 (channel_6)
+        006 Betapack 2 (channel_4)
+        007 Betapack 2 (channel_5)
+        008 Betapack 2 (channel_6)
+
 
 Cue Commands
 ------------
