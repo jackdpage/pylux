@@ -69,7 +69,7 @@ def main():
         'LOG_LEVEL': verbosity_dict[launch_args.verbose][0]}
     if launch_args.gui == True:
         print('Running in GUI mode\n')
-        runpy.run_module('pylux.geditor', init_globals=init_globals, 
+        runpy.run_module('pylux.gui', init_globals=init_globals, 
                          run_name='pylux_root')
     else:
         print('Running in CLI mode\n')

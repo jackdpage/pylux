@@ -39,6 +39,9 @@ class PlotFile:
         root: the root element of the XML tree.
     """
 
+    def __init__(self):
+        self.file = None
+
     def load(self, path):
         """Load a project file.
 
