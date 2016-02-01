@@ -57,8 +57,15 @@ class FixturesPage(Gtk.Box):
             self.fixture_list.add(listbox_row)
 
     class FixtureListItem(Gtk.ListBoxRow):
+        """Display a single fixture and some action buttons.
+
+        An extension of ListBoxRow that displays a fixture's name or 
+        type, and a series of action buttons to perform actions on 
+        that fixture.
+        """
 
         def __init__(self, fixture):
+            """Initialise the ListBoxRow and add the buttons."""
             Gtk.ListBoxRow.__init__(self)
             self.fixture = fixture
             self.container_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -68,12 +75,62 @@ class FixturesPage(Gtk.Box):
             self.container_box.pack_start(self.name_label, False, True, 0)
             # Action buttons
             button_info = Gtk.Button.new_from_icon_name('dialog-information', 1)
+            button_info.connect('clicked', self.fixture_getall)
             button_clone = Gtk.Button.new_from_icon_name('edit-copy', 1)
+            button_clone.connect('clicked', self.fixture_clone)
             button_delete = Gtk.Button.new_from_icon_name('edit-delete', 1)
+            button_delete.connect('clicked', self.fixture_remove)
             self.container_box.pack_end(button_delete, False, False, 0)
             self.container_box.pack_end(button_clone, False, False, 0)
             self.container_box.pack_end(button_info, False, False, 0)
+
+        def fixture_getall(self, widget):
+            info_window = FixturesPage.FixtureInfoWindow(self.fixture)
+            info_window.connect('delete-event', info_window.destroy)
+            info_window.show_all()
+
+        def fixture_clone(self, widget):
+            print('Doing literally nothing.')
+
+        def fixture_remove(self, widget):
+            print('Yeah, about that...')
+
+    class FixtureInfoWindow(Gtk.Window):
+        """A window showing the result of getall."""
         
+        def __init__(self, fixture):
+            self.fixture = fixture
+            fixture_print = clihelper.get_fixture_print(fixture)
+            Gtk.Window.__init__(self, title='Editing '+fixture_print)
+            # Make the list store and populate
+            self.list_store = Gtk.ListStore(str, str)
+            for tag, value in self.fixture.data.items():
+                self.list_store.append([tag, value])
+            # Make the tree view from the store
+            self.tree_view = Gtk.TreeView(self.list_store)
+            self.add(self.tree_view)
+            renderer = Gtk.CellRendererText()
+            renderer_edit = Gtk.CellRendererText(editable=True)
+            tag_column = Gtk.TreeViewColumn('Tag', renderer, text=0)
+            self.tree_view.append_column(tag_column)
+            value_column = Gtk.TreeViewColumn('Value', renderer_edit, text=1)
+            self.tree_view.append_column(value_column)
+            # Manage the selection
+            selection = self.tree_view.get_selection()
+            selection.connect('changed', self.selection_change)
+            # Manage the editing
+            renderer_edit.connect('edited', self.property_edit)
+
+        def selection_change(self, selection):
+            model, list_iter = selection.get_selected()
+            if list_iter != None:
+                print(model[list_iter][0])
+
+        def property_edit(self, widget, path, text):
+            self.list_store[path][1] = text
+            self.fixture.data[self.list_store[path][0]] = text
+            self.fixture.save()
+
 
 class RegistriesPage(Gtk.Box):
 
@@ -130,9 +187,13 @@ def main():
         window = SplashWindow()
     else:
         window = MainWindow()
-    window.connect('delete-event', Gtk.main_quit)
+    window.connect('delete-event', DEBUG__shutdown_WITH_SAVE____)
     window.show_all()
     Gtk.main()
+
+def DEBUG__shutdown_WITH_SAVE____(a, b):
+    Gtk.main_quit()
+    PLOT_FILE.save()
 
 
 if __name__ == 'pylux_root':
