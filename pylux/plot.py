@@ -234,6 +234,7 @@ class FixtureList:
         """Creates fixture objects for all the fixtures in the plot."""
         self.xml_fixtures = plot_file.root.findall('fixture')
         self.fixtures = []
+        self.plot_file = plot_file
         for xml_fixture in self.xml_fixtures:
             fixture = Fixture(plot_file)
             fixture.load(xml_fixture)
@@ -241,7 +242,12 @@ class FixtureList:
 
     def remove(self, fixture):
         """Remove a fixture from the plot."""
-        self.xml_fixtures.remove(fixture.xml_fixture)
+        self.plot_file.root.remove(fixture.xml_fixture)
+
+    def remove_from_uuid(self, uuid):
+        for xml_fixture in self.xml_fixtures:
+            if xml_fixture.get('uuid') == uuid:
+                self.plot_file.root.remove(xml_fixture)
 
     def get_data_values(self, data_type):
         """Returns a list containing the values of data...etc""" 

@@ -70,8 +70,8 @@ class ImagePlot:
                 symbol_instance = FixtureSymbol(fixture)
                 fixture_symbol = symbol_instance.get_fixture_group()
                 fixture_beam = symbol_instance.get_fixture_beam()
-                fixture_circuit = symbol_instance.get_circuit_icon()
-                fixture_group.append(fixture_circuit)
+#                fixture_circuit = symbol_instance.get_circuit_icon()
+#                fixture_group.append(fixture_circuit)
                 fixture_group.append(fixture_beam)
                 fixture_group.append(fixture_symbol)
             else:

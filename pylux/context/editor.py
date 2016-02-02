@@ -179,7 +179,10 @@ class EditorContext(Context):
                 name = fixture.data['name']
             else:
                 name = fixture.data['type']
-            print('\033[4m'+str(i)+'\033[0m '+name+', id: '+fixture.uuid)
+            if self.config['cli']['show-uuids'] == 'True':
+                print('\033[4m'+str(i)+'\033[0m '+name+', id: '+fixture.uuid)
+            else:
+                print('\033[4m'+str(i)+'\033[0m '+name)
             self.interface.append(i, fixture)
             i = i+1
 
@@ -196,8 +199,11 @@ class EditorContext(Context):
                         name = fixture.data['name']
                     else:
                         name = fixture.data['type']
-                    print('\033[4m'+str(i)+'\033[0m '+name+
-                          ', id: '+fixture.uuid+', '+key+': '+value)
+                    if self.config['cli']['show-uuids'] == 'True':
+                        print('\033[4m'+str(i)+'\033[0m '+name+
+                              ', id: '+fixture.uuid)
+                    else:
+                        print('\033[4m'+str(i)+'\033[0m '+name)
                     self.interface.append(i, fixture)
                     i = i+1
             else:

@@ -13,6 +13,8 @@ Generic Incandescent generic
 Hutton P650          p650
 LEDJ RGB PAR         ledjrgbpar
 PAR64 MFL            par64mfl
+Strand Coda 1000     coda1000
 Strand Patt.23       patt23
+Strand Quartet F     quartetf
 Zero88 Betapack 2    betapack2
 ==================== ================
