@@ -32,9 +32,9 @@ class MainWindow(Gtk.Window):
 
     def __init__(self):
         Gtk.Window.__init__(self, title='Pylux')
-        self.set_default_size(700, 500)
         self.main_container = Gtk.Box(spacing=6, 
                                  orientation=Gtk.Orientation.VERTICAL)
+        self.set_default_size(500, 800)
         self.add(self.main_container)
         self.main_notebook = Gtk.Notebook()
         self.main_container.pack_start(self.main_notebook, True, True, 0)
@@ -44,13 +44,12 @@ class MainWindow(Gtk.Window):
         self.main_notebook.append_page(CuesPage(), Gtk.Label('Cues'))
 
 
-class FixturesPage(Gtk.Box):
+class FixturesPage(Gtk.ScrolledWindow):
 
     def __init__(self):
-        Gtk.Box.__init__(self, spacing=6, orientation=Gtk.Orientation.VERTICAL)
-        self.set_border_width(10)
+        Gtk.ScrolledWindow.__init__(self, None, None)
         self.fixture_list = Gtk.ListBox()
-        self.pack_start(self.fixture_list, True, True, 0)
+        self.add_with_viewport(self.fixture_list)
         self.fixtures = plot.FixtureList(PLOT_FILE).fixtures
         for fixture in self.fixtures:
             listbox_row = self.FixtureListItem(fixture)
@@ -132,13 +131,12 @@ class FixturesPage(Gtk.Box):
             self.fixture.save()
 
 
-class RegistriesPage(Gtk.Box):
+class RegistriesPage(Gtk.ScrolledWindow):
 
     def __init__(self):
-        Gtk.Box.__init__(self, spacing=6, orientation=Gtk.Orientation.VERTICAL)
-        self.set_border_width(10)
+        Gtk.ScrolledWindow.__init__(self, None, None)
         self.registry_list = Gtk.ListBox()
-        self.pack_start(self.registry_list, True, True, 0)
+        self.add_with_viewport(self.registry_list)
         self.registries = plot.RegistryList(PLOT_FILE).registries
         for registry in self.registries:
             listbox_row = self.RegistryListItem(registry)
@@ -159,12 +157,39 @@ class RegistriesPage(Gtk.Box):
             self.container_box.pack_end(button_list, False, False, 0)
 
 
-class CuesPage(Gtk.Box):
+class CuesPage(Gtk.ScrolledWindow):
 
     def __init__(self):
-        Gtk.Box.__init__(self, spacing=6, orientation=Gtk.Orientation.VERTICAL)
-        self.set_border_width(10)
-        self.add(Gtk.Label('cues'))
+        Gtk.ScrolledWindow.__init__(self, None, None)
+        self.cues_list = Gtk.ListBox()
+        self.add_with_viewport(self.cues_list)
+        for cue in sorted(plot.CueList(PLOT_FILE).cues, key=lambda q: q.key):
+            listbox_row = self.CueListItem(cue)
+            self.cues_list.add(listbox_row)
+
+    class CueListItem(Gtk.ListBoxRow):
+
+        def __init__(self, cue):
+            Gtk.ListBoxRow.__init__(self)
+            self.cue = cue
+            self.container_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            self.add(self.container_box)
+            # Label showing key, type and location
+            self.key_label = Gtk.Label(cue.key)
+            self.type_label = Gtk.Label(cue.data['type'])
+            self.location_label = Gtk.Label(cue.data['location'])
+            self.container_box.pack_start(self.key_label, False, True, 0)
+            self.container_box.pack_start(self.type_label, False, True, 10)
+            self.container_box.pack_start(self.location_label, False, True, 10)
+            # Action buttons
+            button_list = Gtk.Button.new_from_icon_name('dialog-information', 1)
+            button_mvup = Gtk.Button.new_from_icon_name('go-up', 1)
+            button_mvdn = Gtk.Button.new_from_icon_name('go-down', 1)
+            button_remove = Gtk.Button.new_from_icon_name('edit-delete', 1)
+            self.container_box.pack_end(button_remove, False, False, 0)
+            self.container_box.pack_end(button_mvdn, False, False, 0)
+            self.container_box.pack_end(button_mvup, False, False, 0)
+            self.container_box.pack_end(button_list, False, False, 0)
 
 
 class SplashWindow(Gtk.Window):
@@ -191,7 +216,10 @@ def main():
     window.show_all()
     Gtk.main()
 
+    
 def DEBUG__shutdown_WITH_SAVE____(a, b):
+    print(a)
+    print(b)
     Gtk.main_quit()
     PLOT_FILE.save()
 
