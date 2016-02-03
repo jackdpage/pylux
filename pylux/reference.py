@@ -15,6 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+paper_sizes = {
+    'A0' : (841, 1189),
+    'A1' : (594, 841),
+    'A2' : (420, 594),
+    'A3' : (297, 420),
+    'A4' : (210, 297)}
+
 gel_colours = {
 # Rosco E-Colour+
     'Rose Pink' : '#FF40B9',

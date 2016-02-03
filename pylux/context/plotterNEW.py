@@ -25,8 +25,6 @@ SVG format.
 from pylux.context.context import Context, Command
 import os.path
 import logging
-from tqdm import tqdm
-import base64
 import math
 import xml.etree.ElementTree as ET
 import pylux.plot as plot
@@ -34,64 +32,112 @@ import pylux.clihelper as clihelper
 import pylux.reference as reference
 from pylux import get_data
 
-class ImagePlot:
 
-    def __init__(self, plot_file, options):    
-        self.fixtures = plot.FixtureList(plot_file)
-        self.image_plot = ET.Element('svg')
+class LightingPlot():
+
+    def __init__(self, plot_file, options):
+        self.fixtures = plot.FixtureList(plot_file).fixtures
         self.options = options
 
-    def verify_fixture(self, fixture):
-        errors = []
-        if 'posX' not in fixture.data or 'posY' not in fixture.data:
-            errors.append('No position')
-        if 'focusX' not in fixture.data or 'focusY' not in fixture.data:
-            errors.append('No focus')
-        if 'gel' not in fixture.data:
-            errors.append('No gel')
-        if 'symbol' not in fixture.data:
-            errors.append('No symbol')
-        elif fixture.data['symbol'] == 'PHANTOM':
-            errors.append('Phantom fixture')
-        if len(errors) == 0:
-            return True
-        else:
-            return errors
+    def get_page_dimensions(self):
+        paper_type = self.options['paper_size']
+        orientation = self.options['orientation']
+        dimensions = reference.paper_sizes[paper_type]
+        if orientation == 'portrait':
+            return dimensions
+        elif orientation == 'landscape':
+            return (dimensions[1], dimensions[0])
 
-    def add_fixtures(self):
-        for fixture in tqdm(self.fixtures.fixtures):
-            if self.verify_fixture(fixture) == True:
-                fixture_group = ET.SubElement(self.image_plot, 'g')
-                fixture.data['rotation'] = fixture.generate_rotation()
-                if not fixture.generate_colour():
-                    fixture.data['colour'] = '#000000'
-                else:
-                    fixture.data['colour'] = fixture.generate_colour()
-                symbol_instance = FixtureSymbol(fixture)
-                fixture_symbol = symbol_instance.get_fixture_group()
-                fixture_beam = symbol_instance.get_fixture_beam()
-#                fixture_circuit = symbol_instance.get_circuit_icon()
-#                fixture_group.append(fixture_circuit)
-                fixture_group.append(fixture_beam)
-                fixture_group.append(fixture_symbol)
-            else:
-                pass
+    def get_plot_size(self):
+        """Return the physical size of the plot area.
 
-    def add_background(self):
-        """Set the background image.
+        From the fixtures' locations and focus points, find the 
+        greatest and least values of X and Y then calculate the 
+        dimensions that the plot covers.
 
-        Literally just imports the first group from the background 
-        image file.
+        Returns:
+            A tuple in the form (X, Y) of the dimensions of the plot.
         """
-        tree = ET.parse(self.options['background_image'])
-        root = tree.getroot()
-        ns = {'ns0': 'http://www.w3.org/2000/svg'}
-        image_group = root.find('ns0:g', ns)
-        self.image_plot.append(image_group)
+        x_values = []
+        y_values = []
+        for fixture in self.fixtures:
+            get_mm = lambda field: float(field)*1000
+            x_values.append(get_mm(fixture.data['posX']))
+            x_values.append(get_mm(fixture.data['focusX']))
+            y_values.append(get_mm(fixture.data['posY']))
+            y_values.append(get_mm(fixture.data['focusY']))
+        min_x = min(x_values)
+        min_y = min(y_values)
+        return (min_x, min_y)
 
+    def can_fit_page(self):
+        """Test if the plot can fit on the page.
+
+        Uses the size of the page and scaling to determine whether 
+        the page is large enough to fit the plot.
+        """
+        actual_size = self.get_plot_size()
+        scaling = self.options['scale']
+        get_scaled = lambda dim: dim/scaling
+        scaled_size = (get_scaled(actual_size[0]), get_scaled(actual_size[1]))
+        paper_size = self.get_page_dimensions()
+        remove_margin = lambda dim: dim-2*self.options['margin']
+        draw_area = (remove_margin(paper_size[0]), remove_margin(paper_size[1]))
+        if draw_area[0] < scaled_size[0] or draw_area[1] < scaled_size[1]:
+            return False
+        else:
+            return True
+
+    def get_page_border(self):
+        """Get the page border ready to be put into the plot.
+
+        Returns a path element that borders the plot on all four 
+        sides.
+
+        Returns:
+            An ElementTree element - an SVG path.
+        """
+        marign = self.options['margin_width']
+        weight = self.options['line_weight_heavy']
+        paper = reference.paper_sizes[self.options['paper_size']]
+        border = ET.Element('path')
+        border.set('d', 'M '+str(margin)+' -'+str(margin)+' '
+                   'L '+str(paper[0]-margin)+' -'+str(margin)+' '
+                   'L '+str(paper[0]-margin)+' -'+str(paper[1]-margin)+' '
+                   'L '+str(margin)+' -'+str(paper[1]-margin)+' '
+                   'L '+str(margin)+' -'+str(margin))
+        return border
+
+    def get_title_block(self):
+        if self.options['title_block'] == 'corner':
+            return self.get_title_corner()
+        elif self.options['title_block'] == 'sidebar':
+            return self.get_title_sidebar()
+        elif self.options['title_block'] == None:
+            return None
+
+    def get_title_corner(self):
+        """Get the title block ready to be put into the plot."""
+
+    def get_title_sidebar(self):
+        """Get the title block in vertical form."""
 
 class PlotOptions():
 
+    DEFAULTS = {
+        # [A[0-4]]
+        'paper_size' : 'A4',
+        # ['landscape', 'portrait']
+        'orientation' : 'landscape',
+        # int
+        'scale' : 50,
+        # int
+        'margin' : 20,
+        # int
+        'line_weight_heavy' : 6,
+        # ['corner', 'sidebar', None]
+        'title_block' : 'corner'}
+    
     def __init__(self):
         self.options = {
             'beam_colour': 'Black',
@@ -179,10 +225,7 @@ class FixtureSymbol:
 class PlotterContext(Context):
 
     def __init__(self):
-        print('[NOTICE] THIS IS A TEMPORARY IMPLEMENTATION OF PLOTTER WHILST '
-              'A MORE FULLY FEATURED VERSION IS CREATED. You can access the '
-              'development version of plotter in the plotterNEW module.')
-        self.name = 'plotter'
+        self.name = 'plotter-dev'
         self.init_commands()
         self.register(Command('pn', self.plot_new, [], 
                               synopsis='Create a new plot.'))
@@ -200,10 +243,7 @@ class PlotterContext(Context):
         self.options = PlotOptions()
 
     def plot_new(self, parsed_input):
-        self.image_plot = ImagePlot(self.plot_file, self.options.options)
-        if self.options.options['background_image'] != 'None':
-            self.image_plot.add_background()
-        self.image_plot.add_fixtures()
+        self.lighting_plot = LightingPlot(self.plot_file, self.options.DEFAULTS)
 
     def plot_write(self, parsed_input):
         output_tree = ET.ElementTree(self.image_plot.image_plot)
@@ -216,8 +256,8 @@ class PlotterContext(Context):
         print(self.options.get(parsed_input[0]))
 
     def option_list(self, parsed_input):
-        for option in self.options.options:
-            print(option+': '+self.options.options[option])
+        for option in self.options.DEFAULTS:
+            print(option+': '+str(self.options.DEFAULTS[option]))
 
 def get_context():
     return PlotterContext()

@@ -4,7 +4,8 @@
 (A) 2016-02-02 Fix the ugly af Patt.23 symbol +Content
 (B) 2015-12-20 Auto completion +Base
 (B) 2015-12-30 Error message when removing non-existant meta +Bugfix
-(B) 2016-01-07 Make unaddressing fixtures independent of fixture XML +Clean
+x 2016-01-29 2016-01-07 Make unaddressing independent of fixture XML +Clean
+(B) 2016-02-03 Search local directory for data +Base
 (C) 2015-12-30 add() in Fixture shouldn't exist +Clean
 (C) 2016-01-14 Set DMX output states +Extensions
 x 2015-12-14 2015-12-12 Automatic DMX start address assignment +Base
