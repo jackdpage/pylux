@@ -32,6 +32,7 @@ This documentation is aimed at both users and developers.
     :caption: Appendicies
 
     included_fixtures
+    included_templates
     included_gels
 
 Indices and tables

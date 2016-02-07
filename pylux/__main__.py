@@ -44,11 +44,9 @@ def main():
         help='set the verbosity of output')
     launch_args = parser.parse_args()
     # Load configuration
-    config_file = get_data('settings.conf')
     config = configparser.ConfigParser()
-    config.read(config_file)
-    print('Using configuration file '+config_file)
-
+    config.read([get_data('settings.conf', location='root'),
+                 get_data('settings.conf', location='home')])
     # Handle verbosity
     verbosity_dict = {
         None: (logging.WARNING, 'WARNING'), 
