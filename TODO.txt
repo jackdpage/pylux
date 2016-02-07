@@ -4,8 +4,8 @@
 (A) 2016-02-02 Fix the ugly af Patt.23 symbol +Content
 (B) 2015-12-20 Auto completion +Base
 (B) 2015-12-30 Error message when removing non-existant meta +Bugfix
-x 2016-01-29 2016-01-07 Make unaddressing independent of fixture XML +Clean
 (B) 2016-02-03 Search local directory for data +Base
+(B) 2016-02-06 Default file in ~/.pylux/ +Base
 (C) 2015-12-30 add() in Fixture shouldn't exist +Clean
 (C) 2016-01-14 Set DMX output states +Extensions
 x 2015-12-14 2015-12-12 Automatic DMX start address assignment +Base
@@ -27,3 +27,4 @@ x 2016-01-11 2016-01-07 Calculate auto fields on plotgen +Extensions
 x 2016-01-20 2016-01-14 Cue data storage definition +Extensions
 x 2016-01-20 2016-01-20 Cue move commands work +Bugfix
 x 2016-01-21 2016-01-21 Rewrite TeXlux to use Jinja +Extensions
+x 2016-01-29 2016-01-07 Make unaddressing independent of fixture XML +Clean

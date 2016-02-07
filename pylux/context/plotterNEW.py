@@ -37,16 +37,22 @@ class LightingPlot():
 
     def __init__(self, plot_file, options):
         self.fixtures = plot.FixtureList(plot_file).fixtures
+        self.meta = plot.Metadata(plot_file).meta
         self.options = options
 
     def get_page_dimensions(self):
-        paper_type = self.options['paper_size']
+        paper_type = self.options['paper-size']
         orientation = self.options['orientation']
         dimensions = reference.paper_sizes[paper_type]
         if orientation == 'portrait':
             return dimensions
         elif orientation == 'landscape':
             return (dimensions[1], dimensions[0])
+
+    def get_margin_bounds(self):
+        # This could be a function to get margin coordinates to make
+        # placement easier, but it isn't
+        return None
 
     def get_plot_size(self):
         """Return the physical size of the plot area.
@@ -88,6 +94,20 @@ class LightingPlot():
         else:
             return True
 
+    def get_empty_plot(self):
+        """Get an ElementTree tree with no content.
+
+        Make a new ElementTree with a root svg element, set the 
+        properties of the svg element to match paper size.
+        """
+        page_dims = self.get_page_dimensions()
+        svg_root = ET.Element('svg')
+        svg_root.set('width', str(page_dims[0]))
+        svg_root.set('height', str(page_dims[1]))
+        svg_root.set('xmlns', 'http://www.w3.org/2000/svg')
+        svg_tree = ET.ElementTree(element=svg_root)
+        return svg_tree
+
     def get_page_border(self):
         """Get the page border ready to be put into the plot.
 
@@ -97,46 +117,99 @@ class LightingPlot():
         Returns:
             An ElementTree element - an SVG path.
         """
-        marign = self.options['margin_width']
-        weight = self.options['line_weight_heavy']
-        paper = reference.paper_sizes[self.options['paper_size']]
+        margin = self.options['margin']
+        weight = self.options['line-weight-heavy']
+        paper = self.get_page_dimensions()
         border = ET.Element('path')
-        border.set('d', 'M '+str(margin)+' -'+str(margin)+' '
-                   'L '+str(paper[0]-margin)+' -'+str(margin)+' '
-                   'L '+str(paper[0]-margin)+' -'+str(paper[1]-margin)+' '
-                   'L '+str(margin)+' -'+str(paper[1]-margin)+' '
-                   'L '+str(margin)+' -'+str(margin))
+        border.set('d', 'M '+str(margin)+' '+str(margin)+' '
+                   'L '+str(paper[0]-margin)+' '+str(margin)+' '
+                   'L '+str(paper[0]-margin)+' '+str(paper[1]-margin)+' '
+                   'L '+str(margin)+' '+str(paper[1]-margin)+' '
+                   'L '+str(margin)+' '+str(margin))
+        border.set('fill', 'white')
+        border.set('stroke', 'black')
+        border.set('stroke-width', str(weight))
         return border
 
     def get_title_block(self):
-        if self.options['title_block'] == 'corner':
+        if self.options['title-block'] == 'corner':
             return self.get_title_corner()
-        elif self.options['title_block'] == 'sidebar':
+        elif self.options['title-block'] == 'sidebar':
             return self.get_title_sidebar()
-        elif self.options['title_block'] == None:
+        elif self.options['title-block'] == None:
             return None
 
     def get_title_corner(self):
         """Get the title block ready to be put into the plot."""
+        return None
 
     def get_title_sidebar(self):
         """Get the title block in vertical form."""
+        
+        def get_sidebar_width(self):
+            page_dims = self.get_page_dimensions()
+            pc_width = page_dims[0]*self.options['vertical-title-width-pc']
+            if pc_width > self.options['vertical-title-max-width']:
+                return self.options['vertical-title-max-width']
+            elif pc_width < self.options['vertical-title-min-width']:
+                return self.options['vertical-title-min-width']
+            else:
+                return pc_width
+
+        # Create sidebar group
+        sidebar = ET.Element('g')
+        # Create sidebar border
+        sidebar_width = get_sidebar_width(self)
+        page_dims = self.get_page_dimensions()
+        margin = self.options['margin']
+        left_border = page_dims[0]-margin-sidebar_width
+        sidebar_box = ET.SubElement(sidebar, 'path')
+        sidebar_box.set('d', 'M '+str(left_border)+' '+str(margin)+
+                          ' L '+str(left_border)+' '+str(page_dims[1]-margin))
+        sidebar_box.set('stroke', 'black')
+        sidebar_box.set('stroke-width', str(self.options['line-weight-heavy']))
+        # Create title text
+        text_title = ET.SubElement(sidebar, 'text')
+        text_title.text = self.meta['production']
+        text_title.set('text-anchor', 'middle')
+        text_title.set('x', str(page_dims[0]-margin-0.5*sidebar_width))
+        text_title.set('y', str(margin+10))
+        text_title.set('font-size', str(7))
+        text_title.set('style', 'text-transform:uppercase')
+        
+        return sidebar
+
+    def generate_plot(self):
+        if not self.can_fit_page():
+            print('PlotterError: Plot does not fit page with this scaling')
+        else:
+            self.lighting_plot = self.get_empty_plot()
+            root = self.lighting_plot.getroot()
+            root.append(self.get_page_border())
+            root.append(self.get_title_sidebar())
+    
 
 class PlotOptions():
 
     DEFAULTS = {
         # [A[0-4]]
-        'paper_size' : 'A4',
+        'paper-size' : 'A4',
         # ['landscape', 'portrait']
         'orientation' : 'landscape',
         # int
         'scale' : 50,
-        # int
-        'margin' : 20,
-        # int
-        'line_weight_heavy' : 6,
+        # float
+        'margin' : 10,
+        # float
+        'line-weight-light' : 0.4,
+        'line-weight-medium' : 0.6,
+        'line-weight-heavy' : 0.8,
         # ['corner', 'sidebar', None]
-        'title_block' : 'corner'}
+        'title-block' : 'corner',
+        # float
+        'vertical-title-width-pc' : 0.1,
+        'vertical-title-min-width' : 50,
+        'vertical-title-max-width' : 100}
     
     def __init__(self):
         self.options = {
@@ -231,23 +304,32 @@ class PlotterContext(Context):
                               synopsis='Create a new plot.'))
         self.register(Command('pw', self.plot_write, ['path'], 
                               synopsis='Write the plot buffer to a file.'))
+        self.register(Command('pd', self.plot_dump, []))
         self.register(Command('os', self.option_set, ['name', 'value'], 
                               synopsis='Set the value of an option.'))
         self.register(Command('og', self.option_get, ['name'], 
                               synopsis='Print the value of an option.'))
         self.register(Command('ol', self.option_list, [],
                               synopsis='Print the value of all options.'))
+        self.register(Command('deb', self.debug, []))
         self.init_plot()
+
+    def debug(self, parsed_input):
+        self.plot_new(parsed_input)
+        self.plot_write(['tests/PAGEBORDER.svg'])
 
     def init_plot(self):
         self.options = PlotOptions()
 
     def plot_new(self, parsed_input):
-        self.lighting_plot = LightingPlot(self.plot_file, self.options.DEFAULTS)
+        self.plot = LightingPlot(self.plot_file, self.options.DEFAULTS)
+        self.plot.generate_plot()
 
     def plot_write(self, parsed_input):
-        output_tree = ET.ElementTree(self.image_plot.image_plot)
-        output_tree.write(os.path.expanduser(parsed_input[0]))
+        self.plot.lighting_plot.write(os.path.expanduser(parsed_input[0]))
+
+    def plot_dump(self, parsed_input):
+        ET.dump(self.plot.lighting_plot.getroot())
 
     def option_set(self, parsed_input):
         self.options.set(parsed_input[0], parsed_input[1])
