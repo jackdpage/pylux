@@ -1,6 +1,3 @@
-{% set LXCOUNT = 1 %}
-{% set SXCOUNT = 1 %}
-{% set VXCOUNT = 1 %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -21,19 +18,7 @@
     <tbody>
     {% for cue in cues %}
         <tr>
-            <td>
-                {{ cue.data['type'] }}
-                {% if cue.data['type'] == 'LX' %}
-                    {{ LXCOUNT }}
-                    {% set LXCOUNT = LXCOUNT+1 %}
-                {% elif cue.data['type'] == 'SX' %}
-                    {{ SXCOUNT }}
-                    {% set SXCOUNT = SXCOUNT+1 %}
-                {% elif cue.data['type'] == 'VX' %}
-                    {{ VXCOUNT }}
-                    {% set VXCOUNT = VXCOUNT+1 %}
-                {% endif %}
-            </td>
+            <td>{{ cue.data['identifier'] }}</td>
             <td>{{ cue.data['location'] }}</td>
             <td>{{ cue.data['description'] }}</td>
             <td>{{ cue.data['notes'] }}</td>

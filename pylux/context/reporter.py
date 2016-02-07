@@ -54,20 +54,36 @@ class Report:
             template: full name, including extension of the template
             options: dict of options
         """
+        def is_hung(fixture):
+            if 'posX' not in fixture.data or 'posY' not in fixture.data:
+                return False
+            else:
+                return True
+
         template = self.environment.get_template(template)
-        cue_list = sorted(plot.CueList(self.plot_file).cues,
-                          key=lambda cue: cue.key)
-        fixture_list = plot.FixtureList(self.plot_file).fixtures
+        cues = plot.CueList(self.plot_file)
+        cues.assign_identifiers(self.plot_file)
+        cue_list = sorted(cues.cues, key=lambda cue: cue.key)
+        fixtures = plot.FixtureList(self.plot_file)
+        fixtures.assign_usitt_numbers()
+        fixture_list = sorted(fixtures.fixtures, 
+                              key=lambda fixture: fixture.data['usitt_key'])
+        hung_fixtures = []
+        for fixture in fixture_list:
+            if is_hung(fixture):
+                hung_fixtures.append(fixture)
+        hung_fixtures.sort(key=lambda fixture: fixture.data['usitt_key'])
         metadata_list = plot.Metadata(self.plot_file).meta
         self.content = template.render(cues=cue_list, fixtures=fixture_list,
-                                       meta=metadata_list, options=options)
+                                       meta=metadata_list, hung=hung_fixtures, 
+                                       options=options)
 
 
 class ReporterContext(Context):
 
     def __init__(self):
         self.name = 'reporter'
-        self.init_commands()
+        super().__init__()
         self.register(Command('rn', self.report_new, ['template', 'options'], 
                       synopsis='Create a new report from the Jinja template ' 
                                'and pass in the options.'))

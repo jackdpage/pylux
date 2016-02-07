@@ -28,6 +28,7 @@ import xml.etree.ElementTree as ET
 import uuid
 import math
 import pylux.reference as reference
+from pylux.exception import *
 
 
 class PlotFile:
@@ -47,13 +48,19 @@ class PlotFile:
 
         Args:
             path: the location of the file to load.
+
+        Raises:
+            FileNotFoundError: if the file can not be found in the 
+                               directory hierarchy.
+            FileFormatError: if the XML parser raises a ParseError.
         """
-        self.file = path
         try:
-            self.tree = ET.parse(self.file)
-        except FileNotFoundError:
-            print('The file you are trying to load doesn\'t exist!')
-        self.root = self.tree.getroot()
+            self.tree = ET.parse(path)
+        except ET.ParseError:
+            raise FileFormatError
+        else:
+            self.root = self.tree.getroot()
+            self.file = path
 
     def save(self):
         """Save the project file to its original location."""
@@ -260,6 +267,21 @@ class FixtureList:
         data_values = list(set(data_values))
         data_values.sort()
         return data_values
+
+    def assign_usitt_numbers(self):
+        count = 1
+        hung = []
+        for fixture in self.fixtures:
+            if 'posY' in fixture.data:
+                hung.append(fixture)
+        for fixture in sorted(hung, key=lambda fixture: fixture.data['posY']):
+            fixture.data['usitt_key'] = str(count)
+            count = count+1
+            fixture.save()
+        for fixture in self.fixtures:
+            if fixture not in hung:
+                fixture.data['usitt_key'] = str(None)
+                fixture.save()
 
 
 class Fixture:
@@ -615,6 +637,14 @@ class CueList:
                 elif cue.key == origin:
                     cue.key = dest
                 cue.save(plot_file)
+
+    def assign_identifiers(self, plot_file):
+        count = {'LX': 1, 'SX': 1, 'VX': 1}
+        for cue in sorted(self.cues, key=lambda cue: cue.key):
+            cue_type = cue.data['type']
+            cue.data['identifier'] = cue_type+str(count[cue_type])
+            count[cue_type] = count[cue_type]+1
+            cue.save(plot_file)
 
 
 class Scene:

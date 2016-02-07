@@ -183,7 +183,7 @@ class PlotterContext(Context):
               'A MORE FULLY FEATURED VERSION IS CREATED. You can access the '
               'development version of plotter in the plotterNEW module.')
         self.name = 'plotter'
-        self.init_commands()
+        super().__init__()
         self.register(Command('pn', self.plot_new, [], 
                               synopsis='Create a new plot.'))
         self.register(Command('pw', self.plot_write, ['path'], 

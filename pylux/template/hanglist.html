@@ -2,25 +2,27 @@
 <html>
 <head>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.0.3/milligram.min.css" rel="stylesheet" />
-    <title>{{ meta['production'] }} Fixture List</title>
+    <title>{{ meta['production'] }} Hanging List</title>
 </head>
 <body>
-<h1>{{ meta['production'] }} Fixture List</h1>
+<h1>{{ meta['production'] }} Hanging List</h1>
 <table>
     <thead>
         <tr>
-            <th>Fixture #</th>
             <th>Type</th>
-            <th>Power</th>
+            <th>Position</th>
+            <th>Focus</th>
+            <th>Circuit</th>
             <th>Gel</th>
         </tr>
     </thead>
     <tbody>
-    {% for fixture in fixtures %}
+    {% for fixture in hung %}
         <tr>
-            <td>{{ fixture.data['usitt_key'] }}</td>
             <td>{{ fixture.data['type'] }}</td>
-            <td>{{ fixture.data['power'] }}W</td>
+            <td>{{ fixture.data['posX'] }},{{ fixture.data['posY'] }}</td>
+            <td>{{ fixture.data['focusX'] }},{{ fixture.data['focusY'] }}</td>
+            <td>{{ fixture.data['circuit'] }}</td>
             <td>{{ fixture.data['gel'] }}</td>
         </tr>
     {% endfor %}

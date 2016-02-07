@@ -19,6 +19,7 @@
 from pylux.clihelper import resolve_input, Interface 
 from importlib import import_module
 from tabulate import tabulate
+import logging
 import sys
 import os
 
@@ -41,7 +42,7 @@ class Context:
         interface: the Interface object being used.
     """
 
-    def init_commands(self):
+    def __init__(self):
         """Add the universal commands to the commands dictionary."""
         self.commands = {}
         self.register(Command('c', self.utility_clear, [], 
@@ -80,6 +81,7 @@ class Context:
         self.config = globals_dict['CONFIG']
         self.log_level = globals_dict['LOG_LEVEL']
         self.interface = Interface()
+        logging.basicConfig(level=self.log_level)
 
     def get_globals(self):
         """Get the current globals dictionary.

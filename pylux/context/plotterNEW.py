@@ -299,7 +299,7 @@ class PlotterContext(Context):
 
     def __init__(self):
         self.name = 'plotter-dev'
-        self.init_commands()
+        super().__init__()
         self.register(Command('pn', self.plot_new, [], 
                               synopsis='Create a new plot.'))
         self.register(Command('pw', self.plot_write, ['path'], 

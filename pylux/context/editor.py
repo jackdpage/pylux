@@ -28,50 +28,56 @@ import pylux.clihelper as clihelper
 import logging
 from pylux.context.context import Context, Command
 from pylux import get_data
+from pylux.exception import *
 
 
 class EditorContext(Context):
 
     def __init__(self):
         """Registers commands and globals for this context."""
+        super().__init__()
         self.name = 'editor'
-        self.init_commands()
         # Register commands
         self.register(Command('fo', self.file_open, ['path'], 
-                      synopsis='Open a plot file.'))
+                              synopsis='Open a plot file.'))
         self.register(Command('fw', self.file_write, [], 
-                      synopsis='Write the buffer to the original location.'))
+                              synopsis='Write the buffer to the original '
+                                       'location.'))
         self.register(Command('fW', self.file_writeas, ['path'], 
-                      synopsis='Write the buffer to a different location.'))
+                              synopsis='Write the buffer to a different '
+                                       'location.'))
         self.register(Command('fg', self.file_get, [], 
-                      synopsis='Print the location of the plot file.'))
+                              synopsis='Print the location of the plot file.'))
         self.register(Command('fn', self.file_new, ['path'],
-                      synopsis='Create a new plot file.'))
+                              synopsis='Create a new plot file.'))
         self.register(Command('ml', self.metadata_list, [], 
-                      synopsis='List all metadata values.'))
+                              synopsis='List all metadata values.'))
         self.register(Command('ms', self.metadata_set, ['name', 'value'], 
-                      synopsis='Set the value of one piece of metadata.'))
+                              synopsis='Set the value of one piece of '
+                                       'metadata.'))
         self.register(Command('mr', self.metadata_remove, ['name'], 
-                      synopsis='Remove a piece of metadata'))
+                              synopsis='Remove a piece of metadata'))
         self.register(Command('mg', self.metadata_get, ['name'],
-                      synopsis='Print the value of a piece of metadata.'))
+                              synopsis='Print the value of a piece of '
+                                       'metadata.'))
         self.register(Command('xn', self.fixture_new, ['template'], 
-                      synopsis='Create a new fixture from a template.'))
+                              synopsis='Create a new fixture from a '
+                                       'template.'))
         self.register(Command('xc', self.fixture_clone, ['fixture'], 
-                      synopsis='Create a new fixture from an existing ' 
-                               'fixture.'))
+                              synopsis='Create a new fixture from an existing '
+                                       'fixture.'))
         self.register(Command('xl', self.fixture_list, [], 
-                      synopsis='List all fixtures.'))
+                              synopsis='List all fixtures.'))
         self.register(Command('xf', self.fixture_filter, ['tag', 'value'], 
-                      synopsis='List all fixtures that match certain ' 
-                               'criteria.'))
+                              synopsis='List all fixtures that match certain ' 
+                                       'criteria.'))
         self.register(Command('xr', self.fixture_remove, ['fixture'], 
-                      synopsis='Remove a fixture.'))
+                              synopsis='Remove a fixture.'))
         self.register(Command('xg', self.fixture_get, ['fixture', 'tag'], 
-                      synopsis='Print the value of a fixture\'s tag.'))
+                              synopsis='Print the value of a fixture\'s tag.'))
         self.register(Command('xG', self.fixture_getall, ['fixture'], 
-                      synopsis='Print the values of all of a fixture\'s '
-                               'tags.'))
+                              synopsis='Print the values of all of a '
+                                       'fixture\'s tags.'))
         self.register(Command('xs', self.fixture_set, 
                               ['fixture', 'tag', 'value'], 
                               synopsis='Set the value of a fixture\'s tag.'))
@@ -110,8 +116,10 @@ class EditorContext(Context):
     def file_open(self, parsed_input):
         try:
             self.plot_file.load(parsed_input[0])
-        except AttributeError:
-            pass
+        except FileNotFoundError:
+            logging.warning('No file with that name')
+        except FileFormatError:
+            logging.warning('File is not valid XML')
 
     def file_write(self, parsed_input):
         try:
