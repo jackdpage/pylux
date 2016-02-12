@@ -56,19 +56,21 @@ Standard Fixture Tags
 
 ``posX``
     The x position in 2D space where this fixture is located. Measured in 
-    metres.
+    metres relative to the centre line, where stage left is positive.
 
 ``posY``
     The y position in 2D space where this fixture is located. Measured in 
-    metres.
+    metres relative to the plaster line, where downstage is positive.
 
 ``focusX``
     The x position in 2D space where the centre of this fixture's beam is 
-    focused. Measured in metres.
+    focused. Measured in metres relative to the centre line, where stage 
+    left is positive.
 
 ``focusY``
     The y position in 2D space where the centre of this fixture's beam is 
-    focused. Measured in metres.
+    focused. Measured in metres relative to the plaster line, where 
+    downstage is positive.
 
 ``circuit``
     For traditional fixtures only. The electrical circuit into which this 

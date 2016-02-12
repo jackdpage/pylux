@@ -49,14 +49,13 @@ def main():
         if len(user_input) > 0:
             if inputs[0] == '::':
                 globals_dict = context.get_globals()
-                context = get_context('editor')
+                context = get_context(CONFIG['cli']['default-context'])
                 context.set_globals(globals_dict)
 
             elif inputs[0][0] == ':':
                 globals_dict = context.get_globals()
-                if get_context(inputs[0].split(':')[1]) is not None:
-                    context = get_context(inputs[0].split(':')[1])
-                    context.set_globals(globals_dict)
+                context = get_context(inputs[0].split(':')[1])
+                context.set_globals(globals_dict)
 
             elif inputs[0] in context.commands:
                 context.process(inputs)

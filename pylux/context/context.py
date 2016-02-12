@@ -52,6 +52,10 @@ class Context:
         self.register(Command('Q', self.utility_kill, [], 
                       synopsis='Exit the program without saving any changes.'))
 
+    def post_init(self):
+        """Initialisation phase run once globals are loaded."""
+        return None
+
     def process(self, inputs):
         """From input, perform the required function call.
 
@@ -82,6 +86,7 @@ class Context:
         self.log_level = globals_dict['LOG_LEVEL']
         self.interface = Interface()
         logging.basicConfig(level=self.log_level)
+        self.post_init()
 
     def get_globals(self):
         """Get the current globals dictionary.

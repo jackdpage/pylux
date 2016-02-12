@@ -25,7 +25,6 @@ SVG format.
 from pylux.context.context import Context, Command
 import os.path
 import logging
-from tqdm import tqdm
 import base64
 import math
 import xml.etree.ElementTree as ET
@@ -59,7 +58,7 @@ class ImagePlot:
             return errors
 
     def add_fixtures(self):
-        for fixture in tqdm(self.fixtures.fixtures):
+        for fixture in self.fixtures.fixtures:
             if self.verify_fixture(fixture) == True:
                 fixture_group = ET.SubElement(self.image_plot, 'g')
                 fixture.data['rotation'] = fixture.generate_rotation()

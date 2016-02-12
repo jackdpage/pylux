@@ -26,6 +26,7 @@ from pylux.context.context import Context, Command
 import os.path
 import logging
 import math
+import cairosvg
 import xml.etree.ElementTree as ET
 import pylux.plot as plot
 import pylux.clihelper as clihelper
@@ -98,9 +99,9 @@ class LightingPlot():
             x_values.append(get_mm(fixture.data['focusX']))
             y_values.append(get_mm(fixture.data['posY']))
             y_values.append(get_mm(fixture.data['focusY']))
-        min_x = min(x_values)
-        min_y = min(y_values)
-        return (min_x, min_y)
+        x_range = max(x_values) - min(x_values)
+        y_range = max(y_values) - min(y_values)
+        return (x_range, y_range)
 
     def can_fit_page(self):
         """Test if the plot can fit on the page.
@@ -109,11 +110,11 @@ class LightingPlot():
         the page is large enough to fit the plot.
         """
         actual_size = self.get_plot_size()
-        scaling = self.options['scale']
+        scaling = float(self.options['scale'])
         get_scaled = lambda dim: dim/scaling
         scaled_size = (get_scaled(actual_size[0]), get_scaled(actual_size[1]))
         paper_size = self.get_page_dimensions()
-        remove_margin = lambda dim: dim-2*self.options['margin']
+        remove_margin = lambda dim: dim-2*float(self.options['margin'])
         draw_area = (remove_margin(paper_size[0]), remove_margin(paper_size[1]))
         if draw_area[0] < scaled_size[0] or draw_area[1] < scaled_size[1]:
             return False
@@ -143,8 +144,8 @@ class LightingPlot():
         Returns:
             An ElementTree element - an SVG path.
         """
-        margin = self.options['margin']
-        weight = self.options['line-weight-heavy']
+        margin = float(self.options['margin'])
+        weight = float(self.options['line-weight-heavy'])
         paper = self.get_page_dimensions()
         border = ET.Element('path')
         border.set('d', 'M '+str(margin)+' '+str(margin)+' '
@@ -156,6 +157,73 @@ class LightingPlot():
         border.set('stroke', 'black')
         border.set('stroke-width', str(weight))
         return border
+
+    def get_centre_line(self):
+        """Get the centre line to insert.
+
+        Returns a path element that represents the centre line, 
+        containing the recommended dash appearance.
+
+        Returns:
+            An ElementTree element - an SVG path.
+        """
+        centre = self.get_page_dimensions()[0]/2
+        height = self.get_page_dimensions()[1]
+        margin = float(self.options['margin'])
+        centre_line = ET.Element('path')
+        if self.options['centre-line-extend'] == 'True':
+            centre_line.set('d', 'M '+str(centre)+' 0 '
+                                 'L '+str(centre)+' '+str(height))
+        else:
+            centre_line.set('d', 'M '+str(centre)+' '+str(margin)+' '
+                                 'L '+str(centre)+' '+str(height-margin))
+        centre_line.set('stroke', 'black')
+        centre_line.set('stroke-width', 
+                        str(self.options['line-weight-medium']))
+        centre_line.set('stroke-dasharray', 
+                        self.options['centre-line-dasharray'])
+        return centre_line
+
+    def get_plaster_line(self):
+        """Get the plaster line to insert.
+
+        Returns a path element that represents the plaster line.
+
+        Returns:
+            An ElementTree element - an SVG path.
+        """
+        scale = float(self.options['scale'])
+        padding = float(self.options['plaster-line-padding'])*1000/scale
+        margin = float(self.options['margin'])
+        width = self.get_page_dimensions()[0]
+        plaster_line = ET.Element('path')
+        if self.options['plaster-line-extend'] == 'True':
+            plaster_line.set('d', 'M 0 '+str(margin+padding)+' '
+                                  'L '+str(width)+' '+str(margin+padding))
+        else:
+            plaster_line.set('d', 'M '+str(margin)+' '+str(margin+padding)+' ' 
+                                  'L '+str(width-margin)+' '+
+                                  str(margin+padding))
+        plaster_line.set('stroke', 'black')
+        plaster_line.set('stroke-width', 
+                         str(self.options['line-weight-medium']))
+        plaster_line.set('stroke-dasharray',
+                         self.options['plaster-line-dasharray'])
+        return plaster_line 
+
+    def get_plaster_coord(self):
+        """Get the plaster line y coordinate.
+
+        Returns the plaster line y coordinate to allow offsets to 
+        be calculated when plotting fixtures.
+
+        Returns:
+            A float representing the y coordinate in mm.
+        """
+        scale = float(self.options['scale'])
+        margin = float(self.options['margin'])
+        padding = float(self.options['plaster-line-padding'])*1000/scale
+        return margin+padding
 
     def get_title_block(self):
         if self.options['title-block'] == 'corner':
@@ -174,11 +242,11 @@ class LightingPlot():
         
         def get_sidebar_width(self):
             page_dims = self.get_page_dimensions()
-            pc_width = page_dims[0]*self.options['vertical-title-width-pc']
-            if pc_width > self.options['vertical-title-max-width']:
-                return self.options['vertical-title-max-width']
-            elif pc_width < self.options['vertical-title-min-width']:
-                return self.options['vertical-title-min-width']
+            pc_width = page_dims[0]*float(self.options['vertical-title-width-pc'])
+            if pc_width > float(self.options['vertical-title-max-width']):
+                return float(self.options['vertical-title-max-width'])
+            elif pc_width < float(self.options['vertical-title-min-width']):
+                return float(self.options['vertical-title-min-width'])
             else:
                 return pc_width
 
@@ -187,7 +255,7 @@ class LightingPlot():
         # Create sidebar border
         sidebar_width = get_sidebar_width(self)
         page_dims = self.get_page_dimensions()
-        margin = self.options['margin']
+        margin = float(self.options['margin'])
         left_border = page_dims[0]-margin-sidebar_width
         sidebar_box = ET.SubElement(sidebar, 'path')
         sidebar_box.set('d', 'M '+str(left_border)+' '+str(margin)+
@@ -202,7 +270,6 @@ class LightingPlot():
         text_title.set('y', str(margin+10))
         text_title.set('font-size', str(7))
         text_title.set('style', 'text-transform:uppercase')
-        
         return sidebar
 
     def get_fixture_icon(self, fixture):
@@ -223,19 +290,22 @@ class LightingPlot():
         root = tree.getroot()
         svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
         symbol = root.find('ns0:g', svg_ns)
-        # Transform based on scaling
-        scale = self.options['scale']
+        # Transform based on scaling and data
+        centre = self.get_page_dimensions()[0]/2
+        plaster = self.get_plaster_coord()
+        scale = float(self.options['scale'])
         plot_pos = lambda dim: (float(fixture.data['pos'+dim])*1000)
         rotation = fixture.generate_rotation()
         colour = fixture.generate_colour()
         symbol.set('transform', 'scale( '+str(1/scale)+' ) '
-                   'translate('+str(plot_pos('X'))+' '+str(plot_pos('Y'))+') '
+                   'translate('+str(centre*scale+plot_pos('X'))+' '+
+                   str(plot_pos('Y')+plaster*scale)+') '
                    'rotate('+str(rotation)+')')
         for path in symbol:
             if path.get('class') == 'outer':
                 path.set('fill', colour)
                 path.set('stroke-width', 
-                         str(self.options['line-weight-heavy']))
+                         str(float(self.options['line-weight-heavy'])*scale))
         return symbol
 
     def generate_plot(self):
@@ -245,35 +315,18 @@ class LightingPlot():
             self.lighting_plot = self.get_empty_plot()
             root = self.lighting_plot.getroot()
             root.append(self.get_page_border())
-            root.append(self.get_title_sidebar())
+            root.append(self.get_centre_line())
+            root.append(self.get_plaster_line())
+#            root.append(self.get_title_block())
             for fixture in self.fixtures:
                 root.append(self.get_fixture_icon(fixture))
     
 
 class PlotOptions():
 
-    DEFAULTS = {
-        # [A[0-4]]
-        'paper-size' : 'A4',
-        # ['landscape', 'portrait']
-        'orientation' : 'landscape',
-        # int
-        'scale' : 50,
-        # float
-        'margin' : 10,
-        # float
-        'line-weight-light' : 0.4,
-        'line-weight-medium' : 0.6,
-        'line-weight-heavy' : 0.8,
-        # ['corner', 'sidebar', None]
-        'title-block' : 'corner',
-        # float
-        'vertical-title-width-pc' : 0.1,
-        'vertical-title-min-width' : 50,
-        'vertical-title-max-width' : 100}
-    
     def __init__(self, config):
-        self.options = config['plotter']         
+        
+        self.options = config['plotter']
 
     def set(self, option, value):
         self.options[option] = value
@@ -359,7 +412,9 @@ class PlotterContext(Context):
         self.register(Command('pn', self.plot_new, [], 
                               synopsis='Create a new plot.'))
         self.register(Command('pw', self.plot_write, ['path'], 
-                              synopsis='Write the plot buffer to a file.'))
+                              synopsis='Write the plot buffer to a file and '
+                                       'optionally convert to another '
+                                       'format.'))
         self.register(Command('pd', self.plot_dump, []))
         self.register(Command('os', self.option_set, ['name', 'value'], 
                               synopsis='Set the value of an option.'))
@@ -368,21 +423,28 @@ class PlotterContext(Context):
         self.register(Command('ol', self.option_list, [],
                               synopsis='Print the value of all options.'))
         self.register(Command('deb', self.debug, []))
-        self.init_plot()
+
+    def post_init(self):
+        super().post_init()
+        self.options = PlotOptions(self.config)
 
     def debug(self, parsed_input):
         self.plot_new(parsed_input)
         self.plot_write(['devplot.svg'])
-
-    def init_plot(self):
-        self.options = PlotOptions(self.config)
 
     def plot_new(self, parsed_input):
         self.plot = LightingPlot(self.plot_file, self.options.options)
         self.plot.generate_plot()
 
     def plot_write(self, parsed_input):
-        self.plot.lighting_plot.write(os.path.expanduser(parsed_input[0]))
+        if parsed_input[0].split('.')[-1] == 'svg':
+            self.plot.lighting_plot.write(os.path.expanduser(parsed_input[0]))
+        elif parsed_input[0].split('.')[-1] == 'pdf':
+            plot_bytes = ET.tostring(self.plot.lighting_plot.getroot())
+            cairosvg.svg2pdf(bytestring=plot_bytes, write_to=parsed_input[0])
+        else:
+            print('WARNING: File format not supported, writing as SVG')
+            self.plot.lighting_plot.write(os.path.expanduser(parsed_input[0]))
 
     def plot_dump(self, parsed_input):
         ET.dump(self.plot.lighting_plot.getroot())
@@ -394,8 +456,8 @@ class PlotterContext(Context):
         print(self.options.get(parsed_input[0]))
 
     def option_list(self, parsed_input):
-        for option,value in self.options.options:
-            print(option+': '+str(value))
+        for option in self.options.options:
+            print(option+': '+str(self.options.options[option]))
 
 def get_context():
     return PlotterContext()

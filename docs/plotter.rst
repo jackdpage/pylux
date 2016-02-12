@@ -1,6 +1,13 @@
 The Plotter Context
 ===================
 
+.. WARNING::
+    The plotter context is currently being rewritten to comply with USITT
+    standards. The information listed below is representative of the new 
+    development version of plotter, which as accessible from the 
+    plotterNEW context. These commands do not apply to the temporary plotter 
+    implementation.
+
 The plotter context is used to create 2D SVG images of the fixtures in the 
 plot file. It uses the symbols defined by the ``symbol`` tag of fixtures to 
 find SVG images of the fixtures. It then transforms these fixtures according 
@@ -18,8 +25,17 @@ Commands
     will only store the file internally, if you wish to save the SVG image to 
     a file (which you probably do), you will need to run ``pw``
 
+``pd``
+    Mainly implemented for debugging purposes. Prints the SVG tree to the 
+    console.
+
 ``pw PATH``
-    Save the current SVG plot buffer to the location with path ``PATH``.
+    Save the current SVG plot buffer to the location with path ``PATH``. 
+    Pylux will automatically detect the desired file type based on the 
+    extension of the path you provide. If the path ends in ``.svg``, Pylux 
+    will write the XML (SVG) tree to the file. If the path ends in ``.pdf``, 
+    Pylux will invoke ``cairosvg`` to convert the SVG to a PDF, then write 
+    this to the file.
 
 ``ol``
     List the values of all the options that can be specified. These options 
@@ -37,16 +53,4 @@ Options
 
 Use the option commands detailed above to change these options.
 
-``show_beams``
-    Choose whether or not to display beam focus lines. These are dashed lines 
-    from the fixture to its focus point to assist with understanding where 
-    fixtures are pointing. Must be ``True`` or ``False``. Default: ``True``
 
-``beam_width``
-    The thickness of the beam focus lines, in SVG points. Default: ``6``
-
-``beam_colour``
-    The colour of the beam focus lines. This can be any named gel colour in 
-    the list of legal gel colours. Alternatively, it can be set to ``auto`` 
-    to be the same colour as the fixture from which it originates. 
-    Default: ``Black``
