@@ -205,6 +205,39 @@ class LightingPlot():
         
         return sidebar
 
+    def get_fixture_icon(self, fixture):
+        """Return an SVG group for a single fixture.
+
+        Search the package data for a symbol for this fixture, then 
+        transform as appropriate based on tags and plot scaling.
+
+        Args:
+            fixture: the fixture object to create an icon for.
+
+        Returns:
+            An ElementTree object representing an SVG 'g' element.
+        """
+        # Get the base SVG element
+        symbol_name = fixture.data['symbol']
+        tree = ET.parse(get_data('symbol/'+symbol_name+'.svg'))
+        root = tree.getroot()
+        svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
+        symbol = root.find('ns0:g', svg_ns)
+        # Transform based on scaling
+        scale = self.options['scale']
+        plot_pos = lambda dim: (float(fixture.data['pos'+dim])*1000)
+        rotation = fixture.generate_rotation()
+        colour = fixture.generate_colour()
+        symbol.set('transform', 'scale( '+str(1/scale)+' ) '
+                   'translate('+str(plot_pos('X'))+' '+str(plot_pos('Y'))+') '
+                   'rotate('+str(rotation)+')')
+        for path in symbol:
+            if path.get('class') == 'outer':
+                path.set('fill', colour)
+                path.set('stroke-width', 
+                         str(self.options['line-weight-heavy']))
+        return symbol
+
     def generate_plot(self):
         if not self.can_fit_page():
             print('PlotterError: Plot does not fit page with this scaling')
@@ -213,6 +246,8 @@ class LightingPlot():
             root = self.lighting_plot.getroot()
             root.append(self.get_page_border())
             root.append(self.get_title_sidebar())
+            for fixture in self.fixtures:
+                root.append(self.get_fixture_icon(fixture))
     
 
 class PlotOptions():
@@ -237,13 +272,8 @@ class PlotOptions():
         'vertical-title-min-width' : 50,
         'vertical-title-max-width' : 100}
     
-    def __init__(self):
-        self.options = {
-            'beam_colour': 'Black',
-            'beam_width': '6',
-            'show_beams': 'True',
-            'background_image': 'None',
-            'show_circuits': 'True'}
+    def __init__(self, config):
+        self.options = config['plotter']         
 
     def set(self, option, value):
         self.options[option] = value
@@ -324,8 +354,8 @@ class FixtureSymbol:
 class PlotterContext(Context):
 
     def __init__(self):
-        self.name = 'plotter-dev'
         super().__init__()
+        self.name = 'plotter-dev'
         self.register(Command('pn', self.plot_new, [], 
                               synopsis='Create a new plot.'))
         self.register(Command('pw', self.plot_write, ['path'], 
@@ -345,10 +375,10 @@ class PlotterContext(Context):
         self.plot_write(['devplot.svg'])
 
     def init_plot(self):
-        self.options = PlotOptions()
+        self.options = PlotOptions(self.config)
 
     def plot_new(self, parsed_input):
-        self.plot = LightingPlot(self.plot_file, self.options.DEFAULTS)
+        self.plot = LightingPlot(self.plot_file, self.options.options)
         self.plot.generate_plot()
 
     def plot_write(self, parsed_input):
@@ -364,8 +394,8 @@ class PlotterContext(Context):
         print(self.options.get(parsed_input[0]))
 
     def option_list(self, parsed_input):
-        for option in self.options.DEFAULTS:
-            print(option+': '+str(self.options.DEFAULTS[option]))
+        for option,value in self.options.options:
+            print(option+': '+str(value))
 
 def get_context():
     return PlotterContext()

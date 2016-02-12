@@ -3,7 +3,7 @@
 import os
 import pkg_resources
 
-__version__ = pkg_resources.get_distribution('pylux').verison
+__version__ = pkg_resources.get_distribution('pylux').version
 
 
 _ROOT = os.path.abspath(os.path.dirname(__file__))
