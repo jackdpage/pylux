@@ -10,12 +10,9 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-with open(path.join(here, 'VERSION'), encoding='utf-8') as f:
-    version = f.read()
-
 setup(
     name='pylux',
-    version=version,
+    version='0.1.5',
     description='A program for managing lighting documentation.',
     long_description=long_description,
     url='http://os.pwrg.uk/software/pylux',
