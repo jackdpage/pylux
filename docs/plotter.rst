@@ -51,6 +51,95 @@ Commands
 Options
 -------
 
-Use the option commands detailed above to change these options.
+There are many options which you can change to alter the appearance of your 
+plot. These options all have sane defaults in the config file. You can edit 
+them either for all your projects in the config file at 
+``~/.pylux/settings.conf`` or you can edit them on a temporary basis using the 
+option commands listed above.
 
+``paper-size``
+    The ISO name of the paper you are using. Must be A[0-4]. Default: A4.
 
+``orientation``
+    The orientation of the printed plot. Must be landscape or portrait. 
+    Default: landscape.
+
+``margin``
+    Margin to leave unprinted on all four sides of the paper. Measured in 
+    millimetres. Default: 10.
+
+``scale``
+    The scale to use for the drawing. Default: 50.
+
+``line-weight-light``
+    Line weight for light lines (scenery, leader lines, dimensions). Measured 
+    in millimetres. Default: 0.4.
+
+``line-weight-medium``
+    Line weight for medium lines (masking, drops, centre line, plaster line). 
+    Measured in millimetres. Default: 0.6.
+
+``line-weight-heavy``
+    Line weight for heavy lines (batten, fixture, architecture, drawing 
+    border, title block border). Measured in millimetres. Default: 0.8.
+
+``title-block``
+    If and where to display the title block. Must be corner, sidebar or None. 
+    Default: corner.
+
+``vertical-title-width-pc``
+    If sidebar title is selected, the width of it as a percentage of the 
+    page width. Default: 0.1.
+
+``vertical-title-min-width``
+    If sidebar title is selected, the minimum width it will render as. 
+    Measured in millimetres. Default: 50.
+
+``vertical-title-max-width``
+    If sidebar title is selected, the maximum width it will render as.
+    Measured in millimetres. Default: 100.
+
+``corner-title-width-pc``
+    If corner title is selected, the width of it as a percentage of the 
+    page width. Default: 0.25.
+
+``corner-title-height-pc``
+    If corner title is selected, the height of it as a percentage of the 
+    page height. Default: 0.25.
+
+``corner-title-min-width``
+    If corner title is selected, the minimum width it will render as.
+    Measured in millimetres. Default: 70.
+
+``corner-title-max-width``
+    If corner title is selected, the maximum width it will render as.
+    Measured in millimeters. Default: 120.
+
+``corner-title-min-height``
+    If corner title is selected, the minimum height it will render as.
+    Measured in millimetres. Default: 40.
+
+``corner-title-max-height``
+    If corner title is selected, the maximum height it will render as.
+    Measured in millimetres. Default: 80.
+
+``centre-line-dasharray``
+    The SVG dasharray property of the centre line. Default corresponds to 
+    USITT standards. Must be a valid SVG dasharray value. 
+    Default: 4, 0.5, 1, 1.5.
+
+``centre-line-extend``
+    Whether or not the centre line should extend over the page margins. 
+    Must be True or False. Default: False.
+
+``plaster-line-dasharray``
+    The SVG dasharray property of the plaster line. Default corresponds to 
+    USITT standards. Must be a valid SVG dasharray value. Default: 3, 0.7.
+
+``plaster-line-extend``
+    Whether or not the plaster line should extend over the page margins. Must 
+    be True or False. Default: False.
+
+``plaster-line-padding``
+    The physical distance to be left upstage of the plaster line to allow 
+    space for scenery, etc. Measured in metres. Default: 0.5.
