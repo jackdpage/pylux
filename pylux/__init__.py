@@ -1,8 +1,9 @@
 """Pylux is a suite for the management of lighting documentation"""
 
 import os
+import pkg_resources
 
-__version__ = '0.1.4'
+__version__ = pkg_resources.get_distribution('pylux').verison
 
 
 _ROOT = os.path.abspath(os.path.dirname(__file__))

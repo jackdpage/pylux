@@ -37,10 +37,36 @@ class LightingPlot():
 
     def __init__(self, plot_file, options):
         self.fixtures = plot.FixtureList(plot_file).fixtures
+        self.fixtures = self.get_hung_fixtures()
         self.meta = plot.Metadata(plot_file).meta
         self.options = options
 
+    def get_hung_fixtures(self):
+        """Return a list of the fixtures that are used.
+
+        Trim the fixtures list so that it only contains fixtures 
+        which are hung in the plot. In other words, remove fixtures 
+        which don\'t have position or focus attributes.
+
+        Returns:
+            A list of fixture objects which are used in the plot.
+        """
+        hung_fixtures = []
+        for fixture in self.fixtures:
+            if ('posX' in fixture.data and 'posY' in fixture.data
+                and 'focusX' in fixture.data and 'focusY' in fixture.data):
+                hung_fixtures.append(fixture)
+        return hung_fixtures
+
     def get_page_dimensions(self):
+        """Return the physical size of the paper. 
+
+        Search in the reference module for the paper size in mm then 
+        determine coordinate order based on orientation.
+
+        Returns:
+            A tuple in the form (X, Y) of the dimensions of the paper.
+        """
         paper_type = self.options['paper-size']
         orientation = self.options['orientation']
         dimensions = reference.paper_sizes[paper_type]
@@ -57,7 +83,7 @@ class LightingPlot():
     def get_plot_size(self):
         """Return the physical size of the plot area.
 
-        From the fixtures' locations and focus points, find the 
+        From the fixtures\' locations and focus points, find the 
         greatest and least values of X and Y then calculate the 
         dimensions that the plot covers.
 
@@ -316,7 +342,7 @@ class PlotterContext(Context):
 
     def debug(self, parsed_input):
         self.plot_new(parsed_input)
-        self.plot_write(['tests/PAGEBORDER.svg'])
+        self.plot_write(['devplot.svg'])
 
     def init_plot(self):
         self.options = PlotOptions()
