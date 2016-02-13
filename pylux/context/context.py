@@ -117,7 +117,6 @@ class Context:
 
     def utility_kill(self, parsed_input):
         """Utility to exit the program without warning."""
-        print('Ignoring changes and exiting...')
         sys.exit()
 
     def utility_help(self, parsed_input):

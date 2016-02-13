@@ -283,6 +283,23 @@ class FixtureList:
                 fixture.data['usitt_key'] = str(None)
                 fixture.save()
 
+    def get_fixtures_for_dimmer(self, dimmer):
+        """Get a list of fixtures controlled by this fixture.
+
+        If this is a dimmer fixture, get a list of fixture objects 
+        that the dimmer controls.
+        """
+        if 'is_dimmer' not in dimmer.data:
+            return []
+        if dimmer.data['is_dimmer'] != 'True':
+            return []
+        controlled = []
+        for fixture in self.fixtures:
+            if 'dimmer_uuid' in fixture.data:
+                if fixture.data['dimmer_uuid'] == dimmer.uuid:
+                    controlled.append(fixture)
+        return controlled
+
 
 class Fixture:
     """Manage individual fixtures.

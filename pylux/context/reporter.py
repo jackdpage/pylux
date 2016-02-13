@@ -60,22 +60,51 @@ class Report:
             else:
                 return True
 
+        def is_dimmer(fixture):
+            if 'is_dimmer' in fixture.data:
+                if fixture.data['is_dimmer'] == 'True':
+                    return True
+                else:
+                    return False
+            else:
+                return False
+
         template = self.environment.get_template(template)
+        # Create cues list
         cues = plot.CueList(self.plot_file)
         cues.assign_identifiers(self.plot_file)
         cue_list = sorted(cues.cues, key=lambda cue: cue.key)
+        # Create fixtures list
         fixtures = plot.FixtureList(self.plot_file)
         fixtures.assign_usitt_numbers()
         fixture_list = sorted(fixtures.fixtures, 
                               key=lambda fixture: fixture.data['usitt_key'])
+        # Create hung fixtures list
         hung_fixtures = []
         for fixture in fixture_list:
             if is_hung(fixture):
                 hung_fixtures.append(fixture)
         hung_fixtures.sort(key=lambda fixture: fixture.data['usitt_key'])
+        # Create dimmer list
+        dimmers = []
+        for fixture in fixture_list:
+            if is_dimmer(fixture):
+                power = 0
+                for controlled in fixtures.get_fixtures_for_dimmer(fixture):
+                    if 'power' in controlled.data:
+                        power = power+int(controlled.data['power'])
+                fixture.data['power'] = power
+                dimmers.append(fixture)
+        # Create metadata list
         metadata_list = plot.Metadata(self.plot_file).meta
+        total_power = 0
+        for dimmer in dimmers:
+            total_power = total_power+dimmer.data['power']
+        metadata_list['total_power'] = total_power
+        # Render template
         self.content = template.render(cues=cue_list, fixtures=fixture_list,
-                                       meta=metadata_list, hung=hung_fixtures, 
+                                       meta=metadata_list, hung=hung_fixtures,
+                                       dimmers=dimmers, 
                                        options=options)
 
 
