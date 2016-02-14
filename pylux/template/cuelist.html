@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+{% if options['style'] == 'bootstrap' %}
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
+{% else %}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.0.3/milligram.min.css" rel="stylesheet" />
+{% endif %}
     <title>{{ meta['production'] }} Cue List</title>
 </head>
 <body>
 <h1>{{ meta['production'] }} Cue List</h1>
-<table>
+<table class="table">
     <thead>
         <tr>
             <th>Cue #</th>
@@ -17,6 +21,7 @@
     </thead>
     <tbody>
     {% for cue in cues %}
+        {% if cue.data['type'] in options['show'] or options['show'] == 'all' %}
         <tr>
             <td>{{ cue.data['identifier'] }}</td>
             <td>{{ cue.data['location'] }}</td>

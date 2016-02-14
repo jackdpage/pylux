@@ -29,10 +29,12 @@ Options
 
 Some templates may choose to define some additional options that the user can 
 define when the report generation is run. These are specified using a 
-``key=value`` syntax in a comma-separated list after the ``rn`` command.
+``key=value1,value2`` syntax in a semicolon-separated list after the ``rn`` 
+command.
 
 The allowable options are completely dependent on the template being used. 
 The documentation for the template should make clear what they are. For 
-example, an HTML template may allow you to select the styling::
+example, the cuelist template allows you to filter displayed cues and choose 
+styling::
 
-    rn cuelist style-base=milligram,style-mode=night
+    rn cuelist show=LX,SX;style=bootstrap

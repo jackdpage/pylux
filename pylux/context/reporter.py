@@ -129,6 +129,8 @@ class ReporterContext(Context):
                 options = {}
                 options_input = parsed_input[1].split(';')
                 for option in options_input:
+                    option_name = option.split('=')[0]
+                    option_values = option.split('=')[1].split(',')
                     options[option.split('=')[0]] = option.split('=')[1]
                 return options
 
