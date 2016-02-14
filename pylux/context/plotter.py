@@ -235,6 +235,26 @@ class LightingPlot():
         padding = float(self.options['plaster-line-padding'])*1000/scale
         return margin+padding
 
+    def get_background_image(self):
+        """Get the background image from file.
+
+        Returns:
+            The first group element of the SVG image file.
+        """
+        scale = float(self.options['scale'])
+        svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
+        xloc = self.get_page_dimensions()[0]/2
+        yloc = self.get_plaster_coord()
+        container = ET.Element('g')
+        image_file = os.path.expanduser(self.options['background-image'])
+        image_tree = ET.parse(image_file)
+        image_root = image_tree.getroot()
+        container.append(image_root)
+        container.set('transform', 'scale('+str(1/scale)+') '
+                                     'translate('+str(xloc*scale)+' '+
+                                     str(yloc*scale)+')')
+        return container
+
     def get_title_block(self):
         if self.options['title-block'] == 'corner':
             return self.get_title_corner()
@@ -325,6 +345,7 @@ class LightingPlot():
             self.lighting_plot = self.get_empty_plot()
             root = self.lighting_plot.getroot()
             root.append(self.get_page_border())
+            root.append(self.get_background_image())
             root.append(self.get_centre_line())
             root.append(self.get_plaster_line())
 #            root.append(self.get_title_block())
