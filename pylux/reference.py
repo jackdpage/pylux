@@ -15,6 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+usitt_line_weights = {
+    'scenery' : 'line-weight-light',
+    'leader' : 'line-weight-light',
+    'dimension' : 'line-weight-light',
+    'masking' : 'line-weight-medium',
+    'drop' : 'line-weight-medium',
+    'centre' : 'line-weight-medium',
+    'plaster' : 'line-weight-medium',
+    'batten' : 'line-weight-heavy',
+    'fixture' : 'line-weight-heavy',
+    'architecture' : 'line-weight-heavy',
+    'border' : 'line-weight-heavy'}
+
 paper_sizes = {
     'A0' : (841, 1189),
     'A1' : (594, 841),

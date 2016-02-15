@@ -245,15 +245,23 @@ class LightingPlot():
         svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
         xloc = self.get_page_dimensions()[0]/2
         yloc = self.get_plaster_coord()
-        container = ET.Element('g')
         image_file = os.path.expanduser(self.options['background-image'])
         image_tree = ET.parse(image_file)
         image_root = image_tree.getroot()
-        container.append(image_root)
-        container.set('transform', 'scale('+str(1/scale)+') '
+        image_group = image_root.find('ns0:g', svg_ns)
+        image_group.set('transform', 'scale('+str(1/scale)+') '
                                      'translate('+str(xloc*scale)+' '+
                                      str(yloc*scale)+')')
-        return container
+        for path in image_group:
+            path_class = path.get('class')
+            if path.get('class') in reference.usitt_line_weights:
+                weight = reference.usitt_line_weights[path_class]
+            else:
+                weight = 'line-weight-medium'
+            path.set('stroke-width', 
+                     str(float(self.options[weight])*scale))
+            
+        return image_group
 
     def get_title_block(self):
         if self.options['title-block'] == 'corner':
