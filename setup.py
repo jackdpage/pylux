@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pylux',
-    version='0.1.8',
+    version='0.2.0',
     description='A program for managing lighting documentation.',
     long_description=long_description,
     url='http://os.pwrg.uk/software/pylux',

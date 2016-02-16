@@ -333,8 +333,8 @@ class LightingPlot():
         plaster = self.get_plaster_coord()
         scale = float(self.options['scale'])
         plot_pos = lambda dim: (float(fixture.data['pos'+dim])*1000)
-        rotation = fixture.generate_rotation()
-        colour = fixture.generate_colour()
+        rotation = fixture.get_rotation()
+        colour = fixture.get_colour()
         symbol.set('transform', 'scale( '+str(1/scale)+' ) '
                    'translate('+str(centre*scale+plot_pos('X'))+' '+
                    str(plot_pos('Y')+plaster*scale)+') '
@@ -353,7 +353,10 @@ class LightingPlot():
             self.lighting_plot = self.get_empty_plot()
             root = self.lighting_plot.getroot()
             root.append(self.get_page_border())
-            root.append(self.get_background_image())
+            try:
+                root.append(self.get_background_image())
+            except FileNotFoundError:
+                print('Yeah it kind of didn\'t work. Just going to ignore this')
             root.append(self.get_centre_line())
             root.append(self.get_plaster_line())
 #            root.append(self.get_title_block())

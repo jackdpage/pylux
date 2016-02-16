@@ -4,13 +4,6 @@
     <symbol>PHANTOM</symbol>
     <is_dimmer>True</is_dimmer>
     <dimmer_channels>12</dimmer_channels>
-    <dmx_functions>
-        <channel_1 />
-        <channel_2 />
-        <channel_3 />
-        <channel_4 />
-        <channel_5 />
-        <channel_6 />
-    </dmx_functions>
+    <dmx_functions>channel_1,channel_2,channel_3,channel_4,channel_5,channel_6</dmx_functions>
 </fixture>
 

@@ -3,6 +3,4 @@
 	<type>Eurolite LED Disco Stroboscope</type>
 	<symbol>ministrobe</symbol>
 	<mass>0.4</mass>
-	<dmx_functions>
-	</dmx_functions>
 </fixture>

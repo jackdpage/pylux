@@ -49,7 +49,7 @@ class EditorContext(Context):
                                        'location.'))
         self.register(Command('fg', self.file_get, [], 
                               synopsis='Print the location of the plot file.'))
-        self.register(Command('fn', self.file_new, ['path'],
+        self.register(Command('fn', self.file_new, [],
                               synopsis='Create a new plot file.'))
         self.register(Command('ml', self.metadata_list, [], 
                               synopsis='List all metadata values.'))
@@ -128,20 +128,21 @@ class EditorContext(Context):
 
     def file_write(self, parsed_input):
         try:
-            self.plot_file.save()
+            self.plot_file.write()
         except AttributeError:
             print('Error: No file is loaded')
 
     def file_writeas(self, parsed_input):
-        self.plot_file.saveas(parsed_input[0])
+        self.plot_file.write_to(parsed_input[0])
 
     def file_get(self, parsed_input):
-        print('Using plot file '+self.plot_file.file)
+        if self.plot_file.path is None:
+            print('Using temporary plot file')
+        else:
+            print('Using plot file '+self.plot_file.path)
 
     def file_new(self, parsed_input):
-        self.plot_file.generate(os.path.expanduser(parsed_input[0]))
-        self.plot_file.load(os.path.expanduser(parsed_input[0]))
-        self.file_get(parsed_input)
+        self.plot_file.new()
 
     def metadata_list(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
@@ -150,38 +151,27 @@ class EditorContext(Context):
 
     def metadata_set(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
-        metadata.meta[parsed_input[0]] = parsed_input[1]
-        metadata.save(self.plot_file)
+        metadata.set_data(parsed_input[0], parsed_input[1])
 
     def metadata_remove(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
-        metadata.meta[parsed_input[0]] = None
-        metadata.save(self.plot_file)
+        metadata.set_data(parsed_input[0], None)
 
     def metadata_get(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
-        print(parsed_input[0]+': '+metadata.meta[parsed_input[0]])
+        print(parsed_input[0]+': '+metadata.get_data(parsed_input[0]))
 
     def fixture_new(self, parsed_input):
-        fixture = plot.Fixture(self.plot_file)
         template_file = get_data('fixture/'+parsed_input[0]+'.xml')
         try:
-            fixture.new(template_file)
+            fixture = plot.Fixture(self.plot_file, template=template_file)
         except FileNotFoundError:
-            print('Error: Couldn\'t find a fixture file with this name')
-        else:
-            fixture.add(self.plot_file)
-            fixture.save()
+            print('Error: No template with this name')
 
     def fixture_clone(self, parsed_input):
-        src_fixture = self.interface.get(parsed_input[0])
-        if len(src_fixture) > 1:
-            print('Error: You can only clone one fixture!')
-        else:
-            new_fixture = plot.Fixture(self.plot_file, FIXTURES_DIR)
-            new_fixture.clone(src_fixture[0])
-            new_fixture.add()
-            new_fixture.save()
+        src_fixtures = self.interface.get(parsed_input[0])
+        for src in src_fixtures:
+            new_fixture = plot.Fixture(self.plot_file, src_fixture=src)
 
     def fixture_list(self, parsed_input):
         fixtures = plot.FixtureList(self.plot_file)
@@ -225,17 +215,15 @@ class EditorContext(Context):
     def fixture_remove(self, parsed_input):
         fixture_list = plot.FixtureList(self.plot_file)
         fixtures = self.interface.get(parsed_input[0])
+        registries = plot.RegistryList(self.plot_file)
         for fixture in fixtures:
-            fixture.unaddress(self.plot_file)
+            fixture.unaddress(registries)
             fixture_list.remove(fixture)
 
     def fixture_get(self, parsed_input):
         fixtures = self.interface.get(parsed_input[0])
         for fixture in fixtures:
-            if parsed_input[1] in fixture.data:
-                print(fixture.data[parsed_input[1]])
-            else:
-                print(None)
+            print(fixture.get_data(parsed_input[1]))
         self.interface.update_this(parsed_input[0])
 
     def fixture_getall(self, parsed_input):
@@ -250,38 +238,25 @@ class EditorContext(Context):
         tag = parsed_input[1]
         value = parsed_input[2]
         for fixture in fixtures:
-            # See if it can be automatically generated
-            if value == 'auto':
-                if tag == 'rotation':
-                    fixture.data['rotation'] = str(fixture.generate_rotation())
-                elif tag == 'colour':
-                    fixture.data['colour'] = fixture.generate_colour()
-                else:
-                    print('Error: No automatic generation is available for '
-                          'this tag')
             # See if it is a special pseudo tag
-            elif tag == 'position':
-                fixture.data['posX'] = value.split(',')[0]
-                fixture.data['posY'] = value.split(',')[1]
+            if tag == 'position':
+                fixture.set_data('posX', value.split(',')[0])
+                fixture.set_data('posY', value.split(',')[1])
             elif tag == 'focus':
-                fixture.data['focusX'] = value.split(',')[0]
-                fixture.data['focusY'] = value.split(',')[1]
+                fixture.set_data('focusX', value.split(',')[0])
+                fixture.set_data('focusY', value.split(',')[1])
             elif tag == 'dimmer':
-                fixture.data['dimmer_uuid'] = self.interface.get(value.split(',')[0])[0].uuid
-                fixture.data['dimmer_channel'] = value.split(',')[1]
+                fixture.set_data('dimmer_uuid', self.interface.get(value.split(',')[0])[0].uuid)
+                fixture.set_data('dimmer_channel', value.split(',')[1])
             # Otherwise just set it
             else:
-                fixture.data[tag] = value
-            fixture.save()
+                fixture.set_data(tag, value)
         self.interface.update_this(parsed_input[0])
 
     def fixture_address(self, parsed_input):
         fixtures = self.interface.get(parsed_input[0])
-        if len(fixtures) > 1 :
-            print('Error: You cannot specify more than one fixture. \n'
-                  'Using the first fixture in the list.')
         registry = plot.DmxRegistry(self.plot_file, parsed_input[1])
-        required_channels = fixtures[0].data['dmx_channels']
+        required_channels = len(fixtures[0].data['dmx_functions'].split(','))
         if parsed_input[2] == 'auto':
             start_address = registry.get_start_address(required_channels)
         else:

@@ -35,13 +35,32 @@ class PlotFile:
     """Manage the Pylux plot project file.
 
     Attributes:
-        file: the path of the project file.
+        path: the path of the project file.
         tree: the parsed XML tree.
         root: the root element of the XML tree.
     """
 
-    def __init__(self):
-        self.file = None
+    def __init__(self, path=None):
+        """Initialise the PlotFile instance.
+
+        Prepares the instance of PlotFile for a file to be loaded 
+        into it. If the path argument is given, loads the plot file 
+        at that location on the filesystem and parses its XML tree 
+        into an accessible element.
+
+        Args:
+            path: the full system path of the file to load.
+
+        Raises:
+            FileNotFoundError: if the file does not exist on the 
+                               filesystem.
+            FileFormatError: if the  XML parser raises a ParseError.
+        """
+        self.path = path
+        if self.path is None:
+            self.new()
+        else:
+            self.load(self.path)
 
     def load(self, path):
         """Load a project file.
@@ -49,7 +68,7 @@ class PlotFile:
         Args:
             path: the location of the file to load.
 
-        Raises:
+        Raeses:
             FileNotFoundError: if the file can not be found in the 
                                directory hierarchy.
             FileFormatError: if the XML parser raises a ParseError.
@@ -60,30 +79,31 @@ class PlotFile:
             raise FileFormatError
         else:
             self.root = self.tree.getroot()
-            self.file = path
+            self.path = path
 
-    def save(self):
+    def write(self):
         """Save the project file to its original location."""
-        self.tree.write(self.file, encoding='UTF-8', xml_declaration=True)
+        self.tree.write(self.path, encoding='UTF-8', xml_declaration=True)
 
-    def saveas(self, path):
+    def write_to(self, path):
         """Save the project file to a new location.
 
         Args:
             path: the location to save the file to.
         """
-        self.tree.write(path, encoding='UTF-8', xml_declaration=True)
+        self.path = path
+        self.write()
 
-    def generate(self, path):
-        """Generate a blank project file.
+    def new(self):
+        """Create a new plot file in the buffer.
 
-        Generate a file containing the olplot root element, the 
-        metadata element and the fixtures element.
+        Overwrite the current file buffer with a new empty plot file. 
+        Create a new ElementTree in tree and set the root to be a 
+        plot element.
         """
-        with open(path, 'w') as new_file:
-            new_file.write('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'
-                           '<plot>\n</plot>')
-
+        self.root = ET.Element('plot')
+        self.tree = ET.ElementTree(self.root)
+        self.path = None
 
 class DmxRegistry:
     """Manage DMX registries.
@@ -94,20 +114,20 @@ class DmxRegistry:
     def __init__(self, plot_file, universe):
         self.registry = {}
         self.universe = universe
-        self.xml_registry = False
+        self._xml_registry = None
         # Find the corresponding XML registry
         for xml_registry in plot_file.root.findall('registry'):
             if xml_registry.get('universe') == self.universe:
-                self.xml_registry = xml_registry
+                self._xml_registry = xml_registry
                 break
         # If there isn't one make a new one
-        if not self.xml_registry:
-            self.xml_registry = ET.Element('registry')
-            self.xml_registry.set('universe', self.universe)
-            plot_file.root.append(self.xml_registry)
+        if self._xml_registry is None:
+            self._xml_registry = ET.Element('registry')
+            self._xml_registry.set('universe', self.universe)
+            plot_file.root.append(self._xml_registry)
         # Otherwise populate the Python registry
         else:
-            for xml_channel in xml_registry.findall('channel'):
+            for xml_channel in self._xml_registry.findall('channel'):
                 address = int(xml_channel.get('address'))
                 self.registry[address] = []
                 for xml_function in xml_channel.findall('function'):
@@ -115,7 +135,7 @@ class DmxRegistry:
                     function = xml_function.text
                     self.registry[address].append((fixture_uuid, function))
 
-    def save(self):
+    def _save(self):
         """Saves the Python registry to the XML tree.
 
         Saves the contents of the Python DMX registry to the registry in 
@@ -124,14 +144,14 @@ class DmxRegistry:
         """
         # Search a channel with address in XML
         def get_xml_channel(self, address):
-            for channel in self.xml_registry.findall('channel'):
+            for channel in self._xml_registry.findall('channel'):
                 found_address = channel.get('address')
                 if found_address == str(address):
                     return channel
 
         # Add an empty channel object
         def add_xml_channel(self, address):
-            new_channel = ET.SubElement(self.xml_registry, 'channel')
+            new_channel = ET.SubElement(self._xml_registry, 'channel')
             new_channel.set('address', str(address))
 
         # Iterate over the Python registry
@@ -154,7 +174,7 @@ class DmxRegistry:
                     xml_function.set('uuid', fixture_uuid)
                     xml_function.text = fixture_function
             else:
-                self.xml_registry.remove(get_xml_channel(self, address))
+                self._xml_registry.remove(get_xml_channel(self, address))
 
     def get_occupied(self):
         """Returns a list of occupied DMX channels.
@@ -207,6 +227,7 @@ class DmxRegistry:
             self.registry[address].append((fixture_uuid, function))
         else:
             self.registry[address] = [(fixture_uuid, function)]
+        self._save()
 
     def remove_function(self, address, uuid):
         """Remove a function from an address.
@@ -217,6 +238,7 @@ class DmxRegistry:
         for function in self.registry[address]:
             if function[0] == uuid:
                 self.registry[address].remove(function)
+        self._save()
 
     def get_functions(self, address):
         if address in self.registry:
@@ -239,22 +261,15 @@ class FixtureList:
     """Manage all the fixtures in a plot."""
     def __init__(self, plot_file):
         """Creates fixture objects for all the fixtures in the plot."""
-        self.xml_fixtures = plot_file.root.findall('fixture')
+        self._root = plot_file.root
         self.fixtures = []
-        self.plot_file = plot_file
-        for xml_fixture in self.xml_fixtures:
-            fixture = Fixture(plot_file)
-            fixture.load(xml_fixture)
+        for xml_fixture in self._root.findall('fixture'):
+            fixture = Fixture(plot_file, uuid=xml_fixture.get('uuid'))
             self.fixtures.append(fixture)
 
     def remove(self, fixture):
         """Remove a fixture from the plot."""
-        self.plot_file.root.remove(fixture.xml_fixture)
-
-    def remove_from_uuid(self, uuid):
-        for xml_fixture in self.xml_fixtures:
-            if xml_fixture.get('uuid') == uuid:
-                self.plot_file.root.remove(xml_fixture)
+        self._root.remove(fixture._xml_fixture)
 
     def get_data_values(self, data_type):
         """Returns a list containing the values of data...etc""" 
@@ -275,13 +290,11 @@ class FixtureList:
             if 'posY' in fixture.data:
                 hung.append(fixture)
         for fixture in sorted(hung, key=lambda fixture: fixture.data['posY']):
-            fixture.data['usitt_key'] = str(count)
+            fixture.set_data('usitt_key', str(count))
             count = count+1
-            fixture.save()
         for fixture in self.fixtures:
             if fixture not in hung:
-                fixture.data['usitt_key'] = str(None)
-                fixture.save()
+                fixture.set_data('usitt_key', str(None))
 
     def get_fixtures_for_dimmer(self, dimmer):
         """Get a list of fixtures controlled by this fixture.
@@ -312,106 +325,82 @@ class Fixture:
         dmx_num: the number of DMX channels required by this fixture.
     """
 
-    def __init__(self, plot_file, uuid=None):
-        """Create a new fixture in Python and load data based on UUID."""
-        self.plot_file = plot_file
+    def __init__(self, plot_file, uuid=None, template=None, src_fixture=None):
+        """Create a new fixture in Python.
+
+        If uuid is given, load data from the plot file from the fixture 
+        with the corresponding UUID. If template is given, create a new 
+        fixture based on the template file. If src_fixture is given, 
+        copy the contents of an existing fixture into this one.
+
+        Args:
+            plot_file: the PlotFile object containing the plot.
+            uuid: the UUID of the fixture to load from XML.
+            src_fixture: the Fixture object to copy into this one.
+        """
         self.data = {}
-        self.dmx_functions = []
         if uuid != None:
+            self.uuid = uuid
             xml_fixtures = plot_file.root.findall('fixture')
-            for xml_fixture in xml_fixtures:
+            for xml_fixture in plot_file.root.findall('fixture'):
                 if uuid == xml_fixture.get('uuid'):
-                    self.load(xml_fixture)
+                    self._xml_fixture = xml_fixture
+                    for data_item in self._xml_fixture:
+                        self.data[data_item.tag] = data_item.text
+                    self._save()
+        elif template != None:
+            self._new_from_template(template)
+            self._xml_fixture = ET.Element('fixture')
+            self._xml_fixture.set('uuid', self.uuid)
+            plot_file.root.append(self._xml_fixture)
+            self._save()
+        elif src_fixture != None:
+            self._new_from_fixture(src_fixture)
+            self._xml_fixture = ET.Element('fixture')
+            self._xml_fixture.set('uuid', self.uuid)
+            plot_file.root.append(self._xml_fixture)
+            self._save()
 
-    def new(self, template_file):
-        """Make this fixture as a brand new fixture.
-
-        Given template name, assign a UUID and load the constants from the 
-        OLF file into the data dictionary.
+    def _new_from_template(self, template_file):
+        """Load information from a template into this fixture.
 
         Args:
             template: the name of the template the new fixture should copy.
         """
-        self.uuid = str(uuid.uuid4()) # Random UUID assigned
+        self.uuid = str(uuid.uuid4()) 
         src_tree = ET.parse(template_file)
-        self.src_root = src_tree.getroot()
-        dmx_xml = self.src_root.find('dmx_functions')
-        for channel in dmx_xml:
-            self.dmx_functions.append(channel.tag)
-        dmx_num = len(self.dmx_functions)
-        # Add constants from OLF file
-        for xml_data in self.src_root:
-            if xml_data.tag != 'dmx_functions':
-                self.data[xml_data.tag] = xml_data.text
-        self.data['dmx_channels'] = str(dmx_num)
+        src_root = src_tree.getroot()
+        for xml_data in src_root:
+            self.data[xml_data.tag] = xml_data.text
 
-    def add(self, plot_file):
-        """Create an XML object for the fixture and add to the tree.
+    def _new_from_fixture(self, src_fixture):
+        """Copy the contents of another fixture into this one.
 
-        Generate a fixture XML object and populate it with the 
-        contents of the data dictionary, then add the newly created 
-        fixture to the XML tree.
-        """
-        new_fixture = ET.Element('fixture')
-        new_fixture.set('uuid', self.uuid)
-        # Iterate over data 
-        for data_item in self.data:
-            new_detail = ET.SubElement(new_fixture, data_item)
-            new_detail.text = self.data[data_item]
-        xml_dmx_functions = ET.SubElement(new_fixture, 'dmx_functions')
-        for dmx_function in self.dmx_functions:
-            new_dmx_function = ET.SubElement(xml_dmx_functions, dmx_function)
-        plot_file.root.append(new_fixture)
-        self.xml_fixture = new_fixture
-
-    def load(self, xml_fixture):
-        """Make this fixture as an existing fixture in the XML tree.
-
-        Load the contents of an existing fixture in the XML document 
-        into this Python fixture object.
+        Make a verbatim copy of an existing fixture, except create 
+        a new UUID for this fixture.
 
         Args:
-            fixture: the XML fixture object to load.
-        """
-        self.xml_fixture = xml_fixture
-        self.uuid = xml_fixture.get('uuid')
-        for data_item in xml_fixture:
-            if data_item.tag != 'dmx_functions':
-                self.data[data_item.tag] = data_item.text
-        xml_dmx_functions = xml_fixture.find('dmx_functions')
-        for dmx_function in xml_dmx_functions:
-            self.dmx_functions.append(dmx_function.tag)
-        self.dmx_num = len(self.dmx_functions)
-
-    def clone(self, src_fixture):
-        """Clone a fixture.
-
-         an exact copy of a fixture in XML, but assign a new 
-        UUID.
-
-        Args:
-            src_fixture: source Python fixture object to copy.
+            src_fixture: the source Fixture to be copied. 
         """
         self.uuid = str(uuid.uuid4())
         for data_item in src_fixture.data:
             self.data[data_item] = src_fixture.data[data_item]
 
-    def save(self):
+    def _save(self):
         """Save the Python fixture object to XML."""
         # Add a new data item
         def add_xml_data(self, tag, value):
-            new_data_item = ET.Element(tag)    
+            new_data_item = ET.SubElement(self._xml_fixture, tag)    
             new_data_item.text = value
-            self.xml_fixture.append(new_data_item)
 
         # Edit an existing data item
         def edit_xml_data(self, tag, new_value):
-            self.xml_fixture.find(tag).text = new_value
+            self._xml_fixture.find(tag).text = new_value
 
         # Search for data in XML
         def get_xml_data(self, tag):
             try:
-                return self.xml_fixture.find(tag)
+                return self._xml_fixture.find(tag)
             except AttributeError:
                 return None
 
@@ -423,37 +412,52 @@ class Fixture:
             else:
                 edit_xml_data(self, data_item, self.data[data_item])
         # Iterate over XML fixture to remove empty data
-        for data_item in self.xml_fixture:
+        for data_item in self._xml_fixture:
             data_name = data_item.tag
-            if data_name != 'dmx_functions' and self.data[data_name] == "" :
-                self.xml_fixture.remove(data_item)
+            if self.data[data_name] == '':
+                self._xml_fixture.remove(data_item)
+
+    def set_data(self, name, value):
+        """Set the value of a piece of data."""
+        self.data[name] = value
+        self._save()
+
+    def get_data(self, name):
+        """Get the value of a piece of data."""
+        if name in self.data:
+            return self.data[name]
+        else:
+            return None
 
     def address(self, registry, start_address):
         address = start_address
-        for function in self.dmx_functions:
+        for function in self.data['dmx_functions'].split(','):
             registry.add_function(address, self.uuid, function)
             address = address+1
-        registry.save()
 
-    def unaddress(self, plot_file):
-        registries = RegistryList(plot_file)
+    def unaddress(self, registries):
         for registry in registries.registries:
             for address in registry.registry:
                 registry.remove_function(address, self.uuid)
-        registry.save()
 
-    def generate_rotation(self):
-        posX = float(self.data['posX'])
-        posY = float(self.data['posY'])
-        focusX = float(self.data['focusX'])
-        focusY = float(self.data['focusY'])
-        return math.degrees(math.atan2((focusY-posY), (focusX-posX)))
+    def get_rotation(self):
+        if ('posX' not in self.data or 'posY' not in self.data
+            or 'focusX' not in self.data or 'focusY' not in self.data):
+            return None
+        else:
+            posX = float(self.data['posX'])
+            posY = float(self.data['posY'])
+            focusX = float(self.data['focusX'])
+            focusY = float(self.data['focusY'])
+            return math.degrees(math.atan2((focusY-posY), (focusX-posX)))
 
-    def generate_colour(self):
-        if self.data['gel'] in reference.gel_colours:
+    def get_colour(self):
+        if 'gel' not in self.data:
+            return None
+        elif self.data['gel'] in reference.gel_colours:
             return reference.gel_colours[self.data['gel']]
         else:
-            return False
+            return None
 
 
 class Metadata:
@@ -470,19 +474,23 @@ class Metadata:
         Args:
             plot_file: the FileManager object of the project file.
         """
-        self.xml_meta = plot_file.root.findall('metadata')
+        self._root = plot_file.root
         self.meta = {}
-        for metaitem in self.xml_meta:
+        for metaitem in self._root.findall('metadata'):
             self.meta[metaitem.get('name')] = metaitem.text
 
-    def save(self, plot_file):
+    def set_data(self, name, value):
+        self.meta[name] = value
+        self._save()
+
+    def _save(self):
         """Save the metadata dictionary to XML."""
         # Add a new meta item
         def add_xml_meta(self, name, value):
             new_metadata = ET.Element('metadata')    
             new_metadata.set('name', name)
             new_metadata.text = value
-            plot_file.root.append(new_metadata)
+            self._root.append(new_metadata)
 
         # Edit an existing meta item
         def edit_xml_meta(self, xml_meta, new_value):
@@ -491,7 +499,7 @@ class Metadata:
         # Search for meta in XML
         def get_xml_meta(self, name):
             try:
-                for metaitem in self.xml_meta:
+                for metaitem in self._root.findall('metadata'):
                     if metaitem.get('name') == metaitem:
                         return metaitem
                 else:
@@ -507,11 +515,10 @@ class Metadata:
             else:
                 edit_xml_meta(self, xml_meta, self.meta[metaitem])
         # Iterate over XML meta object to remove empty values
-        for metaitem in self.xml_meta:
+        for metaitem in self._root.findall('metadata'):
             name = metaitem.get('name')
             if self.meta[name] == None:
-                plot_file.root.remove(metaitem)
-
+                self._root.remove(metaitem)
 
 class Cue:
     """Manages cues something something bored of docstrings."""
@@ -522,44 +529,53 @@ class Cue:
         if UUID is None:
             self.uuid = str(uuid.uuid4())
             self.key = len(CueList(plot_file).cues)+1
-            xml_cue = ET.Element('cue')
-            xml_cue.set('uuid', self.uuid)
-            plot_file.root.append(xml_cue)
+            self._xml_cue = ET.Element('cue')
+            self._xml_cue.set('uuid', self.uuid)
+            plot_file.root.append(self._xml_cue)
         else:
             self.uuid = UUID
             for xml_cue in plot_file.root.findall('cue'):
                 if xml_cue.get('uuid') == self.uuid:
+                    self._xml_cue = xml_cue
                     self.key = int(xml_cue.get('key'))
                     for cue_data in xml_cue:
                         self.data[cue_data.tag] = cue_data.text
 
+    def set_data(self, name, value):
+        """Set the value of name to value and save to XML."""
+        self.data[name] = value
+        self._save()
 
-    def save(self, plot_file):
+    def get_data(self, name):
+        """Get the value of name."""
+        if name in self.data:
+            return self.data[name]
+        else:
+            return None
+
+    def _save(self):
         """Save the cue to XML."""
-        for xml_cue_test in plot_file.root.findall('cue'):
-            if xml_cue_test.get('uuid') == self.uuid:
-                xml_cue = xml_cue_test
         # Find data tags already in XML
         data_in_xml = []
-        for data_item_xml in xml_cue:
+        for data_item_xml in self._xml_cue:
             data_in_xml.append(data_item_xml.tag)
         # Set the sorting key
-        xml_cue.set('key', str(self.key))
+        self._xml_cue.set('key', str(self.key))
         # Iterate through data in dict
         for data_item in self.data:
             # If data not in XML, make a new sub element
             if data_item not in data_in_xml:
-                new_data_item = ET.SubElement(xml_cue, data_item)
+                new_data_item = ET.SubElement(self._xml_cue, data_item)
                 new_data_item.text = self.data[data_item]
             # Otherwise edit existing data
             else:
-                for data_item_xml in xml_cue:
+                for data_item_xml in self._xml_cue:
                     if data_item_xml.tag == data_item:
                         data_item_xml.text = self.data[data_item]
         # Iterate through data in XML and remove empty
-        for data_item_xml in xml_cue:
+        for data_item_xml in self._xml_cue:
             if self.data[data_item_xml.tag] is None:
-                xml_cue.remove(data_item_xml)
+                self._xml_cue.remove(data_item_xml)
 
 
 class CueList:
@@ -582,24 +598,23 @@ class CueList:
         Args:
             plot_file: the PlotFile object containing the document.
         """
+        self._root = plot_file.root
         self.cues = []
-        for xml_cue in plot_file.root.findall('cue'):
+        for xml_cue in self._root.findall('cue'):
             cue_uuid = xml_cue.get('uuid')
             cue = Cue(plot_file, UUID=cue_uuid)
             self.cues.append(cue)
 
-    def remove(self, plot_file, UUID):
+    def remove(self, cue):
         """Remove a cue from the plot entirely.
 
         Args:
             plot_file: the PlotFile object containing the document.
             UUID: the UUID of the cue to be deleted.
         """
-        for xml_cue in plot_file.root.findall('cue'):
-            if xml_cue.get('uuid') == UUID:
-                plot_file.root.remove(xml_cue)
+            self._root.remove(cue._xml_cue)
 
-    def move_after(self, plot_file, origin, dest):
+    def move_after(self, origin, dest):
         """Move a cue after another in the list.
 
         Manipulate the key attributes of any necessary cues to 
@@ -618,16 +633,16 @@ class CueList:
                     cue.key = dest
                 elif origin < cue.key <= dest:
                     cue.key = cue.key-1
-                cue.save(plot_file)
+                cue._save()
         if dest < origin:
             for cue in self.cues:
                 if dest < cue.key < origin:
                     cue.key = cue.key+1
                 elif cue.key == origin:
                     cue.key = dest+1
-                cue.save(plot_file)
+                cue._save()
 
-    def move_before(self, plot_file, origin, dest):
+    def move_before(self, origin, dest):
         """Move a cue before another in the list.
 
         Manipulate the key attributes of any necessary cues to 
@@ -646,22 +661,21 @@ class CueList:
                     cue.key = dest
                 elif dest >= cue.key > origin:
                     cue.key = cue.key-1
-                cue.save(plot_file)
+                cue._save()
         if dest < origin:
             for cue in self.cues:
                 if origin > cue.key >= dest:
                     cue.key = cue.key+1
                 elif cue.key == origin:
                     cue.key = dest
-                cue.save(plot_file)
+                cue._save()
 
-    def assign_identifiers(self, plot_file):
+    def assign_identifiers(self):
         count = {'LX': 1, 'SX': 1, 'VX': 1}
         for cue in sorted(self.cues, key=lambda cue: cue.key):
             cue_type = cue.data['type']
-            cue.data['identifier'] = cue_type+str(count[cue_type])
+            cue.set_data('identifier', cue_type+str(count[cue_type]))
             count[cue_type] = count[cue_type]+1
-            cue.save(plot_file)
 
 
 class Scene:

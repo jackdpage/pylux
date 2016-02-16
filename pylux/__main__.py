@@ -57,7 +57,7 @@ def main():
     plot_file = plot.PlotFile()
     if launch_args.file != None:
         plot_file.load(launch_args.file)
-        print('Using plot file '+plot_file.file)
+        print('Using plot file '+plot_file.path)
     else:
         print('No plot file loaded')
     # Prepare globals for launch
