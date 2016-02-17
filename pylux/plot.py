@@ -612,7 +612,7 @@ class CueList:
             plot_file: the PlotFile object containing the document.
             UUID: the UUID of the cue to be deleted.
         """
-            self._root.remove(cue._xml_cue)
+        self._root.remove(cue._xml_cue)
 
     def move_after(self, origin, dest):
         """Move a cue after another in the list.

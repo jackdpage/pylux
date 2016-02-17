@@ -146,8 +146,8 @@ class EditorContext(Context):
 
     def metadata_list(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
-        for i in metadata.meta:
-            print(i+': '+metadata.meta[i])
+        for meta_item in sorted(metadata.meta):
+            print(meta_item+': '+metadata.meta[meta_item])
 
     def metadata_set(self, parsed_input):
         metadata = plot.Metadata(self.plot_file)
