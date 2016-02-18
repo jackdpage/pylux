@@ -305,15 +305,14 @@ class EditorContext(Context):
         for cue in cues.cues:
             cue_type = cue.data['type']
             cue_location = cue.data['location']
-            print('\033[4m'+str(cue.key)+'\033[0m ('+cue_type+') at '+
-                  cue_location)
+            print(''.join(['\033[4m',str(cue.key),'\033[0m (',cue_type,
+                          ') at \'',cue_location,'\'']))
             self.interface.append(cue.key, cue)
 
     def cue_new(self, parsed_input):
         cue = plot.Cue(self.plot_file)
-        cue.data['type'] = parsed_input[0]
-        cue.data['location'] = parsed_input[1]
-        cue.save(self.plot_file)
+        cue.set_data('type', parsed_input[0])
+        cue.set_data('location', parsed_input[1])
 
     def cue_remove(self, parsed_input):
         cues = plot.CueList(self.plot_file)
@@ -324,8 +323,7 @@ class EditorContext(Context):
     def cue_set(self, parsed_input):
         cues_to_change = self.interface.get(parsed_input[0])
         for cue in cues_to_change:
-            cue.data[parsed_input[1]] = parsed_input[2]
-            cue.save(self.plot_file)
+            cue.set_data(parsed_input[1], parsed_input[2])
 
     def cue_get(self, parsed_input):
         cues_to_get = self.interface.get(parsed_input[0])
