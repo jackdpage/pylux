@@ -18,7 +18,6 @@ This documentation is aimed at both users and developers.
     contexts
     standard_tags
 
-
 .. toctree::
     :maxdepth: 2
     :caption: Developer Documentation
@@ -26,6 +25,12 @@ This documentation is aimed at both users and developers.
     developer_introduction
     plot_module
     clihelper
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Creator Documentation
+
+    creator_introduction
 
 .. toctree::
     :maxdepth: 2

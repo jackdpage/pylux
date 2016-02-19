@@ -1,5 +1,5 @@
-Introduction
-============
+User Introduction
+=================
 
 Pylux is a program written in Python whose primary purpose is the management 
 of documentation for stage lighting. It could, however, just as easily be 
