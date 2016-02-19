@@ -19,7 +19,6 @@
 from pylux.clihelper import resolve_input, Interface 
 from importlib import import_module
 from tabulate import tabulate
-import logging
 import sys
 import os
 
@@ -85,7 +84,6 @@ class Context:
         self.config = globals_dict['CONFIG']
         self.log_level = globals_dict['LOG_LEVEL']
         self.interface = Interface()
-        logging.basicConfig(level=self.log_level)
         self.post_init()
 
     def get_globals(self):
@@ -110,6 +108,11 @@ class Context:
         Add a command to the list of commands the user can invoke.
         """
         self.commands[command.mnemonic] = command
+
+    def log(self, level, message):
+        level_name = self.config['advanced']['log-'+str(level)]
+        if level >= self.log_level:
+            print(''.join([level_name,':',self.name,':',message]))
 
     def utility_clear(self, parsed_input):
         """Utility to clear the screen using system call."""

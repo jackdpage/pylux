@@ -16,10 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import logging
 from importlib import import_module
-
 
 def get_context(context_name):
     module_name = 'pylux.context.'+context_name
@@ -40,7 +37,6 @@ def main():
         'CONFIG': CONFIG,
         'LOG_LEVEL': LOG_LEVEL}
     context.set_globals(globals_dict)
-    logging.basicConfig(level=LOG_LEVEL)
     print('Welcome to Pylux! Type \'h\' to view a list of commands.')
     while True:
         user_input = input('(pylux:'+context.name+') ')

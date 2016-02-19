@@ -49,10 +49,11 @@ def main():
                  get_data('settings.conf', location='home')])
     # Handle verbosity
     verbosity_dict = {
-        None: (logging.WARNING, 'WARNING'), 
-        1: (logging.INFO, 'INFO'),
-        2: (logging.DEBUG, 'DEBUG')}
-    print('Logging level is '+verbosity_dict[launch_args.verbose][1])
+        None: 30, 
+        1: 20,
+        2: 10,
+        3: 1}
+    print('Logging level is '+config['advanced']['log-'+str(verbosity_dict[launch_args.verbose])])
     # Load plot file
     plot_file = plot.PlotFile()
     if launch_args.file != None:
@@ -64,7 +65,7 @@ def main():
     init_globals = {
         'PLOT_FILE': plot_file,
         'CONFIG': config,
-        'LOG_LEVEL': verbosity_dict[launch_args.verbose][0]}
+        'LOG_LEVEL': verbosity_dict[launch_args.verbose]}
     if launch_args.gui == True:
         print('Running in GUI mode\n')
         runpy.run_module('pylux.gui', init_globals=init_globals, 

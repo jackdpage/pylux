@@ -318,7 +318,7 @@ class EditorContext(Context):
         cues = plot.CueList(self.plot_file)
         removal_candidates = self.interface.get(parsed_input[0])
         for rc in removal_candidates:
-            cues.remove(self.plot_file, rc.uuid)
+            cues.remove(rc)
 
     def cue_set(self, parsed_input):
         cues_to_change = self.interface.get(parsed_input[0])
@@ -341,12 +341,12 @@ class EditorContext(Context):
 
     def cue_moveafter(self, parsed_input):
         cues = plot.CueList(self.plot_file)
-        cues.move_after(self.plot_file, int(parsed_input[0]), 
+        cues.move_after(int(parsed_input[0]), 
                         int(parsed_input[1]))
 
     def cue_movebefore(self, parsed_input):
         cues = plot.CueList(self.plot_file)
-        cues.move_before(self.plot_file, int(parsed_input[0]), 
+        cues.move_before(int(parsed_input[0]), 
                          int(parsed_input[1]))
 
 
