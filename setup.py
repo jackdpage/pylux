@@ -1,3 +1,4 @@
+#!/usr/bin/python3.5
 """Install Pylux."""
 
 from setuptools import setup, find_packages
@@ -25,10 +26,6 @@ setup(
         'Topic :: Office/Business',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
 
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
     keywords='lighting theatre stage tech',

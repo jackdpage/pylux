@@ -22,12 +22,12 @@ general use.
 
 Regular users should install Pylux from the PyPI using pip::
 
-    sudo pip install pylux
+    sudo pip3 install pylux
 
-In order to do this you will need the Python 3 interpreter and setup tools::
+In order to do this you will need the Python 3.5 interpreter::
 
-    sudo apt install python3 python3-pip python3-setuptools
-    sudo pacman -S python python-pip python-setuptools
+    sudo apt install python3.5
+    sudo pacman -S python
 
 If you would rather use the most recent code, you can install from the Git 
 repository::

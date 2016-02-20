@@ -267,7 +267,7 @@ class EditorContext(Context):
     def fixture_unaddress(self, parsed_input):
         fixtures = self.interface.get(parsed_input[0])
         for fixture in fixtures:
-            fixture.unaddress(self.plot_file)
+            fixture.unaddress(plot.RegistryList(self.plot_file))
 
     def registry_list(self, parsed_input):
         registry = plot.DmxRegistry(self.plot_file, parsed_input[0])

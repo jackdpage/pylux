@@ -124,7 +124,7 @@ class Context:
 
     def utility_help(self, parsed_input):
         """Print a list of all available commands."""
-        if len(parsed_input) > 1:
+        if len(parsed_input) > 0:
             if parsed_input[0] not in self.commands:
                 print('Error: Command does not exist')
             else:
