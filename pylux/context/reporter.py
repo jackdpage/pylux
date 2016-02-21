@@ -72,7 +72,7 @@ class Report:
         template = self.environment.get_template(template)
         # Create cues list
         cues = plot.CueList(self.plot_file)
-        cues.assign_identifiers(self.plot_file)
+        cues.assign_identifiers()
         cue_list = sorted(cues.cues, key=lambda cue: cue.key)
         # Create fixtures list
         fixtures = plot.FixtureList(self.plot_file)

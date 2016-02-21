@@ -20,14 +20,9 @@ from importlib import import_module
 
 def get_context(context_name):
     module_name = 'pylux.context.'+context_name
-    try:
-        context_module = import_module(module_name)
-    except ImportError:
-        print('Error: Context does not exist')
-        return None
-    else:
-        context_class = context_module.get_context()
-        return context_class
+    context_module = import_module(module_name)
+    context_class = context_module.get_context()
+    return context_class
 
 
 def main():
@@ -47,17 +42,18 @@ def main():
                 globals_dict = context.get_globals()
                 context = get_context(CONFIG['cli']['default-context'])
                 context.set_globals(globals_dict)
-
             elif inputs[0][0] == ':':
                 globals_dict = context.get_globals()
-                context = get_context(inputs[0].split(':')[1])
-                context.set_globals(globals_dict)
-
+                try:
+                    context = get_context(inputs[0].split(':')[1])
+                except ImportError or AttributeError:
+                    context.log(30, 'Context does not exist')
+                else:
+                    context.set_globals(globals_dict)
             elif inputs[0] in context.commands:
                 context.process(inputs)
-
             else:
-                print('Error: Command doesn\'t exist.') 
+                context.log(30, 'Command does not exist') 
 
 
 if __name__ == 'pylux_root':

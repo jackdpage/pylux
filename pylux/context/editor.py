@@ -38,7 +38,6 @@ class EditorContext(Context):
         super().__init__()
         self.name = 'editor'
         # Register commands
-        self.register(Command('q', self.save_quit, []))
         self.register(Command('fo', self.file_open, ['path'], 
                               synopsis='Open a plot file.'))
         self.register(Command('fw', self.file_write, [], 
@@ -113,10 +112,6 @@ class EditorContext(Context):
                               synopsis='Move a cue after another.'))
         self.register(Command('qM', self.cue_movebefore, ['cue', 'dest_cue'], 
                               synopsis='Move a cue before another.'))
-
-    def save_quit(self, parsed_input):
-        self.file_write(parsed_input)
-        self.utility_kill(parsed_input)
 
     def file_open(self, parsed_input):
         try:

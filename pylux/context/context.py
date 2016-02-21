@@ -48,6 +48,9 @@ class Context:
                       synopsis='Clear the screen.'))
         self.register(Command('h', self.utility_help, ['command'], 
                       synopsis='Get information about a command.'))
+        self.register(Command('q', self.utility_exit, [],
+                              synopsis='Exit the program and save changes to '
+                                       'disk.'))
         self.register(Command('Q', self.utility_kill, [], 
                       synopsis='Exit the program without saving any changes.'))
 
@@ -67,8 +70,17 @@ class Context:
             inputs: the user input, split by <space>.
         """
         command = self.commands[inputs[0]]
-        parsed_input = resolve_input(inputs, command.nargs)
-        command.function(parsed_input)
+        try:
+            parsed_input = resolve_input(inputs, command.nargs)
+        except IndexError:
+            self.log(30, 'Incorrect number of arguments, type \'h '+
+                         command.mnemonic+'\' for usage')
+        else:
+            if len(parsed_input) != command.nargs and command.mnemonic != 'h':
+                self.log(30, 'Incorrect number of arguments, type \'h '+
+                             command.mnemonic+'\' for usage')
+            else:
+                command.function(parsed_input)
 
     def set_globals(self, globals_dict):
         """Set globals from a dictionary.
@@ -117,6 +129,14 @@ class Context:
     def utility_clear(self, parsed_input):
         """Utility to clear the screen using system call."""
         os.system('cls' if os.name == 'nt' else 'clear')
+
+    def utility_exit(self, parsed_input):
+        """Exit the program and save the plot file to disk."""
+        try:
+            self.plot_file.write()
+        except AttributeError:
+            self.log(30, 'No plot file was loaded, nothing to save')
+        self.utility_kill(parsed_input)
 
     def utility_kill(self, parsed_input):
         """Utility to exit the program without warning."""
