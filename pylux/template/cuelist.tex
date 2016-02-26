@@ -14,7 +14,9 @@
 {\bf Cue \#} & \multicolumn{1}{c}{\bf Cue} & \multicolumn{1}{c}{\bf Description} & \multicolumn{1}{c}{\bf Notes} \\*
 \hline\hline
 {% for cue in cues %}
-	{{ cue.data['identifier'] }} & {{ cue.data['location'] }} & {{ cue.data['description'] }} & {{ cue.data['notes'] }} \\
+		{% if cue.data['type'] in options['show'] or options['show'] == 'all' %}
+				{{ cue.data['identifier'] }} & {{ cue.data['location'] }} & {{ cue.data['description'] }} & {{ cue.data['notes'] }} \\
+		{% endif %}
 {% endfor %}
 \end{longtable}
 \end{document}

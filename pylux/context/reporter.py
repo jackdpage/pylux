@@ -24,6 +24,7 @@ just as easily be used for other formats.
 """
 
 from jinja2 import Environment, FileSystemLoader
+from jinja2.exceptions import TemplateSyntaxError
 import os
 import pylux.plot as plot
 import pylux.clihelper as clihelper
@@ -113,15 +114,15 @@ class ReporterContext(Context):
     def __init__(self):
         self.name = 'reporter'
         super().__init__()
-        self.register(Command('rn', self.report_new, ['template', 'options'], 
-                      synopsis='Create a new report from the Jinja template ' 
-                               'and pass in the options.'))
-        self.register(Command('rg', self.report_get, [], 
-                      synopsis='Print the report buffer.'))
-        self.register(Command('rw', self.report_write, ['path'], 
-                      synopsis='Write the report buffer to a file.'))
+        self.register(Command('rn', self.report_new, [
+            ('template', True, 'The Jinja template to create a report from.'), 
+            ('options', False, 'Optional arguments the template offers.')]))
+        self.register(Command('rg', self.report_get, [])) 
+        self.register(Command('rw', self.report_write, [
+            ('path', True, 'The path to write the file to.')]))
 
     def report_new(self, parsed_input):
+        '''Create a new report from a template in a temporary buffer.'''
         self.report = Report(self.plot_file)
 
         def get_options(parsed_input):
@@ -137,8 +138,10 @@ class ReporterContext(Context):
         def get_template(self, parsed_input):
             possible_templates = self.report.find_template(parsed_input[0])
             if len(possible_templates) == 0:
+                self.log(10, 'Did not find any matching templates.')
                 return None
             elif len(possible_templates) == 1:
+                self.log(10, 'Found one matching template.')
                 return list(possible_templates.values())[0]
             else:
                 print('The template you entered has '+
@@ -150,12 +153,17 @@ class ReporterContext(Context):
         options = get_options(parsed_input)
         template = get_template(self, parsed_input)
         if template != None:
-            self.report.generate(template, options)
+            try:
+                self.report.generate(template, options)
+            except TemplateSyntaxError:
+                self.log(30, 'Template not configured properly.')
             
     def report_get(self, parsed_input):
+        '''Print the contents of the report buffer.'''
         print(self.report.content)
 
     def report_write(self, parsed_input):
+        '''Save the report buffer to a file.'''
         with open(os.path.expanduser(parsed_input[0]), 'w') as outfile:
             outfile.write(self.report.content)
 

@@ -37,83 +37,75 @@ class EditorContext(Context):
         """Registers commands and globals for this context."""
         super().__init__()
         self.name = 'editor'
-        # Register commands
-        self.register(Command('fo', self.file_open, ['path'], 
-                              synopsis='Open a plot file.'))
-        self.register(Command('fw', self.file_write, [], 
-                              synopsis='Write the buffer to the original '
-                                       'location.'))
-        self.register(Command('fW', self.file_writeas, ['path'], 
-                              synopsis='Write the buffer to a different '
-                                       'location.'))
-        self.register(Command('fg', self.file_get, [], 
-                              synopsis='Print the location of the plot file.'))
-        self.register(Command('fn', self.file_new, [],
-                              synopsis='Create a new plot file.'))
-        self.register(Command('ml', self.metadata_list, [], 
-                              synopsis='List all metadata values.'))
-        self.register(Command('ms', self.metadata_set, ['name', 'value'], 
-                              synopsis='Set the value of one piece of '
-                                       'metadata.'))
-        self.register(Command('mr', self.metadata_remove, ['name'], 
-                              synopsis='Remove a piece of metadata'))
-        self.register(Command('mg', self.metadata_get, ['name'],
-                              synopsis='Print the value of a piece of '
-                                       'metadata.'))
-        self.register(Command('xn', self.fixture_new, ['template'], 
-                              synopsis='Create a new fixture from a '
-                                       'template.'))
-        self.register(Command('xc', self.fixture_clone, ['fixture'], 
-                              synopsis='Create a new fixture from an existing '
-                                       'fixture.'))
-        self.register(Command('xl', self.fixture_list, [], 
-                              synopsis='List all fixtures.'))
-        self.register(Command('xf', self.fixture_filter, ['tag', 'value'], 
-                              synopsis='List all fixtures that match certain ' 
-                                       'criteria.'))
-        self.register(Command('xr', self.fixture_remove, ['fixture'], 
-                              synopsis='Remove a fixture.'))
-        self.register(Command('xg', self.fixture_get, ['fixture', 'tag'], 
-                              synopsis='Print the value of a fixture\'s tag.'))
-        self.register(Command('xG', self.fixture_getall, ['fixture'], 
-                              synopsis='Print the values of all of a '
-                                       'fixture\'s tags.'))
-        self.register(Command('xs', self.fixture_set, 
-                              ['fixture', 'tag', 'value'], 
-                              synopsis='Set the value of a fixture\'s tag.'))
-        self.register(Command('xa', self.fixture_address,
-                              ['fixture', 'universe', 'address'], 
-                              synopsis='Assign DMX addresses to a fixture.'))
-        self.register(Command('xA', self.fixture_unaddress, ['fixture'], 
-                              synopsis='Remove the DMX addresses assigned '
-                                       'to a fixture.'))
-        self.register(Command('rl', self.registry_list, ['universe'], 
-                              synopsis='List the functions of the DMX '
-                                       'channels in a universe.'))
-        self.register(Command('rL', self.registry_probe, ['universe'], 
-                              synopsis='List the functions of the DMX '
-                                       'channels in a universe and, if there '
-                                       'are any dimmers, list the fixtures '
-                                       'that they control.'))
-        self.register(Command('ql', self.cue_list, [], 
-                              synopsis='List all the cues.'))
-        self.register(Command('qn', self.cue_new, ['type', 'location'], 
-                              synopsis='Add a new cue.'))
-        self.register(Command('qr', self.cue_remove, ['cue'], 
-                              synopsis='Remove a cue.'))
-        self.register(Command('qs', self.cue_set, ['cue', 'tag', 'value'], 
-                              synopsis='Set the value of a cue\'s tag.'))
-        self.register(Command('qg', self.cue_get, ['cue', 'tag'], 
-                              synopsis='Print the value of a cue\'s tag.'))
-        self.register(Command('qG', self.cue_getall, ['cue'], 
-                              synopsis='Print the values of all of a cue\'s '
-                                       'tags.'))
-        self.register(Command('qm', self.cue_moveafter, ['cue', 'dest_cue'], 
-                              synopsis='Move a cue after another.'))
-        self.register(Command('qM', self.cue_movebefore, ['cue', 'dest_cue'], 
-                              synopsis='Move a cue before another.'))
+
+        self.register(Command('fo', self.file_open, [
+            ('path', True, 'Path of the file to load.')])) 
+        self.register(Command('fw', self.file_write, []))
+        self.register(Command('fW', self.file_writeas, [
+            ('path', True, 'Path to save the buffer to.')]))
+        self.register(Command('fg', self.file_get, []))
+        self.register(Command('fn', self.file_new, []))
+        self.register(Command('ml', self.metadata_list, []))
+        self.register(Command('ms', self.metadata_set, [
+            ('name', True, 'Name of the metadata to set.'),
+            ('value', True, 'Value for the metadata to take.')]))
+        self.register(Command('mr', self.metadata_remove, [
+            ('name', True, 'Name of the metadata to remove.')]))
+        self.register(Command('mg', self.metadata_get, [
+            ('name', True, 'Name of the metadata to print the value of.')]))
+        self.register(Command('xn', self.fixture_new, [
+            ('template', True, 'Name of the fixture file to load data from.')]))
+        self.register(Command('xc', self.fixture_clone, [
+            ('fixture', True, 'The fixture to make a copy of.')]))
+        self.register(Command('xl', self.fixture_list, []))
+        self.register(Command('xf', self.fixture_filter, [
+            ('tag', True, 'The tag to filter by.'),
+            ('value', True, 'The value the tag must be to be displayed.')]))
+        self.register(Command('xr', self.fixture_remove, [
+            ('fixture', True, 'The fixture to remove.')]))
+        self.register(Command('xg', self.fixture_get, [
+            ('fixture', True, 'The fixture to get a tag from.'),
+            ('tag', True, 'The name of the tag to print the value of.')]))
+        self.register(Command('xG', self.fixture_getall, [
+            ('fixture', True, 'The fixture to print the tags of.')]))
+        self.register(Command('xs', self.fixture_set, [
+            ('fixture', True, 'The fixture to set a tag of.'), 
+            ('tag', True, 'The name of the tag to set.'), 
+            ('value', True, 'The value to set the tag to.')]))
+        self.register(Command('xa', self.fixture_address, [
+            ('fixture', True, 'The fixture to assign addresses to.'), 
+            ('universe', True, 'The universe to assign addresses in.'), 
+            ('address', True, 'The addresses to begin addressing at.')]))
+        self.register(Command('xA', self.fixture_unaddress, [
+            ('fixture', True, 'The fixture to unassign addresses for.')]))
+        self.register(Command('rl', self.registry_list, [
+            ('universe', True, 'The universe to list the used addresses of.')]))
+        self.register(Command('rL', self.registry_probe, [
+            ('universe', True, 'The universe to list the used addresses of.')]))
+        self.register(Command('ql', self.cue_list, [])) 
+        self.register(Command('qn', self.cue_new, [
+            ('type', True, 'The type of the cue to add.'), 
+            ('location', True, 'The cue line or visual for this cue.')]))
+        self.register(Command('qr', self.cue_remove, [
+            ('cue', True, 'The cue to remove.')]))
+        self.register(Command('qs', self.cue_set, [
+            ('cue', True, 'The cue to set a tag of.'), 
+            ('tag', True, 'The name of the tag to set.'), 
+            ('value', True, 'The value to set the tag to.')]))
+        self.register(Command('qg', self.cue_get, [
+            ('cue', True, 'The cue to get a tag from.'), 
+            ('tag', True, 'The name of the tag to print the value of.')]))
+        self.register(Command('qG', self.cue_getall, [
+            ('cue', True, 'The cue to print the tags of.')]))
+        self.register(Command('qm', self.cue_moveafter, [
+            ('cue', True, 'The cue to move.'), 
+            ('dest_cue', True, 'The cue after which the cue should come.')]))
+        self.register(Command('qM', self.cue_movebefore, [
+            ('cue', True, 'The cue to move.'),
+            ('dest_cue', True, 'The cue before which the cue should come.')]))
 
     def file_open(self, parsed_input):
+        '''Open a new plot file, discarding any present buffer.'''
         try:
             self.plot_file.load(parsed_input[0])
         except FileNotFoundError:
@@ -122,41 +114,50 @@ class EditorContext(Context):
             logging.warning('File is not valid XML')
 
     def file_write(self, parsed_input):
+        '''Write the contents of the file buffer to its original path.'''
         try:
             self.plot_file.write()
         except AttributeError:
             print('Error: No file is loaded')
 
     def file_writeas(self, parsed_input):
+        '''Write the contents of the file buffer to an alternative location.'''
         self.plot_file.write_to(parsed_input[0])
 
     def file_get(self, parsed_input):
+        '''Print the path from which the current file was loaded.'''
         if self.plot_file.path is None:
             print('Using temporary plot file')
         else:
             print('Using plot file '+self.plot_file.path)
 
     def file_new(self, parsed_input):
+        '''Create a new file in the buffer.'''
         self.plot_file.new()
 
     def metadata_list(self, parsed_input):
+        '''List the values of all metadata in the plot file.'''
         metadata = plot.Metadata(self.plot_file)
         for meta_item in sorted(metadata.meta):
             print(meta_item+': '+metadata.meta[meta_item])
 
     def metadata_set(self, parsed_input):
+        '''Set the value of a piece of metadata.'''
         metadata = plot.Metadata(self.plot_file)
         metadata.set_data(parsed_input[0], parsed_input[1])
 
     def metadata_remove(self, parsed_input):
+        '''Remove a piece of metadata from the file.'''
         metadata = plot.Metadata(self.plot_file)
         metadata.set_data(parsed_input[0], None)
 
     def metadata_get(self, parsed_input):
+        '''Print the value of a piece of metadata.'''
         metadata = plot.Metadata(self.plot_file)
         print(parsed_input[0]+': '+metadata.get_data(parsed_input[0]))
 
     def fixture_new(self, parsed_input):
+        '''Create a new fixture from a template file.'''
         template_file = get_data('fixture/'+parsed_input[0]+'.xml')
         try:
             fixture = plot.Fixture(self.plot_file, template=template_file)
@@ -164,11 +165,13 @@ class EditorContext(Context):
             print('Error: No template with this name')
 
     def fixture_clone(self, parsed_input):
+        '''Create a new fixture by copying an existing fixture.'''
         src_fixtures = self.interface.get(parsed_input[0])
         for src in src_fixtures:
             new_fixture = plot.Fixture(self.plot_file, src_fixture=src)
 
     def fixture_list(self, parsed_input):
+        '''List all fixtures in the plot file.'''
         fixtures = plot.FixtureList(self.plot_file)
         i = 1
         self.interface.clear()
@@ -185,6 +188,7 @@ class EditorContext(Context):
             i = i+1
 
     def fixture_filter(self, parsed_input):
+        '''List all fixtures that meet a certain criterion.'''
         key = parsed_input[0]
         value = parsed_input[1]
         fixtures = plot.FixtureList(self.plot_file)
@@ -208,6 +212,7 @@ class EditorContext(Context):
                 pass
 
     def fixture_remove(self, parsed_input):
+        '''Remove a fixture from the plot file.'''
         fixture_list = plot.FixtureList(self.plot_file)
         fixtures = self.interface.get(parsed_input[0])
         registries = plot.RegistryList(self.plot_file)
@@ -216,12 +221,14 @@ class EditorContext(Context):
             fixture_list.remove(fixture)
 
     def fixture_get(self, parsed_input):
+        '''Print the value of a fixture's tag.'''
         fixtures = self.interface.get(parsed_input[0])
         for fixture in fixtures:
             print(fixture.get_data(parsed_input[1]))
         self.interface.update_this(parsed_input[0])
 
     def fixture_getall(self, parsed_input):
+        '''Print the value of every tag associated with a fixture.'''
         fixtures = self.interface.get(parsed_input[0])
         for fixture in fixtures:
             for data_item in fixture.data:
@@ -229,6 +236,7 @@ class EditorContext(Context):
         self.interface.update_this(parsed_input[0])
 
     def fixture_set(self, parsed_input):
+        '''Set the value of one of a fixture's tags.'''
         fixtures = self.interface.get(parsed_input[0])
         tag = parsed_input[1]
         value = parsed_input[2]
@@ -249,6 +257,7 @@ class EditorContext(Context):
         self.interface.update_this(parsed_input[0])
 
     def fixture_address(self, parsed_input):
+        '''Assign DMX addresses to a fixture.'''
         fixtures = self.interface.get(parsed_input[0])
         registry = plot.DmxRegistry(self.plot_file, parsed_input[1])
         required_channels = len(fixtures[0].data['dmx_functions'].split(','))
@@ -260,11 +269,13 @@ class EditorContext(Context):
         self.interface.update_this(parsed_input[0])
 
     def fixture_unaddress(self, parsed_input):
+        '''Unassign addresses in all universes for this fixture.'''
         fixtures = self.interface.get(parsed_input[0])
         for fixture in fixtures:
             fixture.unaddress(plot.RegistryList(self.plot_file))
 
     def registry_list(self, parsed_input):
+        '''List the functions of all used channels in a registry.'''
         registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
         for channel in registry.registry:
             functions = registry.get_functions(channel)
@@ -275,6 +286,8 @@ class EditorContext(Context):
                       function[1]+')')
 
     def registry_probe(self, parsed_input):
+        '''List the functions of all used channels in a registry and also \n
+        list any fixtures which are controlled by dimmers.'''
         registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
         for channel in registry.registry:
             functions = registry.get_functions(channel)
@@ -295,6 +308,7 @@ class EditorContext(Context):
                             print('    ⤷ '+print_name)
 
     def cue_list(self, parsed_input):
+        '''List all cues in the plot file.'''
         cues = plot.CueList(self.plot_file)
         self.interface.clear()
         for cue in cues.cues:
@@ -305,22 +319,26 @@ class EditorContext(Context):
             self.interface.append(cue.key, cue)
 
     def cue_new(self, parsed_input):
+        '''Create a new cue.'''
         cue = plot.Cue(self.plot_file)
         cue.set_data('type', parsed_input[0])
         cue.set_data('location', parsed_input[1])
 
     def cue_remove(self, parsed_input):
+        '''Remove a cue from the plot.'''
         cues = plot.CueList(self.plot_file)
         removal_candidates = self.interface.get(parsed_input[0])
         for rc in removal_candidates:
             cues.remove(rc)
 
     def cue_set(self, parsed_input):
+        '''Set the value of a cue's tag.'''
         cues_to_change = self.interface.get(parsed_input[0])
         for cue in cues_to_change:
             cue.set_data(parsed_input[1], parsed_input[2])
 
     def cue_get(self, parsed_input):
+        '''Print the value of a cue's tag.'''
         cues_to_get = self.interface.get(parsed_input[0])
         for cue in cues_to_get:
             if parsed_input[1] in cue.data:
@@ -329,17 +347,20 @@ class EditorContext(Context):
                 print(None)
 
     def cue_getall(self, parsed_input):
+        '''Print the values of all of a cue's tags.'''
         cues_to_get = self.interface.get(parsed_input[0])
         for cue in cues_to_get:
             for data_item in cue.data:
                 print(data_item+': '+cue.data[data_item])
 
     def cue_moveafter(self, parsed_input):
+        '''Move a cue directly after another in the list.'''
         cues = plot.CueList(self.plot_file)
         cues.move_after(int(parsed_input[0]), 
                         int(parsed_input[1]))
 
     def cue_movebefore(self, parsed_input):
+        '''Move a cue directly before another in the list.'''
         cues = plot.CueList(self.plot_file)
         cues.move_before(int(parsed_input[0]), 
                          int(parsed_input[1]))
