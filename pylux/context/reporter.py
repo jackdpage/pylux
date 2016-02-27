@@ -79,13 +79,13 @@ class Report:
         fixtures = plot.FixtureList(self.plot_file)
         fixtures.assign_usitt_numbers()
         fixture_list = sorted(fixtures.fixtures, 
-                              key=lambda fixture: fixture.data['usitt_key'])
+                              key=lambda fix: int(fix.data['usitt_key']))
         # Create hung fixtures list
         hung_fixtures = []
         for fixture in fixture_list:
             if is_hung(fixture):
                 hung_fixtures.append(fixture)
-        hung_fixtures.sort(key=lambda fixture: fixture.data['usitt_key'])
+        hung_fixtures.sort(key=lambda fix: int(fix.data['usitt_key']))
         # Create dimmer list
         dimmers = []
         for fixture in fixture_list:
@@ -146,7 +146,7 @@ class ReporterContext(Context):
             else:
                 print('The template you entered has '+
                       str(len(possible_templates))+' matches: ')
-                print(possible_templates)
+                print(', '.join(possible_templates))
                 ext = input('Choose an extension to continue: ')
                 return possible_templates[ext]
         

@@ -92,7 +92,8 @@ class FixturesPage(Gtk.ScrolledWindow):
             print('Doing literally nothing.')
 
         def fixture_remove(self, widget):
-            print('Yeah, about that...')
+            self.fixture.unaddress(plot.RegistryList(PLOT_FILE))
+            plot.FixtureList(PLOT_FILE).remove(self.fixture)
 
     class FixtureInfoWindow(Gtk.Window):
         """A window showing the result of getall."""
@@ -208,7 +209,7 @@ class SplashWindow(Gtk.Window):
     
 
 def main():
-    if PLOT_FILE.file == None:
+    if PLOT_FILE.path == None:
         window = SplashWindow()
     else:
         window = MainWindow()

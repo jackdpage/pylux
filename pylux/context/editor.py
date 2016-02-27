@@ -173,9 +173,11 @@ class EditorContext(Context):
     def fixture_list(self, parsed_input):
         '''List all fixtures in the plot file.'''
         fixtures = plot.FixtureList(self.plot_file)
-        i = 1
+        fixtures.assign_usitt_numbers()
         self.interface.clear()
-        for fixture in fixtures.fixtures:
+        for fixture in sorted(fixtures.fixtures, 
+                              key=lambda f: int(f.data['usitt_key'])):
+            i = fixture.data['usitt_key']
             if 'name' in fixture.data:
                 name = fixture.data['name']
             else:
@@ -185,16 +187,16 @@ class EditorContext(Context):
             else:
                 print('\033[4m'+str(i)+'\033[0m '+name)
             self.interface.append(i, fixture)
-            i = i+1
 
     def fixture_filter(self, parsed_input):
         '''List all fixtures that meet a certain criterion.'''
         key = parsed_input[0]
         value = parsed_input[1]
         fixtures = plot.FixtureList(self.plot_file)
+        fixtures.assign_usitt_numbers()
         self.interface.clear()
-        i = 1
         for fixture in fixtures.fixtures:
+            i = fixture.data['usitt_key']
             if key in fixture.data:
                 if fixture.data[key] == value:
                     if 'name' in fixture.data:
@@ -305,13 +307,13 @@ class EditorContext(Context):
                             lantern.data['dimmer_uuid'] == function[0] and 
                             lantern.data['dimmer_channel'] == dimmer_chan):
                             print_name = clihelper.get_fixture_print(lantern)
-                            print('    ⤷ '+print_name)
+                            print('|---- '+print_name)
 
     def cue_list(self, parsed_input):
         '''List all cues in the plot file.'''
         cues = plot.CueList(self.plot_file)
         self.interface.clear()
-        for cue in cues.cues:
+        for cue in sorted(cues.cues, key=lambda cue: cue.key):
             cue_type = cue.data['type']
             cue_location = cue.data['location']
             print(''.join(['\033[4m',str(cue.key),'\033[0m (',cue_type,
