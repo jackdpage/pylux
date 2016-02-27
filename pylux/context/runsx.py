@@ -44,8 +44,10 @@ class RunSxContext(Context):
         self.name = 'runsx'
         # Register commands
         self.register(Command('ql', self.cue_list, []))
-        self.register(Command('qp', self.cue_play, ['cue']))
-        self.register(Command('ss', self.stack_start, ['start']))
+        self.register(Command('qp', self.cue_play, [
+            ('cue', True, 'The cue to play the sound file of.')]))
+        self.register(Command('ss', self.stack_start, [
+            ('start', False, 'The cue from which to begin the stack.')]))
         self.register(Command('sa', self.stack_advance, []))
         self.register(Command('sx', self.stack_exit, []))
 
@@ -58,6 +60,7 @@ class RunSxContext(Context):
                 self.cues.cues.remove(cue)
 
     def cue_list(self, parsed_input):
+        '''List all cues which are valid sound cues with files.'''
         for cue in sorted(self.cues.cues, key=lambda cue: cue.key):
             print(''.join(['\033[4m',str(cue.key),
                            '\033[0m at \'',cue.data['location'],
@@ -65,6 +68,7 @@ class RunSxContext(Context):
             self.interface.append(cue.key, cue)
 
     def cue_play(self, parsed_input):
+        '''Play the file for a cue.'''
         to_play = self.interface.get(parsed_input[0])
         files = []
         for cue in to_play:
@@ -73,12 +77,15 @@ class RunSxContext(Context):
             subprocess.run(['mplayer', effect])
 
     def stack_start(self, parsed_input):
+        '''Begin the stack interface.'''
         self.stack_instance = CueStack(self.cues)
 
     def stack_advance(self, parsed_input):
+        '''Advance the stack on to the next cue.'''
         return None
 
     def stack_exit(self, parsed_input):
+        '''Leave the stack interface.'''
         return None
 
 def get_context():

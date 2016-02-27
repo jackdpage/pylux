@@ -44,15 +44,11 @@ class Context:
     def __init__(self):
         """Add the universal commands to the commands dictionary."""
         self.commands = {}
-        self.register(Command('c', self.utility_clear, [], 
-                      synopsis='Clear the screen.'))
-        self.register(Command('h', self.utility_help, ['command'], 
-                      synopsis='Get information about a command.'))
-        self.register(Command('q', self.utility_exit, [],
-                              synopsis='Exit the program and save changes to '
-                                       'disk.'))
-        self.register(Command('Q', self.utility_kill, [], 
-                      synopsis='Exit the program without saving any changes.'))
+        self.register(Command('c', self.utility_clear, []))
+        self.register(Command('h', self.utility_help, [
+            ('command', False, 'The command to access information about')]))
+        self.register(Command('q', self.utility_exit, []))
+        self.register(Command('Q', self.utility_kill, []))
 
     def post_init(self):
         """Initialisation phase run once globals are loaded."""
@@ -70,17 +66,15 @@ class Context:
             inputs: the user input, split by <space>.
         """
         command = self.commands[inputs[0]]
-        try:
-            parsed_input = resolve_input(inputs, command.nargs)
-        except IndexError:
-            self.log(30, 'Incorrect number of arguments, type \'h '+
-                         command.mnemonic+'\' for usage')
+        if len(inputs) < command.nargs:
+            self.log(30, 'Not enough arguments, type \'h '+
+                         command.mnemoic+'\' for usage.')
+        elif len(inputs) >= command.maxargs:
+            parsed_input = resolve_input(inputs, command.maxargs)
+            command.function(parsed_input)
         else:
-            if len(parsed_input) != command.nargs and command.mnemonic != 'h':
-                self.log(30, 'Incorrect number of arguments, type \'h '+
-                             command.mnemonic+'\' for usage')
-            else:
-                command.function(parsed_input)
+            parsed_input = resolve_input(inputs, command.nargs)
+            command.function(parsed_input)
 
     def set_globals(self, globals_dict):
         """Set globals from a dictionary.
@@ -127,11 +121,11 @@ class Context:
             print(''.join([level_name,':',self.name,':',message]))
 
     def utility_clear(self, parsed_input):
-        """Utility to clear the screen using system call."""
+        '''Clear the screen.'''
         os.system('cls' if os.name == 'nt' else 'clear')
 
     def utility_exit(self, parsed_input):
-        """Exit the program and save the plot file to disk."""
+        '''Quit the program and save the plot file to disk.'''
         try:
             self.plot_file.write()
         except AttributeError:
@@ -139,23 +133,30 @@ class Context:
         self.utility_kill(parsed_input)
 
     def utility_kill(self, parsed_input):
-        """Utility to exit the program without warning."""
+        '''Quit the program without saving any changes.'''
         sys.exit()
 
     def utility_help(self, parsed_input):
-        """Print a list of all available commands."""
+        '''Access information about a command or list all commands.'''
         if len(parsed_input) > 0:
             if parsed_input[0] not in self.commands:
-                print('Error: Command does not exist')
+                self.log(30, 'Command does not exist')
             else:
                 command = self.commands[parsed_input[0]]
                 print('Usage:')
                 usage = '    '+command.mnemonic
                 for arg in command.arguments:
-                    usage = usage+' '+arg
+                    usage = usage+' '+arg[0]
                 print(usage)
                 print('Description:')
                 print('    '+str(command.synopsis))
+                print('Arguments:')
+                for arg in command.arguments:
+                    if arg[1]:
+                        req = '(Required)'
+                    else:
+                        req = '(Optional)'
+                    print(''.join(['    ', arg[0], ' ', req, ': ', arg[2]]))
         else:
             command_table = []
             for mnemonic in self.commands:
@@ -163,7 +164,7 @@ class Context:
                 command = self.commands[mnemonic]
                 usage = mnemonic
                 for arg in command.arguments:
-                    usage = usage+' '+arg
+                    usage = usage+' '+arg[0]
                 table_row.append(usage)
                 table_row.append(command.function.__name__)
                 command_table.append(table_row)
@@ -175,9 +176,13 @@ class Context:
 
 class Command:
 
-    def __init__(self, mnemonic, function, arguments, synopsis=None):
+    def __init__(self, mnemonic, function, arguments):
         self.mnemonic = mnemonic
         self.function = function
+        self.synopsis = self.function.__doc__
         self.arguments = arguments
-        self.nargs = len(self.arguments)
-        self.synopsis = synopsis
+        self.maxargs = len(self.arguments)
+        self.nargs = 0
+        for arg in self.arguments:
+            if arg[1]:
+                self.nargs += 1

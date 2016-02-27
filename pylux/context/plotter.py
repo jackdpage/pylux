@@ -346,6 +346,22 @@ class LightingPlot():
                          str(float(self.options['line-weight-heavy'])*scale))
         return symbol
 
+    def get_fixture_beam(self, fixture):
+        beam = ET.Element('path')
+        scale = float(self.options['scale'])
+        centre = self.get_page_dimensions()[0]/2
+        plaster = self.get_plaster_coord()
+        startx = (float(fixture.data['posX'])*1000)*(1/scale)+centre
+        starty = (float(fixture.data['posY'])*1000)*(1/scale)+plaster
+        endx = (float(fixture.data['focusX'])*1000)*(1/scale)+centre
+        endy = (float(fixture.data['focusY'])*1000)*(1/scale)+plaster
+        beam.set('d', 'M '+str(startx)+' '+str(starty)+
+                      ' L '+str(endx)+' '+str(endy))
+        beam.set('stroke', 'black')
+        beam.set('stroke-width', self.options['line-weight-light'])
+        beam.set('stroke-dasharray', self.options['beam-dasharray'])
+        return beam
+
     def generate_plot(self):
         if not self.can_fit_page():
             print('PlotterError: Plot does not fit page with this scaling')
@@ -359,8 +375,9 @@ class LightingPlot():
                 print('Yeah it kind of didn\'t work. Just going to ignore this')
             root.append(self.get_centre_line())
             root.append(self.get_plaster_line())
-#            root.append(self.get_title_block())
             for fixture in self.fixtures:
+                if self.options['show-beams'] == 'True':
+                    root.append(self.get_fixture_beam(fixture))
                 root.append(self.get_fixture_icon(fixture))
     
 
@@ -451,34 +468,28 @@ class PlotterContext(Context):
     def __init__(self):
         super().__init__()
         self.name = 'plotter'
-        self.register(Command('pn', self.plot_new, [], 
-                              synopsis='Create a new plot.'))
-        self.register(Command('pw', self.plot_write, ['path'], 
-                              synopsis='Write the plot buffer to a file and '
-                                       'optionally convert to another '
-                                       'format.'))
+        self.register(Command('pn', self.plot_new, []))
+        self.register(Command('pw', self.plot_write, [
+            ('path', True, 'The location to save the plot to.')]))
         self.register(Command('pd', self.plot_dump, []))
-        self.register(Command('os', self.option_set, ['name', 'value'], 
-                              synopsis='Set the value of an option.'))
-        self.register(Command('og', self.option_get, ['name'], 
-                              synopsis='Print the value of an option.'))
-        self.register(Command('ol', self.option_list, [],
-                              synopsis='Print the value of all options.'))
-        self.register(Command('deb', self.debug, []))
+        self.register(Command('os', self.option_set, [
+            ('name', True, 'The name of the option to set the value of.'), 
+            ('value', True, 'The new value of the option.')]))
+        self.register(Command('og', self.option_get, [
+            ('name', True, 'The name of the option to print the value of.')]))
+        self.register(Command('ol', self.option_list, []))
 
     def post_init(self):
         super().post_init()
         self.options = PlotOptions(self.config)
 
-    def debug(self, parsed_input):
-        self.plot_new(parsed_input)
-        self.plot_write(['devplot.svg'])
-
     def plot_new(self, parsed_input):
+        '''Create a new SVG plot in a temporary buffer.'''
         self.plot = LightingPlot(self.plot_file, self.options.options)
         self.plot.generate_plot()
 
     def plot_write(self, parsed_input):
+        '''Write the plot to a file either as SVG or PDF.'''
         if parsed_input[0].split('.')[-1] == 'svg':
             self.plot.lighting_plot.write(os.path.expanduser(parsed_input[0]))
         elif parsed_input[0].split('.')[-1] == 'pdf':
@@ -489,15 +500,19 @@ class PlotterContext(Context):
             self.plot.lighting_plot.write(os.path.expanduser(parsed_input[0]))
 
     def plot_dump(self, parsed_input):
+        '''Dump the plot (for debugging purposes.'''
         ET.dump(self.plot.lighting_plot.getroot())
 
     def option_set(self, parsed_input):
+        '''Set the value of an option.'''
         self.options.set(parsed_input[0], parsed_input[1])
 
     def option_get(self, parsed_input):
+        '''Print the value of an option.'''
         print(self.options.get(parsed_input[0]))
 
     def option_list(self, parsed_input):
+        '''List the values of all options.'''
         for option in self.options.options:
             print(option+': '+str(self.options.options[option]))
 

@@ -294,7 +294,8 @@ class FixtureList:
             count = count+1
         for fixture in self.fixtures:
             if fixture not in hung:
-                fixture.set_data('usitt_key', str(None))
+                fixture.set_data('usitt_key', str(count))
+                count = count+1
 
     def get_fixtures_for_dimmer(self, dimmer):
         """Get a list of fixtures controlled by this fixture.
@@ -641,6 +642,7 @@ class CueList:
                 elif cue.key == origin:
                     cue.key = dest+1
                 cue._save()
+        self._clean_keys()
 
     def move_before(self, origin, dest):
         """Move a cue before another in the list.
@@ -669,6 +671,14 @@ class CueList:
                 elif cue.key == origin:
                     cue.key = dest
                 cue._save()
+        self._clean_keys()
+
+    def _clean_keys(self):
+        i = 1
+        for cue in sorted(self.cues, key=lambda cue: cue.key):
+            cue.key = i
+            cue._save()
+            i = i+1
 
     def assign_identifiers(self):
         count = {'LX': 1, 'SX': 1, 'VX': 1}
