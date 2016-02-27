@@ -31,6 +31,12 @@ from pylux import get_data
 from pylux.exception import *
 
 
+class CueStack():
+
+    def __init__(self, cues):
+        self.cues = cues
+
+
 class RunSxContext(Context):
 
     def __init__(self):
@@ -47,14 +53,16 @@ class RunSxContext(Context):
         super().post_init()
         self.cues = plot.CueList(self.plot_file)
         self.cues.assign_identifiers()
+        for cue in self.cues.cues:
+            if cue.data['type'].upper() != 'SX' or 'file' not in cue.data:
+                self.cues.cues.remove(cue)
 
     def cue_list(self, parsed_input):
         for cue in sorted(self.cues.cues, key=lambda cue: cue.key):
-            if cue.data['type'].upper() == 'SX' and 'file' in cue.data:
-                print(''.join(['\033[4m',str(cue.key),
-                               '\033[0m at \'',cue.data['location'],
-                               '\': ',cue.data['file']]))
-                self.interface.append(cue.key, cue)
+            print(''.join(['\033[4m',str(cue.key),
+                           '\033[0m at \'',cue.data['location'],
+                           '\': ',cue.data['file']]))
+            self.interface.append(cue.key, cue)
 
     def cue_play(self, parsed_input):
         to_play = self.interface.get(parsed_input[0])
@@ -65,7 +73,7 @@ class RunSxContext(Context):
             subprocess.run(['mplayer', effect])
 
     def stack_start(self, parsed_input):
-        return None
+        self.stack_instance = CueStack(self.cues)
 
     def stack_advance(self, parsed_input):
         return None

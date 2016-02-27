@@ -127,8 +127,7 @@ class FixturesPage(Gtk.ScrolledWindow):
 
         def property_edit(self, widget, path, text):
             self.list_store[path][1] = text
-            self.fixture.data[self.list_store[path][0]] = text
-            self.fixture.save()
+            self.fixture.set_data(self.list_store[path][0], text)
 
 
 class RegistriesPage(Gtk.ScrolledWindow):
@@ -208,7 +207,7 @@ class SplashWindow(Gtk.Window):
     
 
 def main():
-    if PLOT_FILE.file == None:
+    if PLOT_FILE.path == None:
         window = SplashWindow()
     else:
         window = MainWindow()
@@ -221,7 +220,7 @@ def DEBUG__shutdown_WITH_SAVE____(a, b):
     print(a)
     print(b)
     Gtk.main_quit()
-    PLOT_FILE.save()
+    PLOT_FILE.write()
 
 
 if __name__ == 'pylux_root':
