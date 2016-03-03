@@ -1,3 +1,4 @@
+(A) 2016-03-03 Fix metadata duplication +Urgent
 (A) 2016-01-20 Individual assigning of DMX functions +Base
 (A) 2016-02-02 Add locked flags to fixture tags +Base
 (A) 2016-02-19 Fix cue keying system +Base

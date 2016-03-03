@@ -177,7 +177,7 @@ class EditorContext(Context):
         self.interface.clear()
         for fixture in sorted(fixtures.fixtures, 
                               key=lambda f: int(f.data['usitt_key'])):
-            i = fixture.data['usitt_key']
+            i = int(fixture.data['usitt_key'])
             if 'name' in fixture.data:
                 name = fixture.data['name']
             else:
@@ -196,7 +196,7 @@ class EditorContext(Context):
         fixtures.assign_usitt_numbers()
         self.interface.clear()
         for fixture in fixtures.fixtures:
-            i = fixture.data['usitt_key']
+            i = int(fixture.data['usitt_key'])
             if key in fixture.data:
                 if fixture.data[key] == value:
                     if 'name' in fixture.data:
