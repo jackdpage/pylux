@@ -31,6 +31,7 @@ import pylux.reference as reference
 from pylux.exception import *
 
 
+# IMP
 class PlotFile:
     """Manage the Pylux plot project file.
 
@@ -40,6 +41,7 @@ class PlotFile:
         root: the root element of the XML tree.
     """
 
+    # IMP
     def __init__(self, path=None):
         """Initialise the PlotFile instance.
 
@@ -62,6 +64,7 @@ class PlotFile:
         else:
             self.load(self.path)
 
+    # IMP
     def load(self, path):
         """Load a project file.
 
@@ -81,10 +84,12 @@ class PlotFile:
             self.root = self.tree.getroot()
             self.path = path
 
+    # WNI
     def write(self):
         """Save the project file to its original location."""
         self.tree.write(self.path, encoding='UTF-8', xml_declaration=True)
 
+    # IMP
     def write_to(self, path):
         """Save the project file to a new location.
 
@@ -94,6 +99,7 @@ class PlotFile:
         self.path = path
         self.write()
 
+    # WNI
     def new(self):
         """Create a new plot file in the buffer.
 
@@ -105,6 +111,7 @@ class PlotFile:
         self.tree = ET.ElementTree(self.root)
         self.path = None
 
+# IMP
 class DmxRegistry:
     """Manage DMX registries.
     
@@ -176,6 +183,7 @@ class DmxRegistry:
             else:
                 self._xml_registry.remove(get_xml_channel(self, address))
 
+    # IMP
     def get_occupied(self):
         """Returns a list of occupied DMX channels.
 
@@ -190,6 +198,7 @@ class DmxRegistry:
         occupied.sort()
         return occupied
 
+    # IMP
     def get_start_address(self, n):
         """Returns a recommended start address for a new fixture.
 
@@ -221,7 +230,7 @@ class DmxRegistry:
                     str(free_from))
                 return free_from
 
-
+## WNI THIS BLOCK ##
     def add_function(self, address, fixture_uuid, function):
         if address in self.registry:
             self.registry[address].append((fixture_uuid, function))
@@ -245,7 +254,7 @@ class DmxRegistry:
             return self.registry[address]
         else:
             return None
-        
+## END BLOCK ##
 
 class RegistryList:
 
