@@ -295,26 +295,24 @@ class EditorContext(Context):
                 self.interface.add_listing(channel, s)
 
     def registry_probe(self, parsed_input):
-        '''List the functions of all used channels in a registry and also \n
-        list any fixtures which are controlled by dimmers.'''
-        registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
-        for channel in registry.registry:
-            functions = registry.get_functions(channel)
-            for function in functions:
-                fixture = plot.Fixture(self.plot_file, uuid=function[0])
-                print_name = clihelper.get_fixture_print(fixture)
-                print(str(format(channel, '03d'))+' '+print_name+' ('+
-                      function[1]+')')
-                if ('is_dimmer' in fixture.data and 
-                    fixture.data['is_dimmer'] == 'True'):
-                    dimmer_chan = function[1].replace('channel_', '')
-                    fixtures = plot.FixtureList(self.plot_file)
-                    for lantern in fixtures.fixtures:
-                        if ('dimmer_uuid' in lantern.data and 
-                            lantern.data['dimmer_uuid'] == function[0] and 
-                            lantern.data['dimmer_channel'] == dimmer_chan):
-                            print_name = clihelper.get_fixture_print(lantern)
-                            print('|---- '+print_name)
+        '''List channels and dimmer controlled lights.'''
+        registries = self.interface.get(parsed_input[0])
+        self.interface.begin_listing()
+        for registry in registries:
+            print('\033[1mUniverse: '+registry.name+'\033[0m')
+            for channel in registry.channels:
+                address = channel.address
+                func = self.plot_file.get_object_by_uuid(channel.function.uuid)
+                fix = self.plot_file.get_fixture_for_function(func)
+                s = ('DMX'+str(format(address, '03d'))+': '+fix.name+' ('
+                     +func.name+')')
+                self.interface.add_listing(channel, s)
+                if 'isDimmer' in fix.data:
+                    if xpx.boolify(fix.data['isDimmer']):
+                        controlled = self.plot_file.get_fixtures_for_dimmer(fix)
+                        for fixture in controlled:
+                            if fixture.data['dimmerChannel'] == fix.uuid:
+                                print('\t⤷ '+fixture.name)
 
     def cue_list(self, parsed_input):
         '''List all cues in the plot file.'''
