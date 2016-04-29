@@ -87,6 +87,20 @@ class Interface:
         if reference != 'this':
             self.option_list['this'] = reference
 
+    def begin_listing(self):
+        '''Clear interface for new listing operation.'''
+        self.clear()
+
+    def add_listing(self, obj, s):
+        '''Add a list item.
+
+        Add item with string representation s, object reference obj 
+        and automatic numbering.
+        '''
+        i = len(self.option_list)
+        self.append(i, obj)
+        print('\033[92m\033[1m'+str(i)+'\033[0m ',s)
+
 
 def resolve_references(user_input):
     """Parse the reference input.

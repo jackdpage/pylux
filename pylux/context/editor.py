@@ -23,12 +23,12 @@ for the reading and editing of Pylux plot files.
 """
 
 import os
-import pylux.plot as plot
 import pylux.clihelper as clihelper
 import logging
 from pylux.context.context import Context, Command
 from pylux import get_data
 from pylux.exception import *
+import libxpx.xpx as xpx
 
 
 class EditorContext(Context):
@@ -40,14 +40,11 @@ class EditorContext(Context):
 
         self.register(Command('fo', self.file_open, [
             ('path', True, 'Path of the file to load.')])) 
-        self.register(Command('fw', self.file_write, []))
         self.register(Command('fW', self.file_writeas, [
             ('path', True, 'Path to save the buffer to.')]))
-        self.register(Command('fg', self.file_get, []))
-        self.register(Command('fn', self.file_new, []))
         self.register(Command('ml', self.metadata_list, []))
         self.register(Command('ms', self.metadata_set, [
-            ('name', True, 'Name of the metadata to set.'),
+            ('meta', True, 'The metadata to set the value of.'),
             ('value', True, 'Value for the metadata to take.')]))
         self.register(Command('mr', self.metadata_remove, [
             ('name', True, 'Name of the metadata to remove.')]))
@@ -78,9 +75,10 @@ class EditorContext(Context):
             ('address', True, 'The addresses to begin addressing at.')]))
         self.register(Command('xA', self.fixture_unaddress, [
             ('fixture', True, 'The fixture to unassign addresses for.')]))
-        self.register(Command('rl', self.registry_list, [
-            ('universe', True, 'The universe to list the used addresses of.')]))
-        self.register(Command('rL', self.registry_probe, [
+        self.register(Command('rl', self.registry_list, []))
+        self.register(Command('rL', self.registry_query, [
+            ('registry', True, 'The registry to list used channels of.')]))
+        self.register(Command('rp', self.registry_probe, [
             ('universe', True, 'The universe to list the used addresses of.')]))
         self.register(Command('ql', self.cue_list, [])) 
         self.register(Command('qn', self.cue_new, [
@@ -104,6 +102,8 @@ class EditorContext(Context):
             ('cue', True, 'The cue to move.'),
             ('dest_cue', True, 'The cue before which the cue should come.')]))
 
+    # File commands
+
     def file_open(self, parsed_input):
         '''Open a new plot file, discarding any present buffer.'''
         try:
@@ -113,48 +113,42 @@ class EditorContext(Context):
         except FileFormatError:
             logging.warning('File is not valid XML')
 
-    def file_write(self, parsed_input):
+    def file_writeas(self, parsed_input):
         '''Write the contents of the file buffer to its original path.'''
         try:
-            self.plot_file.write()
+            self.plot_file.write(parsed_input[0])
         except AttributeError:
             print('Error: No file is loaded')
 
-    def file_writeas(self, parsed_input):
-        '''Write the contents of the file buffer to an alternative location.'''
-        self.plot_file.write_to(parsed_input[0])
-
-    def file_get(self, parsed_input):
-        '''Print the path from which the current file was loaded.'''
-        if self.plot_file.path is None:
-            print('Using temporary plot file')
-        else:
-            print('Using plot file '+self.plot_file.path)
-
-    def file_new(self, parsed_input):
-        '''Create a new file in the buffer.'''
-        self.plot_file.new()
+    # Metadata commands
 
     def metadata_list(self, parsed_input):
         '''List the values of all metadata in the plot file.'''
-        metadata = plot.Metadata(self.plot_file)
-        for meta_item in sorted(metadata.meta):
-            print(meta_item+': '+metadata.meta[meta_item])
+        self.interface.begin_listing()
+        for meta in self.plot_file.metadata:
+            s = meta.name+': '+meta.value
+            self.interface.add_listing(meta, s)
 
     def metadata_set(self, parsed_input):
-        '''Set the value of a piece of metadata.'''
-        metadata = plot.Metadata(self.plot_file)
-        metadata.set_data(parsed_input[0], parsed_input[1])
+        metadata = self.interface.get(parsed_input[0])
+        for meta in metadata:
+            meta.value = parsed_input[1]
 
     def metadata_remove(self, parsed_input):
         '''Remove a piece of metadata from the file.'''
-        metadata = plot.Metadata(self.plot_file)
-        metadata.set_data(parsed_input[0], None)
+        metadata = self.interface.get(parsed_input[0])
+        for meta in metadata:
+            self.plot_file.metadata.remove(meta)
 
     def metadata_get(self, parsed_input):
-        '''Print the value of a piece of metadata.'''
-        metadata = plot.Metadata(self.plot_file)
-        print(parsed_input[0]+': '+metadata.get_data(parsed_input[0]))
+        '''Print the values of metadata matching a name.'''
+        self.interface.begin_listing()
+        for meta in self.plot_file.metadata:
+            if meta.name == parsed_input[0]:
+                s = meta.name+': '+meta.value
+                self.interface.add_listing(meta, s)
+
+    # Fixture commands
 
     def fixture_new(self, parsed_input):
         '''Create a new fixture from a template file.'''
@@ -276,16 +270,29 @@ class EditorContext(Context):
         for fixture in fixtures:
             fixture.unaddress(plot.RegistryList(self.plot_file))
 
+    # Registry commands
+
     def registry_list(self, parsed_input):
+        '''List all registries.'''
+        self.interface.begin_listing()
+        for registry in self.plot_file.registries:
+            s = (registry.name+' ('+str(len(registry.get_occupied_addresses()))
+                 +' occupied)')
+            self.interface.add_listing(registry, s) 
+
+    def registry_query(self, parsed_input):
         '''List the functions of all used channels in a registry.'''
-        registry = plot.DmxRegistry(self.plot_file, parsed_input[0])
-        for channel in registry.registry:
-            functions = registry.get_functions(channel)
-            for function in functions:
-                fixture = plot.Fixture(self.plot_file, uuid=function[0])
-                print_name = clihelper.get_fixture_print(fixture)
-                print(str(format(channel, '03d'))+' '+print_name+' ('+
-                      function[1]+')')
+        registries = self.interface.get(parsed_input[0])
+        self.interface.begin_listing()
+        for registry in registries:
+            print('\033[1mUniverse: '+registry.name+'\033[0m')
+            for channel in registry.channels:
+                address = channel.address
+                func = self.plot_file.get_object_by_uuid(channel.function.uuid)
+                fix = self.plot_file.get_fixture_for_function(func)
+                s = ('DMX'+str(format(address, '03d'))+': '+fix.name+' ('
+                     +func.name+')')
+                self.interface.add_listing(channel, s)
 
     def registry_probe(self, parsed_input):
         '''List the functions of all used channels in a registry and also \n

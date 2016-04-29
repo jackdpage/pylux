@@ -23,7 +23,7 @@ import configparser
 import sys
 import runpy
 import logging
-import pylux.plot as plot
+import libxpx.xpx as xpx
 
 from pylux import __version__, get_data
 
@@ -54,16 +54,16 @@ def main():
         2: 10,
         3: 1}
     print('Logging level is '+config['advanced']['log-'+str(verbosity_dict[launch_args.verbose])])
-    # Load plot file
-    plot_file = plot.PlotFile()
+    # Load XPX file
+    xpx_file = xpx.Document()
     if launch_args.file != None:
-        plot_file.load(launch_args.file)
-        print('Using plot file '+plot_file.path)
+        xpx_file.load(launch_args.file)
+        print('Using XPX file '+launch_args.file)
     else:
-        print('No plot file loaded')
+        print('No XPX file loaded')
     # Prepare globals for launch
     init_globals = {
-        'PLOT_FILE': plot_file,
+        'PLOT_FILE': xpx_file,
         'CONFIG': config,
         'LOG_LEVEL': verbosity_dict[launch_args.verbose]}
     if launch_args.gui == True:
