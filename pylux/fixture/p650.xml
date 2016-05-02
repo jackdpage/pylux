@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<fixture>
-	<type>Hutton P650</type>
-  <power>650</power>
-  <symbol>p650</symbol>
+<fixture uuid="%UUID%" xmlns="http://os.pwrg.uk/xmlns/xpx">
+    <name>Hutton P650</name>
+    <data>
+        <type>Hutton P650</type>
+        <power>650</power>
+        <symbol>p650</symbol>
+    </data>
+    <functions />
 </fixture>
 

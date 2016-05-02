@@ -24,11 +24,10 @@ for the reading and editing of Pylux plot files.
 
 import os
 import pylux.clihelper as clihelper
-import logging
 from pylux.context.context import Context, Command
 from pylux import get_data
-from pylux.exception import *
 import libxpx.xpx as xpx
+import xml.etree.ElementTree as ET
 
 
 class EditorContext(Context):
@@ -40,8 +39,12 @@ class EditorContext(Context):
 
         self.register(Command('fo', self.file_open, [
             ('path', True, 'Path of the file to load.')])) 
+        self.register(Command('fw', self.file_write, []))
         self.register(Command('fW', self.file_writeas, [
             ('path', True, 'Path to save the buffer to.')]))
+        self.register(Command('fg', self.file_get, []))
+        self.register(Command('fs', self.file_set, [
+            ('path', True, 'Path to set as default save location.')]))
 
         self.register(Command('ml', self.metadata_list, []))
         self.register(Command('ms', self.metadata_set, [
@@ -53,6 +56,8 @@ class EditorContext(Context):
             ('name', True, 'Name of the metadata to print the value of.')]))
 
         self.register(Command('xn', self.fixture_new, [
+            ('name', True, 'Human-readable name of the new fixture.')]))
+        self.register(Command('xN', self.fixture_from_template, [
             ('template', True, 'Name of the fixture file to load data from.')]))
         self.register(Command('xc', self.fixture_clone, [
             ('fixture', True, 'The fixture to make a copy of.')]))
@@ -114,19 +119,26 @@ class EditorContext(Context):
 
     def file_open(self, parsed_input):
         '''Open a new plot file, discarding any present buffer.'''
-        try:
-            self.plot_file.load(parsed_input[0])
-        except FileNotFoundError:
-            logging.warning('No file with that name')
-        except FileFormatError:
-            logging.warning('File is not valid XML')
+        self.plot_file.load(parsed_input[0])
+
+    def file_write(self, parsed_input):
+        '''Write the contents of the file buffer to the original path.'''
+        self.plot_file.write(self.plot_file.load_location)
 
     def file_writeas(self, parsed_input):
-        '''Write the contents of the file buffer to its original path.'''
+        '''Write the contents of the file buffer to a new path.'''
         try:
             self.plot_file.write(parsed_input[0])
         except AttributeError:
             print('Error: No file is loaded')
+
+    def file_get(self, parsed_input):
+        '''Print the original location of the plot file.'''
+        print(self.plot_file.load_location)
+
+    def file_set(self, parsed_input):
+        '''Set the default save location for the plot file.'''
+        self.plot_file.load_location = parsed_input[0]
 
     # Metadata commands
 
@@ -159,12 +171,19 @@ class EditorContext(Context):
     # Fixture commands
 
     def fixture_new(self, parsed_input):
+        '''Create a new fixture from scratch.'''
+        fixture = xpx.Fixture(name=parsed_input[0], functions=[], data={})
+        self.plot_file.fixtures.append(fixture)
+
+    def fixture_from_template(self, parsed_input):
         '''Create a new fixture from a template file.'''
         template_file = get_data('fixture/'+parsed_input[0]+'.xml')
-        try:
-            fixture = plot.Fixture(self.plot_file, template=template_file)
-        except FileNotFoundError:
-            print('Error: No template with this name')
+        if not template_file:
+            self.log(30, 'No fixture template with this name exists')
+        else:
+            xfixture = ET.parse(template_file).getroot()
+            fixture = xpx.Fixture(element=xfixture)
+            self.plot_file.fixtures.append(fixture)
 
     def fixture_clone(self, parsed_input):
         '''Create a new fixture by copying an existing fixture.'''

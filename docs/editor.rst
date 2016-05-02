@@ -13,24 +13,23 @@ File Commands
 You can only edit one plot file at a time in Pylux. Also, there is no 
 autosaving feature so you must remember to run ``fw`` regularly.
 
-``fo FILE``
-    Open the file with path ``FILE`` as the plot file. This will override any 
+``fo file``
+    Open the file with path ``file`` as the plot file. This will override any 
     unsaved buffer associated with the previous plot file, if there was one.
 
 ``fw``
     Save the plot file buffer to the location from which the current plot file 
     was loaded.
 
-``fW PATH``
-    Save the plot file buffer to the location with path ``PATH``.
+``fW path``
+    Save the plot file buffer to the location with path ``path``.
 
 ``fg``
     Print the path of the plot file which is currently loaded.
 
-``fn PATH``
-    Generate a new plot file at the location with path ``PATH``, then load it 
-    as the current plot file. This will override any unsaved buffer associated 
-    with the previous plot file, if there was one.
+``fs path``
+    Set the default save location for the current plot file buffer to the 
+    location with path ``path``.
 
 Metadata Commands
 -----------------
@@ -40,14 +39,14 @@ These commands manipulate the metadata objects in a plot file.
 ``ml``
     List all metadata tags and their values.
 
-``ms TAG VALUE``
-    Set the value of the metadata with tag name ``TAG`` to ``VALUE``.
+``ms META value``
+    Set the value of the metadata item ``META`` to ``value``.
 
-``mr TAG``
-    Remove the metadata with tag name ``TAG``.
+``mr META``
+    Remove metadata item ``META``.
 
-``mg TAG``
-    Print the value of the metadata with tag name ``TAG``.
+``mg tag``
+    Print all the values of metadata that have the tag ``tag``.
 
 Fixture Commands
 ----------------
@@ -55,22 +54,25 @@ Fixture Commands
 Fixtures are the most fundamental concept in the plot file, and are necessary 
 to have a functional, useful environment.
 
-``xn TEMPLATE``
-    Add a new fixture to the plot. This will load the contents of the fixture 
-    file with name ``TEMPLATE`` into the new fixture, including any DMX 
-    functions. It also assigns a randomly generated UUID to the fixture. This 
-    command does not assign DMX values, you need to use ``xa`` for that.
+``xn name``
+    Creata a new fixture from scratch with name ``name``. All other fields 
+    will be blank and the fixture will have no DMX functions associated with 
+    it. A new UUID is assigned.
+
+``xN template``
+    Create a new fixture and load the contents of the fixture template file 
+    ``template`` into it. Fixture template files should specify ``%UUID%`` in 
+    place of UUIDs to allow for automatic generation. Some fixture templates 
+    are included, others should be placed in ``~/.pylux/fixture/``.
 
 ``xc FIXTURE``
-    Add a new fixture to the plot, but instead of loading information from a 
-    fixture file, clone the contents of ``FIXTURE`` into this fixture. This 
-    will not assign any DMX values, even if the source fixture has had values 
-    assigned. A new UUID will be created for the fixture.
+    Create a new fixture and load the contents of an existing fixture into 
+    it, including any DMX functions and user-defined data. A new UUID is 
+    assigned.
 
 ``xl``
-    List all the fixtures in the plot. This will list the fixture's name (or 
-    type if it has no name), its UUID and also assign interface references to 
-    each fixture in the list.
+    List all fixtures in the plot file. Lists name, type and assigns 
+    interface references.
 
 ``xf TAG VALUE``
     List all the fixtures that match the specified criteria. Only list 
@@ -78,11 +80,13 @@ to have a functional, useful environment.
     ``xl`` command, this will print the name/type, UUID and assign interface 
     references.
 
-``xg FIXTURE TAG``
-    Print the value of the tag with name ``TAG`` for ``FIXTURE``.
+``xg FIXTURE``
+    Print the value of every data tag that is assigned to ``FIXTURE``.
 
 ``xG FIXTURE``
-    Print the value of all tags that have been assigned to ``FIXTURE``.
+    Print the value of every data tag that is assigned to ``FIXTURE``, and 
+    also list the functions of the fixture. Interface references are given to 
+    functions.
 
 ``xr FIXTURE``
     Remove ``FIXTURE`` from the plot file. Any associated DMX channels will 

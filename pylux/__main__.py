@@ -45,8 +45,9 @@ def main():
     launch_args = parser.parse_args()
     # Load configuration
     config = configparser.ConfigParser()
-    config.read([get_data('settings.conf', location='root'),
-                 get_data('settings.conf', location='home')])
+    config.read([get_data('settings.conf', location='root')])
+    if get_data('settings.conf', location='home'):
+        config.read([get_data('settings.conf', location='home')])
     # Handle verbosity
     verbosity_dict = {
         None: 30, 
