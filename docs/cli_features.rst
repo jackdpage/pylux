@@ -1,48 +1,70 @@
 CLI Features
 ============
 
-The default interface used by Pylux is the CLI. The Pylux CLI acts very much 
-like any other shell, but of course uses the Pylux command-set. To make 
-navigating Pylux quicker, each command is a two-letter mnemonic (apart from 
-some special utility commands) where the first letter represents the object 
-which is going to have an action performed on it and the second letter 
-represents the action to be performed. For example, ``ml`` is the mnemonic 
-for listing all metadata.
+The default interface used by Pylux is the interactive command-line 
+interface (CLI). From the prompt, Pylux accepts commands in the form 
+``CMD arg1 arg2 ...``. All command names are a two character mnemonic where 
+the first character represents the object and the second character the 
+action to be performed on that object. The number and type of arguments 
+vary greatly between commands.
+
+Note that global commands are only a single character.
+
 
 Contexts
 --------
 
-In order to facilitate all the functionality of Pylux whilst still keeping 
-the simple two letter mnemonics, and also to keep code cleaner, Pylux uses a 
-system called contexts. A context is simply a set of commands that the user 
-can access at any one time. The current context is indicated by the prompt, 
-which will be of the form ``(pylux:CONTEXT)``. Commands for one context will 
-not work in another context. For example, the aforementioned ``ml`` command 
-is part of the ``editor`` context, so will not work in the ``plotter`` 
-context.
+To facilitate the extending feature-set and for general code cleanliness, 
+Pylux uses a system of 'contexts'. The user can only be in one context at any 
+one time and only the commands provided by that context are available to the 
+user at that time.
 
-Piping Complex Objects
-----------------------
+For example, in order to edit XPX files, you must be in the editor context. 
+In order to generate reports you must be in the reporter context.
 
-Some commands call for an object as an argument. These are shown by capitalised 
-arguments in the command description. This argument allows you to pipe 
-in objects from the output of special listing commands. When a listing command 
-is run, some lines on the output will be preceded by green integers, also 
-called interface references. This 
-shows that the object on that line can be piped into another command using 
-that integer.
+The current context is indicated by the prompt which will be of the form 
+``(pylux:context)``. The default context can be set in the configuration but 
+the default is editor.
 
-You can pipe in multiple objects at once. Pylux accepts comma-separated lists 
-of integers, colon-separated ranges of integers and any combination of the two, 
-for example ``1,4:9,11,20:28``.
+The current context can be changed by issuing the ``:context`` command, where 
+context is replaced by the name of the context to switch to.
 
-For example, you may wish to set the gel colour of a specific fixture. First 
-run the ``xl`` command to list all fixtures::
-    1 SL spot (Hutton P650)
-    2 SR spot (Hutton P650)
-    3 White wash (Strand Coda 1000)
-    4 Red wash (Strand Coda 1000)
 
-Say you wanted to set the gel of the Red wash to Sunset Red, use the ``xs`` 
-command, piping in object 4::
-    xs 4 gel Sunset Red
+Pipes
+-----
+
+On the CLI, you can only provide arguments in the form of strings. However, 
+there are a number of other data forms that may be required by commands. For 
+example, to set the value of a piece of metadata, you must provide the 
+metadata object as an argument.
+
+The passing of these objects into commands is facilitated by the piping 
+system. The piping system relies on a special subset of commands: listing 
+commands.
+
+Listing Commands
+^^^^^^^^^^^^^^^^
+
+A listing command is any command which generates a list of objects of which 
+the string representations are printed to the output. Along with the string 
+representation of the object, listing commands also assign so-called 
+interface references to each object. These are displayed as green integers 
+preceding the line which contains the object. It is these integers that are 
+passed into commands in place of the objects they demand.
+
+Pipe Syntax
+^^^^^^^^^^^
+
+Piped objects can simply be a single integer, `1`, a list of integers (in 
+no particular order), `3,9,8,2`, a range of integers, `2:9`, or any 
+combination of the above, `9,7,11:17,19`.
+
+For example, in order to set the value of a piece of metadata, first run the 
+metadata listing command, ``ml``, giving output::
+    1   Director: J. Smith
+    2   Designer: A. Wilson
+    3   Master Electrician: P. Small
+
+In order to change the name of the director, use the metadata setting 
+command, ``ms``, piping in `1`::
+    ms 1 T. Johnson

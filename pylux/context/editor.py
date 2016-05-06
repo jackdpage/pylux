@@ -48,7 +48,7 @@ class EditorContext(Context):
 
         self.register(Command('ml', self.metadata_list, []))
         self.register(Command('ms', self.metadata_set, [
-            ('meta', True, 'The metadata to set the value of.'),
+            ('META', True, 'The metadata to set the value of.'),
             ('value', True, 'Value for the metadata to take.')]))
         self.register(Command('mr', self.metadata_remove, [
             ('name', True, 'Name of the metadata to remove.')]))
@@ -58,40 +58,44 @@ class EditorContext(Context):
         self.register(Command('xn', self.fixture_new, [
             ('name', True, 'Human-readable name of the new fixture.')]))
         self.register(Command('xN', self.fixture_from_template, [
-            ('template', True, 'Name of the fixture file to load data from.')]))
+            ('template', True, 'Path to the file to load data from.')]))
         self.register(Command('xc', self.fixture_clone, [
-            ('fixture', True, 'The fixture to make a copy of.')]))
+            ('FIXTURE', True, 'The fixture to make a copy of.')]))
         self.register(Command('xl', self.fixture_list, []))
         self.register(Command('xf', self.fixture_filter, [
             ('tag', True, 'The tag to filter by.'),
             ('value', True, 'The value the tag must be to be displayed.')]))
         self.register(Command('xr', self.fixture_remove, [
-            ('fixture', True, 'The fixture to remove.')]))
+            ('FIXTURE', True, 'The fixture to remove.')]))
         self.register(Command('xg', self.fixture_get, [
-            ('fixture', True, 'The fixture to get a tag from.'),
+            ('FIXTURE', True, 'The fixture to get a tag from.'),
             ('tag', True, 'The name of the tag to print the vAlue of.')]))
         self.register(Command('xG', self.fixture_getall, [
-            ('fixture', True, 'The fixture to print the tags of.')]))
+            ('FIXTURE', True, 'The fixture to print the tags of.')]))
         self.register(Command('xs', self.fixture_set, [
-            ('fixture', True, 'The fixture to set a tag of.'), 
+            ('FIXTURE', True, 'The fixture to set a tag of.'), 
             ('tag', True, 'The name of the tag to set.'), 
             ('value', True, 'The value to set the tag to.')]))
         self.register(Command('xa', self.fixture_address, [
-            ('fixture', True, 'The fixture to assign addresses to.'), 
-            ('universe', True, 'The universe to assign addresses in.'), 
+            ('FIXTURE', True, 'The fixture to assign addresses to.'), 
+            ('universe', True, 'The name of the universe to address in.'), 
             ('address', True, 'The addresses to begin addressing at.')]))
         self.register(Command('xA', self.fixture_unaddress, [
-            ('fixture', True, 'The fixture to unassign addresses for.')]))
+            ('FIXTURE', True, 'The fixture to unassign addresses for.')]))
 
         self.register(Command('rl', self.registry_list, []))
         self.register(Command('rL', self.registry_query, [
-            ('registry', True, 'The registry to list used channels of.')]))
+            ('REGISTRY', True, 'The registry to list used channels of.')]))
         self.register(Command('rn', self.registry_new, [
             ('name', True, 'The name of the new registry.')]))
         self.register(Command('rp', self.registry_probe, [
-            ('registry', True, 'The registry to probe the used channels of.')]))
+            ('REGISTRY', True, 'The registry to probe the channels of.')]))
 #        self.register(Command('rr', self.registry_remove [
 #            ('registry', True, 'The registry to remove.')]))
+        self.register(Command('ra', self.registry_add, [
+            ('FUNCTION', True, 'The function(s) to address.'),
+            ('registry', True, 'The name of the registry to address in.'),
+            ('address', True, 'The address to begin addressing at.')]))
 
         self.register(Command('ql', self.cue_list, [])) 
         self.register(Command('qn', self.cue_new, [
@@ -127,10 +131,7 @@ class EditorContext(Context):
 
     def file_writeas(self, parsed_input):
         '''Write the contents of the file buffer to a new path.'''
-        try:
-            self.plot_file.write(parsed_input[0])
-        except AttributeError:
-            print('Error: No file is loaded')
+        self.plot_file.write(parsed_input[0])
 
     def file_get(self, parsed_input):
         '''Print the original location of the plot file.'''
@@ -206,37 +207,20 @@ class EditorContext(Context):
 
     def fixture_filter(self, parsed_input):
         '''List all fixtures that meet a certain criterion.'''
+        self.interface.begin_listing()
         key = parsed_input[0]
         value = parsed_input[1]
-        fixtures = plot.FixtureList(self.plot_file)
-        fixtures.assign_usitt_numbers()
-        self.interface.clear()
-        for fixture in fixtures.fixtures:
-            i = int(fixture.data['usitt_key'])
+        for fixture in self.plot_file.fixtures:
             if key in fixture.data:
                 if fixture.data[key] == value:
-                    if 'name' in fixture.data:
-                        name = fixture.data['name']
-                    else:
-                        name = fixture.data['type']
-                    if self.config['cli']['show-uuids'] == 'True':
-                        print('\033[4m'+str(i)+'\033[0m '+name+
-                              ', id: '+fixture.uuid)
-                    else:
-                        print('\033[4m'+str(i)+'\033[0m '+name)
-                    self.interface.append(i, fixture)
-                    i = i+1
-            else:
-                pass
+                    s = fixture.name+' ('+key+'='+value+')'
+                    self.interface.add_listing(fixture, s)
 
     def fixture_remove(self, parsed_input):
         '''Remove a fixture from the plot file.'''
-        fixture_list = plot.FixtureList(self.plot_file)
         fixtures = self.interface.get(parsed_input[0])
-        registries = plot.RegistryList(self.plot_file)
         for fixture in fixtures:
-            fixture.unaddress(registries)
-            fixture_list.remove(fixture)
+            self.plot_file.fixtures.remove(fixture)
 
     def fixture_get(self, parsed_input):
         '''Print the values of a fixture's tags.'''
@@ -282,20 +266,34 @@ class EditorContext(Context):
     def fixture_address(self, parsed_input):
         '''Assign DMX addresses to a fixture.'''
         fixtures = self.interface.get(parsed_input[0])
-        registry = plot.DmxRegistry(self.plot_file, parsed_input[1])
-        required_channels = len(fixtures[0].data['dmx_functions'].split(','))
-        if parsed_input[2] == 'auto':
-            start_address = registry.get_start_address(required_channels)
-        else:
-            start_address = int(parsed_input[2])
-        fixtures[0].address(registry, start_address) 
-        self.interface.update_this(parsed_input[0])
+        # We cannot have two objects passed in the same command, so the 
+        # registry has to be given by name. (Hopefully people name 
+        # registries uniquely)
+        for reg in self.plot_file.registries:
+            if reg.name == parsed_input[1]:
+                registry = reg
+        for fixture in fixtures:
+            n_chan = len(fixture.functions)
+            if parsed_input[2] == 'auto':
+                addr = registry.get_start_address(n_chan)
+            else:
+                addr = int(parsed_input[2])
+            for function in fixture.functions:
+                chan_obj = xpx.RegistryChannel(
+                    address=addr, function=xpx.XPXReference(function.uuid))
+                registry.channels.append(chan_obj)
+                addr += 1
 
     def fixture_unaddress(self, parsed_input):
         '''Unassign addresses in all universes for this fixture.'''
         fixtures = self.interface.get(parsed_input[0])
         for fixture in fixtures:
-            fixture.unaddress(plot.RegistryList(self.plot_file))
+            functions = [function.uuid for function in fixture.functions]
+            for registry in self.plot_file.registries:
+                # BUG: does not check last channel if len(channels) > 1
+                for channel in registry.channels:
+                    if channel.function.uuid in functions:
+                        registry.channels.remove(channel)
 
     # Registry commands
 
@@ -348,6 +346,22 @@ class EditorContext(Context):
                 controlled = self.plot_file.get_fixtures_for_dimmer_function(func)
                 for dimmed_fixture in controlled:
                     print('\t→ '+dimmed_fixture.name)
+
+    def registry_add(self, parsed_input):
+        '''Manually add a function to a registry.'''
+        functions = self.interface.get(parsed_input[0])
+        for reg in self.plot_file.registries:
+            if reg.name == parsed_input[1]:
+                registry = reg
+        n_chan = len(functions)
+        if parsed_input[2] == 'auto':
+            addr = registry.get_start_address(n_chan)
+        else:
+            addr = int(parsed_input[2])
+        for function in functions:
+            chan_obj = xpx.RegistryChannel(address=addr, function=function)
+            registry.channels.append(chan_obj)
+            addr += 1
 
     # Cue commands
 

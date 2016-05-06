@@ -74,11 +74,9 @@ to have a functional, useful environment.
     List all fixtures in the plot file. Lists name, type and assigns 
     interface references.
 
-``xf TAG VALUE``
-    List all the fixtures that match the specified criteria. Only list 
-    fixture's whose value for the tag with name ``TAG`` is ``VALUE``. Like the 
-    ``xl`` command, this will print the name/type, UUID and assign interface 
-    references.
+``xf tag value``
+    List fixtures whose value of ``tag`` in their data dictionary is 
+    ``value``. Prints name and assigns interface references.
 
 ``xg FIXTURE``
     Print the value of every data tag that is assigned to ``FIXTURE``.
@@ -95,12 +93,16 @@ to have a functional, useful environment.
 ``xs FIXTURE TAG VALUE``
     Set the value of the tag with name ``TAG`` to ``VALUE`` for ``FIXTURE``.
 
-``xa FIXTURE UNIVERSE ADDR``
+``xa FIXTURE universe addr``
     Assign DMX addresses to ``FIXTURE``. This will assign a new channel in the 
     registry with universe name ``UNIVERSE`` for each DMX function defined by 
     the fixture. It will start assigning values at address number ``ADDR`` or, 
     if ``ADDR`` is ``auto``, the next best start address based on the 
     available free channels.
+
+``xA FIXTURE``
+    Unassign all DMX addresses associated with the functions of ``FIXTURE``, 
+    in all universes.
 
 ``xp FIXTURE``
     Purge ``FIXTURE``. This acts much like the ``xr`` command, except it also 
