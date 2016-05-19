@@ -118,7 +118,7 @@ class Context:
     def log(self, level, message):
         level_name = self.config['advanced']['log-'+str(level)]
         if level >= self.log_level:
-            print(''.join([level_name,':',self.name,':',message]))
+            print(''.join([level_name,':',self.name,':',message,'\033[0m']))
 
     def utility_clear(self, parsed_input):
         '''Clear the screen.'''

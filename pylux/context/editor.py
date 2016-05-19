@@ -47,11 +47,13 @@ class EditorContext(Context):
             ('path', True, 'Path to set as default save location.')]))
 
         self.register(Command('ml', self.metadata_list, []))
+        self.register(Command('mn', self.metadata_new, [
+            ('name', True, 'The name of the metadata to add.')]))
         self.register(Command('ms', self.metadata_set, [
             ('META', True, 'The metadata to set the value of.'),
             ('value', True, 'Value for the metadata to take.')]))
         self.register(Command('mr', self.metadata_remove, [
-            ('name', True, 'Name of the metadata to remove.')]))
+            ('META', True, 'The metadata to remove.')]))
         self.register(Command('mg', self.metadata_get, [
             ('name', True, 'Name of the metadata to print the value of.')]))
 
@@ -97,27 +99,10 @@ class EditorContext(Context):
             ('registry', True, 'The name of the registry to address in.'),
             ('address', True, 'The address to begin addressing at.')]))
 
-        self.register(Command('ql', self.cue_list, [])) 
-        self.register(Command('qn', self.cue_new, [
-            ('type', True, 'The type of the cue to add.'), 
-            ('location', True, 'The cue line or visual for this cue.')]))
-        self.register(Command('qr', self.cue_remove, [
-            ('cue', True, 'The cue to remove.')]))
-        self.register(Command('qs', self.cue_set, [
-            ('cue', True, 'The cue to set a tag of.'), 
-            ('tag', True, 'The name of the tag to set.'), 
-            ('value', True, 'The value to set the tag to.')]))
-        self.register(Command('qg', self.cue_get, [
-            ('cue', True, 'The cue to get a tag from.'), 
-            ('tag', True, 'The name of the tag to print the value of.')]))
-        self.register(Command('qG', self.cue_getall, [
-            ('cue', True, 'The cue to print the tags of.')]))
-        self.register(Command('qm', self.cue_moveafter, [
-            ('cue', True, 'The cue to move.'), 
-            ('dest_cue', True, 'The cue after which the cue should come.')]))
-        self.register(Command('qM', self.cue_movebefore, [
-            ('cue', True, 'The cue to move.'),
-            ('dest_cue', True, 'The cue before which the cue should come.')]))
+        self.register(Command('sl', self.scene_list, []))
+        self.register(Command('sn', self.scene_new, [
+            ('outputs', True, 'In the form FNC@###;FNC@###.'),
+            ('name', True, 'The name of the scene.')]))
 
     # File commands
 
@@ -145,29 +130,34 @@ class EditorContext(Context):
 
     def metadata_list(self, parsed_input):
         '''List the values of all metadata in the plot file.'''
-        self.interface.begin_listing()
+        self.interface.open('MET')
         for meta in self.plot_file.metadata:
             s = meta.name+': '+meta.value
-            self.interface.add_listing(meta, s)
+            self.interface.add(s, meta, 'MET')
 
     def metadata_set(self, parsed_input):
-        metadata = self.interface.get(parsed_input[0])
+        metadata = self.interface.get('MET', parsed_input[0])
         for meta in metadata:
             meta.value = parsed_input[1]
 
     def metadata_remove(self, parsed_input):
         '''Remove a piece of metadata from the file.'''
-        metadata = self.interface.get(parsed_input[0])
+        metadata = self.interface.get('MET', parsed_input[0])
         for meta in metadata:
             self.plot_file.metadata.remove(meta)
 
     def metadata_get(self, parsed_input):
         '''Print the values of metadata matching a name.'''
-        self.interface.begin_listing()
+        self.interface.open('MET')
         for meta in self.plot_file.metadata:
             if meta.name == parsed_input[0]:
                 s = meta.name+': '+meta.value
-                self.interface.add_listing(meta, s)
+                self.interface.add(s, meta, 'MET')
+
+    def metadata_new(self, parsed_input):
+        '''Create a new metadata item.'''
+        self.plot_file.metadata.append(xpx.Metadata(name=parsed_input[0], 
+                                                    value=''))
 
     # Fixture commands
 
@@ -188,7 +178,7 @@ class EditorContext(Context):
 
     def fixture_clone(self, parsed_input):
         '''Create a new fixture by copying an existing fixture.'''
-        src_fixtures = self.interface.get(parsed_input[0])
+        src_fixtures = self.interface.get('FIX', parsed_input[0])
         for src in src_fixtures:
             new_fixture = src
             new_fixture.uuid = str(xpx.uuid4())
@@ -196,55 +186,59 @@ class EditorContext(Context):
 
     def fixture_list(self, parsed_input):
         '''List all fixtures in the plot file.'''
-        self.interface.begin_listing()
+        self.interface.open('FIX')
         for fixture in self.plot_file.fixtures:
             if 'type' in fixture.data:
                 fixture_type = fixture.data['type']
             else:
                 fixture_type = 'n/a'
             s = fixture.name+' ('+fixture_type+')'
-            self.interface.add_listing(fixture, s)
+            self.interface.add(s, fixture, 'FIX')
 
     def fixture_filter(self, parsed_input):
         '''List all fixtures that meet a certain criterion.'''
-        self.interface.begin_listing()
+        self.interface.open('FIX')
         key = parsed_input[0]
         value = parsed_input[1]
         for fixture in self.plot_file.fixtures:
             if key in fixture.data:
                 if fixture.data[key] == value:
                     s = fixture.name+' ('+key+'='+value+')'
-                    self.interface.add_listing(fixture, s)
+                    self.interface.add(s, fixture, 'FIX')
 
     def fixture_remove(self, parsed_input):
         '''Remove a fixture from the plot file.'''
-        fixtures = self.interface.get(parsed_input[0])
+        fixtures = self.interface.get('FIX', parsed_input[0])
         for fixture in fixtures:
             self.plot_file.fixtures.remove(fixture)
 
     def fixture_get(self, parsed_input):
         '''Print the values of a fixture's tags.'''
-        fixtures = self.interface.get(parsed_input[0])
+        fixtures = self.interface.get('FIX', parsed_input[0])
         for fixture in fixtures:
-            print('\033[1mFixture Data: '+fixture.name+'\033[0m')
+            print('\033[1m'+fixture.name+'\033[0m')
+            print(str(len(fixture.data)), 'Data Tags: ')
             for key, value in fixture.data.items():
-                print(key+': '+value)
+                print('    '+key+': '+value)
 
     def fixture_getall(self, parsed_input):
         '''Print the tags and functions of a fixture..'''
-        fixtures = self.interface.get(parsed_input[0])
-        self.interface.begin_listing()
+        fixtures = self.interface.get('FIX', parsed_input[0])
+        self.interface.open('FNC')
         for fixture in fixtures:
-            print('\033[1mFixture Data: '+fixture.name+'\033[0m')
+            print('\033[1m'+fixture.name+'\033[0m')
+            print(str(len(fixture.data)), 'Data Tags: ')
             for key, value in fixture.data.items():
-                print(key+': '+value)
-            for function in fixture.functions:
-                s = '(Function) '+function.name
-                self.interface.add_listing(function, s)
+                print('    '+key+': '+value)
+            if len(fixture.functions):
+                print(str(len(fixture.functions)), 'DMX Functions:')
+                for function in fixture.functions:
+                    s = function.name
+                    self.interface.add(s, function, 'FNC', pre='    ')
 
     def fixture_set(self, parsed_input):
         '''Set the value of one of a fixture's tags.'''
-        fixtures = self.interface.get(parsed_input[0])
+        fixtures = self.interface.get('FIX', parsed_input[0])
         tag = parsed_input[1]
         value = parsed_input[2]
         for fixture in fixtures:
@@ -256,7 +250,7 @@ class EditorContext(Context):
                 fixture.data['focusX'] = value.split(',')[0]
                 fixture.data['focusY'] = value.split(',')[1]
             elif tag == 'dimmer':
-                dimmer_function = self.interface.get(value)[0].uuid
+                dimmer_function = self.interface.get('FIX', value)[0].uuid
                 fixture.data['controlDimmer'] = dimmer_function
             # Otherwise just set it
             else:
@@ -265,28 +259,24 @@ class EditorContext(Context):
 
     def fixture_address(self, parsed_input):
         '''Assign DMX addresses to a fixture.'''
-        fixtures = self.interface.get(parsed_input[0])
-        # We cannot have two objects passed in the same command, so the 
-        # registry has to be given by name. (Hopefully people name 
-        # registries uniquely)
-        for reg in self.plot_file.registries:
-            if reg.name == parsed_input[1]:
-                registry = reg
+        fixtures = self.interface.get('FIX', parsed_input[0])
+        registries = self.interface.get('REG', parsed_input[1])
         for fixture in fixtures:
             n_chan = len(fixture.functions)
-            if parsed_input[2] == 'auto':
-                addr = registry.get_start_address(n_chan)
-            else:
-                addr = int(parsed_input[2])
-            for function in fixture.functions:
-                chan_obj = xpx.RegistryChannel(
-                    address=addr, function=xpx.XPXReference(function.uuid))
-                registry.channels.append(chan_obj)
-                addr += 1
+            for registry in registries:
+                if parsed_input[2] == 'auto':
+                    addr = registry.get_start_address(n_chan)
+                else:
+                    addr = int(parsed_input[2])
+                for function in fixture.functions:
+                    chan_obj = xpx.RegistryChannel(
+                        address=addr, function=xpx.XPXReference(function.uuid))
+                    registry.channels.append(chan_obj)
+                    addr += 1
 
     def fixture_unaddress(self, parsed_input):
         '''Unassign addresses in all universes for this fixture.'''
-        fixtures = self.interface.get(parsed_input[0])
+        fixtures = self.interface.get('FIX', parsed_input[0])
         for fixture in fixtures:
             functions = [function.uuid for function in fixture.functions]
             for registry in self.plot_file.registries:
@@ -304,22 +294,22 @@ class EditorContext(Context):
 
     def registry_remove(self, parsed_input):
         '''Delete one or more registries.'''
-        registries = self.interface.get(parsed_input[0])
+        registries = self.interface.get('REG', parsed_input[0])
         for registry in registries:
             self.plot_file.registries.remove(registry)
 
     def registry_list(self, parsed_input):
         '''List all registries.'''
-        self.interface.begin_listing()
+        self.interface.open('REG')
         for registry in self.plot_file.registries:
             s = (registry.name+' ('+str(len(registry.get_occupied_addresses()))
                  +' occupied)')
-            self.interface.add_listing(registry, s) 
+            self.interface.add(s, registry, 'REG') 
 
     def registry_query(self, parsed_input):
         '''List the functions of all used channels in a registry.'''
-        registries = self.interface.get(parsed_input[0])
-        self.interface.begin_listing()
+        registries = self.interface.get('REG', parsed_input[0])
+        self.interface.open('FNC')
         for registry in registries:
             print('\033[1mUniverse: '+registry.name+'\033[0m')
             for channel in registry.channels:
@@ -328,12 +318,12 @@ class EditorContext(Context):
                 fix = self.plot_file.get_fixture_for_function(func)
                 s = ('DMX'+str(format(address, '03d'))+': '+fix.name+' ('
                      +func.name+')')
-                self.interface.add_listing(channel, s)
+                self.interface.add(s, func, 'FNC')
 
     def registry_probe(self, parsed_input):
         '''List channels and dimmer controlled lights.'''
-        registries = self.interface.get(parsed_input[0])
-        self.interface.begin_listing()
+        registries = self.interface.get('REG', parsed_input[0])
+        self.interface.open('FNC')
         for registry in registries:
             print('\033[1mUniverse: '+registry.name+'\033[0m')
             for channel in registry.channels:
@@ -342,17 +332,15 @@ class EditorContext(Context):
                 fixture = self.plot_file.get_fixture_for_function(func)
                 s = ('DMX'+str(format(address, '03d'))+': '+fixture.name+' ('
                      +func.name+')')
-                self.interface.add_listing(channel, s)
+                self.interface.add(s, func, 'FNC')
                 controlled = self.plot_file.get_fixtures_for_dimmer_function(func)
                 for dimmed_fixture in controlled:
                     print('\t→ '+dimmed_fixture.name)
 
     def registry_add(self, parsed_input):
         '''Manually add a function to a registry.'''
-        functions = self.interface.get(parsed_input[0])
-        for reg in self.plot_file.registries:
-            if reg.name == parsed_input[1]:
-                registry = reg
+        functions = self.interface.get('FNC', parsed_input[0])
+        registries = self.interface.get('REG', parsed_input[1])
         n_chan = len(functions)
         if parsed_input[2] == 'auto':
             addr = registry.get_start_address(n_chan)
@@ -363,65 +351,28 @@ class EditorContext(Context):
             registry.channels.append(chan_obj)
             addr += 1
 
-    # Cue commands
+    # Scene commands
 
-    def cue_list(self, parsed_input):
-        '''List all cues in the plot file.'''
-        cues = plot.CueList(self.plot_file)
-        self.interface.clear()
-        for cue in sorted(cues.cues, key=lambda cue: cue.key):
-            cue_type = cue.data['type']
-            cue_location = cue.data['location']
-            print(''.join(['\033[4m',str(cue.key),'\033[0m (',cue_type,
-                          ') at \'',cue_location,'\'']))
-            self.interface.append(cue.key, cue)
+    def scene_list(self, parsed_input):
+        '''List all scenes.'''
+        self.interface.open('SCN')
+        for scene in self.plot_file.scenes:
+            s = scene.name+' (Affects '+str(len(scene.outputs))+' functions)'
+            self.interface.add(s, scene, 'SCN')
 
-    def cue_new(self, parsed_input):
-        '''Create a new cue.'''
-        cue = plot.Cue(self.plot_file)
-        cue.set_data('type', parsed_input[0])
-        cue.set_data('location', parsed_input[1])
+    def scene_new(self, parsed_input):
+        '''Create a new scene.'''
+        outputs = []
+        for output in parsed_input[0].split(';'):
+            functions = self.interface.get('FNC', output.split('@')[0])
+            for function in functions:
+                outputs.append(xpx.OutputState(
+                    function=xpx.XPXReference(function.uuid),
+                    value=output.split('@')[1]))
+        self.plot_file.scenes.append(xpx.Scene(outputs=outputs, 
+                                               name=parsed_input[1]))
 
-    def cue_remove(self, parsed_input):
-        '''Remove a cue from the plot.'''
-        cues = plot.CueList(self.plot_file)
-        removal_candidates = self.interface.get(parsed_input[0])
-        for rc in removal_candidates:
-            cues.remove(rc)
-
-    def cue_set(self, parsed_input):
-        '''Set the value of a cue's tag.'''
-        cues_to_change = self.interface.get(parsed_input[0])
-        for cue in cues_to_change:
-            cue.set_data(parsed_input[1], parsed_input[2])
-
-    def cue_get(self, parsed_input):
-        '''Print the value of a cue's tag.'''
-        cues_to_get = self.interface.get(parsed_input[0])
-        for cue in cues_to_get:
-            if parsed_input[1] in cue.data:
-                print(cue.data[parsed_input[1]])
-            else:
-                print(None)
-
-    def cue_getall(self, parsed_input):
-        '''Print the values of all of a cue's tags.'''
-        cues_to_get = self.interface.get(parsed_input[0])
-        for cue in cues_to_get:
-            for data_item in cue.data:
-                print(data_item+': '+cue.data[data_item])
-
-    def cue_moveafter(self, parsed_input):
-        '''Move a cue directly after another in the list.'''
-        cues = plot.CueList(self.plot_file)
-        cues.move_after(int(parsed_input[0]), 
-                        int(parsed_input[1]))
-
-    def cue_movebefore(self, parsed_input):
-        '''Move a cue directly before another in the list.'''
-        cues = plot.CueList(self.plot_file)
-        cues.move_before(int(parsed_input[0]), 
-                         int(parsed_input[1]))
+    # Chase commands
 
 
 def get_context():

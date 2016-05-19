@@ -48,7 +48,7 @@ Listing Commands
 A listing command is any command which generates a list of objects of which 
 the string representations are printed to the output. Along with the string 
 representation of the object, listing commands also assign so-called 
-interface references to each object. These are displayed as green integers 
+interface references to each object. These are displayed as integers 
 preceding the line which contains the object. It is these integers that are 
 passed into commands in place of the objects they demand.
 
@@ -61,10 +61,28 @@ combination of the above, `9,7,11:17,19`.
 
 For example, in order to set the value of a piece of metadata, first run the 
 metadata listing command, ``ml``, giving output::
-    1   Director: J. Smith
-    2   Designer: A. Wilson
-    3   Master Electrician: P. Small
+    0   Director: J. Smith
+    1   Designer: A. Wilson
+    2   Master Electrician: P. Small
 
 In order to change the name of the director, use the metadata setting 
-command, ``ms``, piping in `1`::
-    ms 1 T. Johnson
+command, ``ms``, piping in `0`::
+    ms 0 T. Johnson
+
+Documentation of Pipes
+^^^^^^^^^^^^^^^^^^^^^^
+
+Where a command calls for an object to be piped in, this will be made clear 
+by the fact that the argument name will be in capitals, for example ``FIX``. 
+There are a number of different object types that can be passed in, each of 
+which is represented by a different colour on the CLI. They are:
+
+======== ======
+Arg Name Colour
+======== ======
+FIX      Green
+FNC      Red
+REG      Yellow
+MET      Blue
+CUE      NYI
+======== ======

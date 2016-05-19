@@ -15,93 +15,76 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
- 
+
 class Interface:
-    """Manage the CLI interactivity.
-
-    Manage the interactive CLI lists, whereby a unique key which is 
-    presented to the user on the CLI returns an object, without the 
-    user having to specify the object itself.
-
-    Attributes:
-        option_list: a dictionary of the options presented to the 
-            user on the CLI.
-    """
-
+    '''Manage multiple buffers at a time.'''
     def __init__(self):
-        """Create a dictionary for the options.
+        self.buffers = {'FIX': ReferenceBuffer(colour=92),
+                        'FNC': ReferenceBuffer(colour=92),
+                        'REG': ReferenceBuffer(colour=93),
+                        'MET': ReferenceBuffer(colour=94),
+                        'CUE': ReferenceBuffer(colour=95),
+                        'SCN': ReferenceBuffer(colour=96),
+                        'CHS': ReferenceBuffer(colour=96),
+                        'QLC': ReferenceBuffer(colour=95),
+                        'QAC': ReferenceBuffer(colour=95)}
 
-        Create a dictionary ready to populate with options, and add 
-        an entry for the special 'this' with the value None.
-        """
-        self.option_list = {'this': None}
+    def add_buffer(self, s):
+        self.buffers[s] = ReferenceBuffer()
 
-    def append(self, ref, object):
-        """Add an object to the option list.
+    def get(self, buff, user_input):
+        return self.buffers[buff].get(user_input)
 
-        Args:
-            ref: the unique CLI identifier of the option being added.
-            object: the object that should be returned if the user 
-                selects this option.
-        """
-        self.option_list[ref] = object
+    def open(self, buff):
+        self.buffers[buff].begin()
+
+    def add(self, s, obj, buff, pre=''):
+        self.buffers[buff].append(obj, s, pre)
+
+
+class ReferenceBuffer:
+    '''Contains one set of interface references.
+
+    The user can specify which reference buffer they wish to write 
+    interface references to. (By default they are written to STD) 
+    This allows multiple references to be accessed simultaneously.
+    '''
+    def __init__(self, colour=0):
+        self.option_list = {}
+        self.colour = colour
+
+    def set_colour(self, colour):
+        self.colour = colour
+    
+    def add(self, ref, obj):
+        '''Add an object to the buffer.'''
+        self.option_list[ref] = obj
 
     def get(self, refs):
-        """Return the object of a user selection.
-
-        Args:
-            ref: the unique CLI identifier that the user selected.
-
-        Returns:
-            A list of objects that correspond to the references that 
-            were given.
-        """
-        objects= []
+        objs = []
         if refs == 'all':
-            for ref in self.option_list:
-                if ref != 'this':
-                    objects.append(self.option_list[ref])
+            for ref, obj in self.option_list.items():
+                objs.append(obj)
         else:
-            if refs == 'this':
-                refs = self.option_list['this']
-            references = resolve_references(refs)
-            for ref in references:
-                objects.append(self.option_list[ref])
-        return objects
+            for ref in resolve_references(refs):
+                objs.append(self.option_list[ref])
+        return objs
 
     def clear(self):
-        """Clear the option list."""
+        '''Clear the reference buffer.'''
         self.option_list.clear()
-        self.option_list['this'] = None
 
-    def update_this(self, reference):
-        """Update the 'this' special reference.
-
-        Set the 'this' special reference to a specified reference. 
-        If the given reference is also 'this', do nothing as 'this' 
-        will already point to the desired reference.
-
-        Args:
-            reference: the reference that 'this' should point to.
-        """
-        if reference != 'this':
-            self.option_list['this'] = reference
-
-    def begin_listing(self):
-        '''Clear interface for new listing operation.'''
+    def begin(self):
+        '''Start the buffer from empty.'''
         self.clear()
 
-    def add_listing(self, obj, s):
-        '''Add a list item.
-
-        Add item with string representation s, object reference obj 
-        and automatic numbering.
-        '''
+    def append(self, obj, s, pre):
+        '''Append and print an object in the buffer.'''
         i = len(self.option_list)
-        self.append(i, obj)
-        print('\033[92m\033[1m'+str(i)+'\033[0m ',s)
-
-
+        self.add(i, obj)
+        print(pre+'\033[1m\033['+str(self.colour)+'m'+str(i)+'\033[0m '+s)
+    
+ 
 def resolve_references(user_input):
     """Parse the reference input.
     
@@ -171,18 +154,3 @@ def resolve_input(inputs_list, number_args):
     if args_list[-1] == '':
         args_list.pop(-1)
     return args_list
-
-
-def get_fixture_print(fixture):
-    """Return a string that represents this fixture the best.
-
-    If the fixture has a name tag, return that, if not and it has a 
-    type tag, return that, otherwise return the uuid.
-    """
-    if 'name' in fixture.data:
-        return fixture.data['name']
-    elif 'type' in fixture.data:
-        return fixture.data['type']
-    else:
-        return fixture.uuid
-
