@@ -29,7 +29,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     keywords='lighting theatre stage tech',
-    packages=['pylux', 'pylux.context'],
+    packages=['pylux', 'pylux.context', 'pylux.lib'],
     install_requires=['tabulate', 'Jinja2', 'cairosvg'],
     package_data={
         'pylux': ['settings.conf', 

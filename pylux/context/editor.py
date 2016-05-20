@@ -26,6 +26,7 @@ import os
 import pylux.clihelper as clihelper
 from pylux.context.context import Context, Command
 from pylux import get_data
+from pylux.lib import pseudotag
 import libxpx.xpx as xpx
 import xml.etree.ElementTree as ET
 
@@ -103,6 +104,8 @@ class EditorContext(Context):
         self.register(Command('sn', self.scene_new, [
             ('outputs', True, 'In the form FNC@###;FNC@###.'),
             ('name', True, 'The name of the scene.')]))
+        self.register(Command('sg', self.scene_getall, [
+            ('SCN', True, 'The scene to display the outputs of.')]))
 
     # File commands
 
@@ -243,19 +246,10 @@ class EditorContext(Context):
         value = parsed_input[2]
         for fixture in fixtures:
             # See if it is a special pseudo tag
-            if tag == 'position':
-                fixture.data['posX'] = value.split(',')[0]
-                fixture.data['posY'] = value.split(',')[1]
-            elif tag == 'focus':
-                fixture.data['focusX'] = value.split(',')[0]
-                fixture.data['focusY'] = value.split(',')[1]
-            elif tag == 'dimmer':
-                dimmer_function = self.interface.get('FIX', value)[0].uuid
-                fixture.data['controlDimmer'] = dimmer_function
-            # Otherwise just set it
+            if tag in pseudotag.pseudotags:
+                pseudotag.pseudotags[tag](fixture, self, value)
             else:
                 fixture.data[tag] = value
-        self.interface.update_this(parsed_input[0])
 
     def fixture_address(self, parsed_input):
         '''Assign DMX addresses to a fixture.'''
@@ -371,6 +365,21 @@ class EditorContext(Context):
                     value=output.split('@')[1]))
         self.plot_file.scenes.append(xpx.Scene(outputs=outputs, 
                                                name=parsed_input[1]))
+
+    def scene_getall(self, parsed_input):
+        '''Display the outputs of a scene.'''
+        self.interface.open('FNC')
+        scenes = self.interface.get('SCN', parsed_input[0])
+        for scene in scenes:
+            print('\033[1mScene: '+scene.name+'\033[0m')
+            for output in scene.outputs:
+                function = self.plot_file.get_object_by_uuid(
+                    output.function.uuid)
+                value = clihelper.ProgressBar()
+                value = value+output.value
+                fixture = self.plot_file.get_fixture_for_function(function)
+                s = str(value)+' '+function.name+' ('+fixture.name+')'
+                self.interface.add(s, function, 'FNC')
 
     # Chase commands
 
