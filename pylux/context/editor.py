@@ -106,6 +106,8 @@ class EditorContext(Context):
             ('name', True, 'The name of the scene.')]))
         self.register(Command('sg', self.scene_getall, [
             ('SCN', True, 'The scene to display the outputs of.')]))
+        self.register(Command('sG', self.scene_getall_dmx, [
+            ('SCN', True, 'The scene to display the outputs of.')]))
 
     # File commands
 
@@ -380,6 +382,40 @@ class EditorContext(Context):
                 fixture = self.plot_file.get_fixture_for_function(function)
                 s = str(value)+' '+function.name+' ('+fixture.name+')'
                 self.interface.add(s, function, 'FNC')
+
+    def scene_getall_dmx(self, parsed_input):
+        '''Display the outputs of a scene in terms of DMX channels.'''
+        self.interface.open('FNC')
+        scenes = self.interface.get('SCN', parsed_input[0])
+        for scene in scenes:
+            printlines = []
+            registries = []
+            print('\033[1mScene: '+scene.name+'\033[0m')
+            for output in scene.outputs:
+                function = self.plot_file.get_object_by_uuid(
+                    output.function.uuid)
+                channels = self.plot_file.get_channels_for_function(function)
+                for channel in channels:
+                    registry = self.plot_file.get_registry_for_channel(channel)
+                    if registry not in registries:
+                        registries.append(registry)
+                    printlines.append((registry, channel, output.value))
+            for registry in registries:
+                print('\033[3mRegistry: '+registry.name+'\033[0m')
+                for printline in printlines:
+                    if printline[0] == registry:
+                        value = clihelper.ProgressBar()
+                        value = value+printline[2]
+                        s = ('DMX'+str(format(printline[1].address, '03d'))+
+                             ' '+str(value))
+                        self.interface.add(s, printline[1].function, 'FNC')
+                
+
+    def scene_remove(self, parsed_input):
+        '''Remove a scene.'''
+        scenes = self.interface.get('SCN', parsed_input[0])
+        for scene in scenes:
+            self.plot_file.remove(scene)
 
     # Chase commands
 
