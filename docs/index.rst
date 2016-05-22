@@ -15,6 +15,7 @@ This documentation is aimed at both users and developers.
     user_introduction
     getting_started
     using_metadata
+    using_fixtures
 
 .. toctree::
     :maxdepth: 2
