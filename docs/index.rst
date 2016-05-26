@@ -16,6 +16,7 @@ This documentation is aimed at both users and developers.
     getting_started
     using_metadata
     using_fixtures
+    generating_reports
 
 .. toctree::
     :maxdepth: 2

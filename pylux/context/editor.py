@@ -23,11 +23,10 @@ for the reading and editing of Pylux plot files.
 """
 
 import os
-import pylux.clihelper as clihelper
-from pylux.clihelper import ReferenceBuffer
+import clihelper
+from clihelper import ReferenceBuffer
 from pylux.context.context import Context, Command
-from pylux import get_data
-from pylux.lib import pseudotag
+from lib import pseudotag, data
 import libxpx.xpx as xpx
 import xml.etree.ElementTree as ET
 
@@ -189,7 +188,7 @@ class EditorContext(Context):
 
     def fixture_from_template(self, parsed_input):
         '''Create a new fixture from a template file.'''
-        template_file = get_data('fixture/'+parsed_input[0]+'.xml')
+        template_file = data.get_data('fixture/'+parsed_input[0]+'.xml')
         if not template_file:
             self.log(30, 'No fixture template with this name exists')
         else:

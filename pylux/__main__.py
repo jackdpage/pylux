@@ -24,6 +24,7 @@ import sys
 import runpy
 import logging
 import libxpx.xpx as xpx
+import cli
 
 from pylux import __version__, get_data
 
@@ -66,8 +67,7 @@ def main():
         'CONFIG': config,
         'LOG_LEVEL': verbosity_dict[launch_args.verbose]}
     print('Running in CLI mode\n')
-    runpy.run_module('pylux.cli', init_globals=init_globals, 
-                     run_name='pylux_root')
+    cli.main(init_globals)
 
 
 if __name__ == '__main__':

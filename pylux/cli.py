@@ -19,19 +19,16 @@
 from importlib import import_module
 
 def get_context(context_name):
-    module_name = 'pylux.context.'+context_name
+    module_name = 'context.'+context_name
     context_module = import_module(module_name)
     context_class = context_module.get_context()
     return context_class
 
 
-def main():
-    context = get_context(CONFIG['cli']['default-context'])
-    globals_dict = {
-        'PLOT_FILE': PLOT_FILE,
-        'CONFIG': CONFIG,
-        'LOG_LEVEL': LOG_LEVEL}
-    context.set_globals(globals_dict)
+def main(init_globals):
+    globals = init_globals
+    context = get_context(globals['CONFIG']['cli']['default-context'])
+    context.set_globals(globals)
     print('Welcome to Pylux! Type \'h\' to view a list of commands.')
     while True:
         user_input = input('(pylux:'+context.name+') ')
@@ -40,7 +37,7 @@ def main():
         if len(user_input) > 0:
             if inputs[0] == '::':
                 globals_dict = context.get_globals()
-                context = get_context(CONFIG['cli']['default-context'])
+                context = get_context(globals['CONFIG']['cli']['default-context'])
                 context.set_globals(globals_dict)
             elif inputs[0][0] == ':':
                 globals_dict = context.get_globals()
@@ -54,7 +51,3 @@ def main():
                 context.process(inputs)
             else:
                 context.log(30, 'Command does not exist') 
-
-
-if __name__ == 'pylux_root':
-    main()

@@ -27,7 +27,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError
 import os
 from pylux.clihelper import ReferenceBuffer
-from pylux import get_data
+from . import *
 from pylux.context.context import Context, Command
 
 
@@ -132,6 +132,10 @@ class ReporterContext(Context):
 #report write (to file)
 #report list
 ####
+
+    def template_list(self, parsed_input):
+        '''List the templates installed on this system.'''
+        
 
     def report_generate(self, parsed_input):
         '''Create a new report from a template in a temporary buffer.'''
