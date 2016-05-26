@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<fixture>
+<fixture uuid="%UUID%">
 	<type>Showtec LED PAR56</type>
 	<symbol>ledpar56</symbol>
 	<mass>2.3</mass>
 	<power>15</power>
-	<dmx_functions>red,green,blue,colour_wheel,strobe,multi_function</dmx_functions>
 </fixture>
 

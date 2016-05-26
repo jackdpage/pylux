@@ -1,9 +1,12 @@
-Pylux
-=====
+Pylux - libxpx branch
+=====================
 
 .. image:: https://img.shields.io/pypi/v/pylux.svg
 .. image:: https://img.shields.io/pypi/format/pylux.svg
 .. image:: https://readthedocs.org/projects/pylux/badge/?version=latest
+
+THIS BRANCH OF PYLUX IS CURRENTLY IN DEVELOPMENT. THE AIM IS TO UTILISE THE 
+LIBXPX FORMAT FOR PLOT FILES. COMMANDS ARE CURRENTLY BEING PORTED.
 
 Pylux is a program for creating and managing documentation for stage lighting. 
 The program uses an XML 'plot' file to store information about a lighting 

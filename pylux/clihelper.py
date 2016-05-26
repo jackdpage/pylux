@@ -15,79 +15,68 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
- 
+
 class Interface:
-    """Manage the CLI interactivity.
-
-    Manage the interactive CLI lists, whereby a unique key which is 
-    presented to the user on the CLI returns an object, without the 
-    user having to specify the object itself.
-
-    Attributes:
-        option_list: a dictionary of the options presented to the 
-            user on the CLI.
-    """
-
+    '''Manage multiple buffers at a time.'''
     def __init__(self):
-        """Create a dictionary for the options.
+        self.buffers = {}
 
-        Create a dictionary ready to populate with options, and add 
-        an entry for the special 'this' with the value None.
-        """
-        self.option_list = {'this': None}
+    def add_buffer(self, s):
+        self.buffers[s] = ReferenceBuffer()
 
-    def append(self, ref, object):
-        """Add an object to the option list.
+    def get(self, buff, user_input):
+        return self.buffers[buff].get(user_input)
 
-        Args:
-            ref: the unique CLI identifier of the option being added.
-            object: the object that should be returned if the user 
-                selects this option.
-        """
-        self.option_list[ref] = object
+    def open(self, buff):
+        self.buffers[buff].begin()
+
+    def add(self, s, obj, buff, pre=''):
+        self.buffers[buff].append(obj, s, pre)
+
+
+class ReferenceBuffer:
+    '''Contains one set of interface references.
+
+    The user can specify which reference buffer they wish to write 
+    interface references to. (By default they are written to STD) 
+    This allows multiple references to be accessed simultaneously.
+    '''
+    def __init__(self, colour=0):
+        self.option_list = {}
+        self.colour = colour
+
+    def set_colour(self, colour):
+        self.colour = colour
+    
+    def add(self, ref, obj):
+        '''Add an object to the buffer.'''
+        self.option_list[ref] = obj
 
     def get(self, refs):
-        """Return the object of a user selection.
-
-        Args:
-            ref: the unique CLI identifier that the user selected.
-
-        Returns:
-            A list of objects that correspond to the references that 
-            were given.
-        """
-        objects= []
+        objs = []
         if refs == 'all':
-            for ref in self.option_list:
-                if ref != 'this':
-                    objects.append(self.option_list[ref])
+            for ref, obj in self.option_list.items():
+                objs.append(obj)
         else:
-            if refs == 'this':
-                refs = self.option_list['this']
-            references = resolve_references(refs)
-            for ref in references:
-                objects.append(self.option_list[ref])
-        return objects
+            for ref in resolve_references(refs):
+                objs.append(self.option_list[ref])
+        return objs
 
     def clear(self):
-        """Clear the option list."""
+        '''Clear the reference buffer.'''
         self.option_list.clear()
-        self.option_list['this'] = None
 
-    def update_this(self, reference):
-        """Update the 'this' special reference.
+    def begin(self):
+        '''Start the buffer from empty.'''
+        self.clear()
 
-        Set the 'this' special reference to a specified reference. 
-        If the given reference is also 'this', do nothing as 'this' 
-        will already point to the desired reference.
-
-        Args:
-            reference: the reference that 'this' should point to.
-        """
-        if reference != 'this':
-            self.option_list['this'] = reference
-
-
+    def append(self, obj, s, pre):
+        '''Append and print an object in the buffer.'''
+        i = len(self.option_list)
+        self.add(i, obj)
+        print(pre+'\033[1m\033['+str(self.colour)+'m'+str(i)+'\033[0m '+s)
+    
+ 
 def resolve_references(user_input):
     """Parse the reference input.
     
@@ -158,17 +147,50 @@ def resolve_input(inputs_list, number_args):
         args_list.pop(-1)
     return args_list
 
+# PROGRESS BAR - ACTIVESTATE PYTHON PROGRESS BAR RECIPE
 
-def get_fixture_print(fixture):
-    """Return a string that represents this fixture the best.
-
-    If the fixture has a name tag, return that, if not and it has a 
-    type tag, return that, otherwise return the uuid.
+class ProgressBar(object):
+    """ProgressBar class holds the options of the progress bar.
+    The options are:
+        start   State from which start the progress. For example, if start is
+                5 and the end is 10, the progress of this state is 50%
+        end     State in which the progress has terminated.
+        width   --
+        fill    String to use for "filled" used to represent the progress
+        blank   String to use for "filled" used to represent remaining space.
+        format  Format
+        incremental
     """
-    if 'name' in fixture.data:
-        return fixture.data['name']
-    elif 'type' in fixture.data:
-        return fixture.data['type']
-    else:
-        return fixture.uuid
+    def __init__(self, start=0, end=255, width=10, fill='=', blank=' ', incremental=True):
+        self.start = start
+        self.end = end
+        self.width = width
+        self.fill = fill
+        self.blank = blank
+        self.incremental = incremental
+        self.step = 100 / float(width) #fix
+        self.reset()
 
+    def __add__(self, increment):
+        increment = self._get_progress(increment)
+        if 100 > self.progress + increment:
+            self.progress += increment
+        else:
+            self.progress = 100
+        return self
+
+    def __str__(self):
+        progressed = int(self.progress / self.step) #fix
+        fill = (progressed-1) * self.fill
+        blank = (self.width - progressed) * self.blank
+        return ''.join(['[',fill,'>',blank,'] ',str(round(self.progress)),'%'])
+
+    __repr__ = __str__
+
+    def _get_progress(self, increment):
+        return float(increment * 100) / self.end
+
+    def reset(self):
+        """Resets the current progress to the start point"""
+        self.progress = self._get_progress(self.start)
+        return self

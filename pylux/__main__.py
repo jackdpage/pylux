@@ -23,7 +23,7 @@ import configparser
 import sys
 import runpy
 import logging
-import pylux.plot as plot
+import libxpx.xpx as xpx
 
 from pylux import __version__, get_data
 
@@ -33,20 +33,19 @@ def main():
     print('This is Pylux, version '+__version__)
     # Initiate the argument parser and get launch arguments
     parser = argparse.ArgumentParser(prog='pylux',
-       description='Create and modify OpenLighting Plot files')
+       description='Entertainment documentation management suite')
     parser.add_argument('-v', '--version', action='version', 
         version='%(prog`)s '+__version__)
     parser.add_argument('-f', '--file', dest='file', 
         help='load this project file on launch')
-    parser.add_argument('-g', '--gui', action='store_true', 
-        help='launch Pylux with a GUI')
     parser.add_argument('-V', '--verbose', dest='verbose', action='count',
         help='set the verbosity of output')
     launch_args = parser.parse_args()
     # Load configuration
     config = configparser.ConfigParser()
-    config.read([get_data('settings.conf', location='root'),
-                 get_data('settings.conf', location='home')])
+    config.read([get_data('settings.conf', location='root')])
+    if get_data('settings.conf', location='home'):
+        config.read([get_data('settings.conf', location='home')])
     # Handle verbosity
     verbosity_dict = {
         None: 30, 
@@ -54,26 +53,21 @@ def main():
         2: 10,
         3: 1}
     print('Logging level is '+config['advanced']['log-'+str(verbosity_dict[launch_args.verbose])])
-    # Load plot file
-    plot_file = plot.PlotFile()
+    # Load XPX file
+    xpx_file = xpx.Document()
     if launch_args.file != None:
-        plot_file.load(launch_args.file)
-        print('Using plot file '+plot_file.path)
+        xpx_file.load(launch_args.file)
+        print('Using XPX file '+launch_args.file)
     else:
-        print('No plot file loaded')
+        print('No XPX file loaded')
     # Prepare globals for launch
     init_globals = {
-        'PLOT_FILE': plot_file,
+        'PLOT_FILE': xpx_file,
         'CONFIG': config,
         'LOG_LEVEL': verbosity_dict[launch_args.verbose]}
-    if launch_args.gui == True:
-        print('Running in GUI mode\n')
-        runpy.run_module('pylux.gui', init_globals=init_globals, 
-                         run_name='pylux_root')
-    else:
-        print('Running in CLI mode\n')
-        runpy.run_module('pylux.cli', init_globals=init_globals, 
-                         run_name='pylux_root')
+    print('Running in CLI mode\n')
+    runpy.run_module('pylux.cli', init_globals=init_globals, 
+                     run_name='pylux_root')
 
 
 if __name__ == '__main__':

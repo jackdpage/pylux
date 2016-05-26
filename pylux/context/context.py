@@ -118,7 +118,7 @@ class Context:
     def log(self, level, message):
         level_name = self.config['advanced']['log-'+str(level)]
         if level >= self.log_level:
-            print(''.join([level_name,':',self.name,':',message]))
+            print(''.join([level_name,':',self.name,':',message,'\033[0m']))
 
     def utility_clear(self, parsed_input):
         '''Clear the screen.'''
@@ -127,7 +127,7 @@ class Context:
     def utility_exit(self, parsed_input):
         '''Quit the program and save the plot file to disk.'''
         try:
-            self.plot_file.write()
+            self.plot_file.write(self.plot_file.load_location)
         except AttributeError:
             self.log(30, 'No plot file was loaded, nothing to save')
         self.utility_kill(parsed_input)
@@ -149,7 +149,7 @@ class Context:
                     usage = usage+' '+arg[0]
                 print(usage)
                 print('Description:')
-                print('    '+str(command.synopsis))
+                print('    '+str(command.function.__doc__))
                 print('Arguments:')
                 for arg in command.arguments:
                     if arg[1]:
