@@ -33,13 +33,11 @@ def main():
     print('This is Pylux, version '+__version__)
     # Initiate the argument parser and get launch arguments
     parser = argparse.ArgumentParser(prog='pylux',
-       description='Create and modify OpenLighting Plot files')
+       description='Entertainment documentation management suite')
     parser.add_argument('-v', '--version', action='version', 
         version='%(prog`)s '+__version__)
     parser.add_argument('-f', '--file', dest='file', 
         help='load this project file on launch')
-    parser.add_argument('-g', '--gui', action='store_true', 
-        help='launch Pylux with a GUI')
     parser.add_argument('-V', '--verbose', dest='verbose', action='count',
         help='set the verbosity of output')
     launch_args = parser.parse_args()
@@ -67,14 +65,9 @@ def main():
         'PLOT_FILE': xpx_file,
         'CONFIG': config,
         'LOG_LEVEL': verbosity_dict[launch_args.verbose]}
-    if launch_args.gui == True:
-        print('Running in GUI mode\n')
-        runpy.run_module('pylux.gui', init_globals=init_globals, 
-                         run_name='pylux_root')
-    else:
-        print('Running in CLI mode\n')
-        runpy.run_module('pylux.cli', init_globals=init_globals, 
-                         run_name='pylux_root')
+    print('Running in CLI mode\n')
+    runpy.run_module('pylux.cli', init_globals=init_globals, 
+                     run_name='pylux_root')
 
 
 if __name__ == '__main__':

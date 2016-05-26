@@ -19,15 +19,7 @@
 class Interface:
     '''Manage multiple buffers at a time.'''
     def __init__(self):
-        self.buffers = {'FIX': ReferenceBuffer(colour=92),
-                        'FNC': ReferenceBuffer(colour=95),
-                        'REG': ReferenceBuffer(colour=93),
-                        'MET': ReferenceBuffer(colour=94),
-                        'CUE': ReferenceBuffer(colour=95),
-                        'SCN': ReferenceBuffer(colour=96),
-                        'CHS': ReferenceBuffer(colour=96),
-                        'QLC': ReferenceBuffer(colour=92),
-                        'QAC': ReferenceBuffer(colour=93)}
+        self.buffers = {}
 
     def add_buffer(self, s):
         self.buffers[s] = ReferenceBuffer()

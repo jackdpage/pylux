@@ -24,6 +24,7 @@ for the reading and editing of Pylux plot files.
 
 import os
 import pylux.clihelper as clihelper
+from pylux.clihelper import ReferenceBuffer
 from pylux.context.context import Context, Command
 from pylux import get_data
 from pylux.lib import pseudotag
@@ -34,9 +35,11 @@ import xml.etree.ElementTree as ET
 class EditorContext(Context):
 
     def __init__(self):
-        """Registers commands and globals for this context."""
+        """Registers commands."""
         super().__init__()
         self.name = 'editor'
+
+        # Command Registration
 
         self.register(Command('fo', self.file_open, [
             ('path', True, 'Path of the file to load.')])) 
@@ -108,6 +111,19 @@ class EditorContext(Context):
             ('SCN', True, 'The scene to display the outputs of.')]))
         self.register(Command('sG', self.scene_getall_dmx, [
             ('SCN', True, 'The scene to display the outputs of.')]))
+
+    def post_init(self):
+        '''Registers interface buffers.'''
+
+        self.interface.buffers['FIX'] = ReferenceBuffer(colour=92)
+        self.interface.buffers['FNC'] = ReferenceBuffer(colour=95)
+        self.interface.buffers['REG'] = ReferenceBuffer(colour=93)
+        self.interface.buffers['MET'] = ReferenceBuffer(colour=94)
+        self.interface.buffers['CUE'] = ReferenceBuffer(colour=95)
+        self.interface.buffers['SCN'] = ReferenceBuffer(colour=96)
+        self.interface.buffers['CHS'] = ReferenceBuffer(colour=96)
+        self.interface.buffers['QLC'] = ReferenceBuffer(colour=92)
+        self.interface.buffers['QAC'] = ReferenceBuffer(colour=93)
 
     # File commands
 
