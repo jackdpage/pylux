@@ -25,7 +25,7 @@ for the reading and editing of Pylux plot files.
 import os
 import clihelper
 from clihelper import ReferenceBuffer
-from pylux.context.context import Context, Command
+from context.context import Context, Command
 from lib import pseudotag, data
 import libxpx.xpx as xpx
 import xml.etree.ElementTree as ET

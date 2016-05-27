@@ -25,8 +25,9 @@ import runpy
 import logging
 import libxpx.xpx as xpx
 import cli
+from lib import data
 
-from pylux import __version__, get_data
+from __init__ import __version__
 
 
 def main():
@@ -44,9 +45,8 @@ def main():
     launch_args = parser.parse_args()
     # Load configuration
     config = configparser.ConfigParser()
-    config.read([get_data('settings.conf', location='root')])
-    if get_data('settings.conf', location='home'):
-        config.read([get_data('settings.conf', location='home')])
+    config.read(['/etc/pylux.conf'])
+    config.read([data.get_data('settings.conf', location='home')])
     # Handle verbosity
     verbosity_dict = {
         None: 30, 
@@ -69,6 +69,9 @@ def main():
     print('Running in CLI mode\n')
     cli.main(init_globals)
 
+
+if __name__ == '__main__' and __package__ is None:
+    __package__ = 'pylux'
 
 if __name__ == '__main__':
     main()

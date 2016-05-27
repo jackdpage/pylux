@@ -10,3 +10,5 @@ sed -i "s/\(version = \).*/\1'"$VERSION"'/;s/\(release = \).*/\1'"$RELEASE"'/" '
 # Update setup.py version
 sed -i "s/\(version=\).*/\1'"$RELEASE"',/" 'setup.py'
 
+# Update __init__ version
+sed -i "s/\(__version__ = \).*/\1'"$RELEASE"'/" 'pylux/__init__.py'
