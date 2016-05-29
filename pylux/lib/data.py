@@ -29,3 +29,20 @@ def get_data(path, location='auto'):
             return False
     else:
         return False
+
+def list_data(path, location='all'):
+    if location == 'all':
+        files = []
+        for loc in PRIORITY:
+            if os.path.isdir(os.path.join(LOCATIONS[loc], path)):
+                for data in os.listdir(os.path.join(LOCATIONS[loc], path)):
+                    files.append((loc, data))
+        return files
+    elif location in LOCATIONS:
+        files = []
+        if os.path.isdir(os.path.join(LOCATIONS[location], path)):
+            for data in os.listdir(os.path.join(LOCATIONS[location], path)):
+                files.append((location, data))
+        return files
+    else:
+        return []

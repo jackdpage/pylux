@@ -21,14 +21,11 @@ import argparse
 import os
 import configparser
 import sys
-import runpy
-import logging
 import libxpx.xpx as xpx
-import cli
-from lib import data
 
-from __init__ import __version__
-
+import pylux.cli
+from pylux.lib import data
+from pylux import __version__
 
 def main():
     """Initialise the argument and config parsers."""
@@ -67,11 +64,9 @@ def main():
         'CONFIG': config,
         'LOG_LEVEL': verbosity_dict[launch_args.verbose]}
     print('Running in CLI mode\n')
-    cli.main(init_globals)
+    pylux.cli.main(init_globals)
 
-
-if __name__ == '__main__' and __package__ is None:
-    __package__ = 'pylux'
 
 if __name__ == '__main__':
+    __package__ = 'pylux'
     main()

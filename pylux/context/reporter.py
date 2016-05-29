@@ -26,9 +26,9 @@ just as easily be used for other formats.
 from jinja2 import Environment, FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError
 import os
-from clihelper import ReferenceBuffer
-from lib import data
-from context.context import Context, Command
+from pylux.clihelper import ReferenceBuffer
+from pylux.lib import data
+from pylux.context.context import Context, Command
 
 
 class Report:
@@ -119,6 +119,8 @@ class ReporterContext(Context):
         self.register(Command('rd', self.report_dump, [])) 
         self.register(Command('rw', self.report_write, [
             ('path', True, 'The path to write the file to.')]))
+        
+        self.register(Command('tl', self.template_list, []))
 
     def post_init(self):
 
@@ -135,7 +137,11 @@ class ReporterContext(Context):
 
     def template_list(self, parsed_input):
         '''List the templates installed on this system.'''
-        
+        self.interface.open('TMP')
+        templates = data.list_data('template')
+        for template in templates:
+            s = template[1]+' ('+template[0]+')'
+            self.interface.add(s, template, 'TMP')
 
     def report_generate(self, parsed_input):
         '''Create a new report from a template in a temporary buffer.'''

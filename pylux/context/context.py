@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from clihelper import resolve_input, Interface 
+from pylux.clihelper import resolve_input, Interface 
 from importlib import import_module
 from tabulate import tabulate
 import sys

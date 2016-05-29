@@ -1,15 +1,12 @@
-Pylux - libxpx branch
-=====================
+Pylux
+=====
 
 .. image:: https://img.shields.io/pypi/v/pylux.svg
 .. image:: https://img.shields.io/pypi/format/pylux.svg
 .. image:: https://readthedocs.org/projects/pylux/badge/?version=latest
 
-THIS BRANCH OF PYLUX IS CURRENTLY IN DEVELOPMENT. THE AIM IS TO UTILISE THE 
-LIBXPX FORMAT FOR PLOT FILES. COMMANDS ARE CURRENTLY BEING PORTED.
-
 Pylux is a program for creating and managing documentation for stage lighting. 
-The program uses an XML 'plot' file to store information about a lighting 
+The program uses an XML 'effects plot' file to store information about a lighting 
 project. 
 
 Pylux currently has the capability to, using the aforementioned plot files, 
@@ -20,30 +17,22 @@ mplayer, play sound cues.
 Installation and Dependencies
 -----------------------------
 
-Pylux is in the early stages of development. It is not stable enough for 
-general use.
-
-Regular users should install Pylux from the PyPI using pip::
-
-    sudo pip3 install pylux
-
-In order to do this you will need the Python 3.5 interpreter::
-
-    sudo apt install python3.5
-    sudo pacman -S python
-
-If you would rather use the most recent code, you can install from the Git 
-repository::
+Pylux is written in Python 3, so you will need the usual Python dependencies, 
+they will be available via your package manager. The version of Pylux on 
+the PyPI is outdated, instead install from the Git repository::
 
     git clone https://github.com/jackdpage/pylux.git
     cd pylux
     sudo python3 setup.py install
 
-Dependencies will be downloaded from the PyPI on installation. You will also 
-need to manually install mplayer to play sound cues::
+Content for Pylux is available from the `content repository`_.
 
-    sudo apt install mplayer
-    sudo pacman -S mplayer
+If you are running an Arch derivative, a PKGBUILD is available for both at 
+https://github.com/jackdpage/PKGBUILDs.
+
+If you want to play sound cues, you will need to install mplayer.
+
+.. _`content repository`: https://github.com/jackdpage/pylux-content
 
 Documentation
 -------------

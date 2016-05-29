@@ -23,10 +23,10 @@ for the reading and editing of Pylux plot files.
 """
 
 import os
-import clihelper
-from clihelper import ReferenceBuffer
-from context.context import Context, Command
-from lib import pseudotag, data
+import pylux.clihelper
+from pylux.clihelper import ReferenceBuffer
+from pylux.context.context import Context, Command
+from pylux.lib import pseudotag, data
 import libxpx.xpx as xpx
 import xml.etree.ElementTree as ET
 
@@ -392,7 +392,7 @@ class EditorContext(Context):
             for output in scene.outputs:
                 function = self.plot_file.get_object_by_uuid(
                     output.function.uuid)
-                value = clihelper.ProgressBar()
+                value = pylux.clihelper.ProgressBar()
                 value = value+output.value
                 fixture = self.plot_file.get_fixture_for_function(function)
                 s = str(value)+' '+function.name+' ('+fixture.name+')'
@@ -419,7 +419,7 @@ class EditorContext(Context):
                 print('\033[3mRegistry: '+registry.name+'\033[0m')
                 for printline in printlines:
                     if printline[0] == registry:
-                        value = clihelper.ProgressBar()
+                        value = pylux.clihelper.ProgressBar()
                         value = value+printline[2]
                         s = ('DMX'+str(format(printline[1].address, '03d'))+
                              ' '+str(value))

@@ -18,8 +18,9 @@
 
 from importlib import import_module
 
+
 def get_context(context_name):
-    module_name = 'context.'+context_name
+    module_name = 'pylux.context.'+context_name
     context_module = import_module(module_name)
     context_class = context_module.get_context()
     return context_class
