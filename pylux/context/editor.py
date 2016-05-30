@@ -53,10 +53,10 @@ class EditorContext(Context):
         self.register(Command('mn', self.metadata_new, [
             ('name', True, 'The name of the metadata to add.')]))
         self.register(Command('ms', self.metadata_set, [
-            ('META', True, 'The metadata to set the value of.'),
+            ('MET', True, 'The metadata to set the value of.'),
             ('value', True, 'Value for the metadata to take.')]))
         self.register(Command('mr', self.metadata_remove, [
-            ('META', True, 'The metadata to remove.')]))
+            ('MET', True, 'The metadata to remove.')]))
         self.register(Command('mg', self.metadata_get, [
             ('name', True, 'Name of the metadata to print the value of.')]))
 
@@ -65,41 +65,41 @@ class EditorContext(Context):
         self.register(Command('xN', self.fixture_from_template, [
             ('template', True, 'Path to the file to load data from.')]))
         self.register(Command('xc', self.fixture_clone, [
-            ('FIXTURE', True, 'The fixture to make a copy of.')]))
+            ('FIX', True, 'The fixture to make a copy of.')]))
         self.register(Command('xl', self.fixture_list, []))
         self.register(Command('xf', self.fixture_filter, [
             ('tag', True, 'The tag to filter by.'),
             ('value', True, 'The value the tag must be to be displayed.')]))
         self.register(Command('xr', self.fixture_remove, [
-            ('FIXTURE', True, 'The fixture to remove.')]))
+            ('FIX', True, 'The fixture to remove.')]))
         self.register(Command('xg', self.fixture_get, [
-            ('FIXTURE', True, 'The fixture to get a tag from.'),
+            ('FIX', True, 'The fixture to get a tag from.'),
             ('tag', True, 'The name of the tag to print the vAlue of.')]))
         self.register(Command('xG', self.fixture_getall, [
-            ('FIXTURE', True, 'The fixture to print the tags of.')]))
+            ('FIX', True, 'The fixture to print the tags of.')]))
         self.register(Command('xs', self.fixture_set, [
-            ('FIXTURE', True, 'The fixture to set a tag of.'), 
+            ('FIX', True, 'The fixture to set a tag of.'), 
             ('tag', True, 'The name of the tag to set.'), 
             ('value', True, 'The value to set the tag to.')]))
         self.register(Command('xa', self.fixture_address, [
-            ('FIXTURE', True, 'The fixture to assign addresses to.'), 
-            ('universe', True, 'The name of the universe to address in.'), 
+            ('FIX', True, 'The fixture to assign addresses to.'), 
+            ('REG', True, 'The name of the universe to address in.'), 
             ('address', True, 'The addresses to begin addressing at.')]))
         self.register(Command('xA', self.fixture_unaddress, [
-            ('FIXTURE', True, 'The fixture to unassign addresses for.')]))
+            ('FIX', True, 'The fixture to unassign addresses for.')]))
 
         self.register(Command('rl', self.registry_list, []))
         self.register(Command('rL', self.registry_query, [
-            ('REGISTRY', True, 'The registry to list used channels of.')]))
+            ('REG', True, 'The registry to list used channels of.')]))
         self.register(Command('rn', self.registry_new, [
             ('name', True, 'The name of the new registry.')]))
         self.register(Command('rp', self.registry_probe, [
-            ('REGISTRY', True, 'The registry to probe the channels of.')]))
+            ('REG', True, 'The registry to probe the channels of.')]))
 #        self.register(Command('rr', self.registry_remove [
 #            ('registry', True, 'The registry to remove.')]))
         self.register(Command('ra', self.registry_add, [
-            ('FUNCTION', True, 'The function(s) to address.'),
-            ('registry', True, 'The name of the registry to address in.'),
+            ('FNC', True, 'The function(s) to address.'),
+            ('REG', True, 'The name of the registry to address in.'),
             ('address', True, 'The address to begin addressing at.')]))
 
         self.register(Command('sl', self.scene_list, []))
@@ -118,11 +118,8 @@ class EditorContext(Context):
         self.interface.buffers['FNC'] = ReferenceBuffer(colour=95)
         self.interface.buffers['REG'] = ReferenceBuffer(colour=93)
         self.interface.buffers['MET'] = ReferenceBuffer(colour=94)
-        self.interface.buffers['CUE'] = ReferenceBuffer(colour=95)
         self.interface.buffers['SCN'] = ReferenceBuffer(colour=96)
         self.interface.buffers['CHS'] = ReferenceBuffer(colour=96)
-        self.interface.buffers['QLC'] = ReferenceBuffer(colour=92)
-        self.interface.buffers['QAC'] = ReferenceBuffer(colour=93)
 
     # File commands
 
