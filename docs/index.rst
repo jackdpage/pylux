@@ -16,11 +16,14 @@ This documentation is aimed at both users and developers.
     getting_started
     using_metadata
     using_fixtures
+    using_cues
     generating_reports
 
 .. toctree::
     :maxdepth: 2
     :caption: Command Reference
+
+    reference_editor
 
 
 .. toctree::
