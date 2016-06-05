@@ -22,7 +22,6 @@ editor is a CLI implementation of the Pylux plot editor, allowing
 for the reading and editing of Pylux plot files.
 """
 
-import os
 import pylux.clihelper
 from pylux.clihelper import ReferenceBuffer
 from pylux.context.context import Context, Command

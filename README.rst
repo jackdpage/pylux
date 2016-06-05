@@ -42,20 +42,6 @@ The documentation for both users and contributers is available on
 
 .. _`Read the Docs`: http://pylux.readthedocs.org/
 
-
-Contributing
-------------
-
-Before making a contribution, please refer to the guidelines in 
-``CONTRIBUTING.md``. If you are interested in contributing, there are many 
-ways in which you can help:
-
-+ [Python] writing code;
-+ [XML] making fixture templates;
-+ [SVG] making fixture symbols;
-+ [Jinja] making ``reporter`` templates;
-+ [English] submitting bug reports and feature requests.
-
 License
 -------
 
