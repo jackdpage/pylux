@@ -23,9 +23,10 @@ import os
 import pylux.clihelper
 from pylux.clihelper import ReferenceBuffer
 from pylux.context.context import Context, Command
-from pylux.lib import cuestring, data
+from pylux.lib import cuestring, data, wizard
 import libxpx.xpx as xpx
 import xml.etree.ElementTree as ET
+from datetime import datetime
 
 
 class QEditorContext(Context):
@@ -56,6 +57,7 @@ class QEditorContext(Context):
         self.register(Command('ln', self.location_new, [
             ('type', True, 'abs or rel.'),
             ('event', True, 'Machine readable location description.')]))
+        self.register(Command('lN', self.location_new_wizard, []))
 
     def post_init(self):
 
@@ -63,6 +65,7 @@ class QEditorContext(Context):
         self.interface.buffers['ACT'] = ReferenceBuffer(colour=95)
         self.interface.buffers['LOC'] = ReferenceBuffer(colour=96)
         self.interface.buffers['OUT'] = ReferenceBuffer(colour=93)
+        self.interface.buffers['WIZ'] = ReferenceBuffer(colour=97)
 
     def cue_list(self, parsed_input):
         '''List all cues in the effects plot.'''
@@ -131,7 +134,35 @@ class QEditorContext(Context):
         '''Create a new cue location.'''
         self.cue_locations.append(xpx.CueLocation(type=parsed_input[0],
                                                   event=parsed_input[1]))
- 
+
+    def location_new_wizard(self, parsed_input):
+        '''Interactively create a new cue location.'''
+        self.interface.open('WIZ')
+        print('Conjuring wizard...')
+        self.interface.add('Absolute', 'abs', 'WIZ', pre=wizard.DISPLAY_NAME)
+        self.interface.add('Relative', 'rel', 'WIZ', pre=wizard.DISPLAY_NAME)
+        location_type = wizard.ask('Choose a type', '0')
+        if 'rel' in self.interface.get('WIZ', location_type):
+            location_type = 'rel'
+            wizard.say('Running relative time chooser')
+            wizard.say('Oh crap I can\'t do that. Sorry')
+            ## do something
+        else:
+            location_type = 'abs'
+            wizard.say('Running absolute time chooser')
+            time_yy = int(wizard.ask('Choose a year', datetime.now().year))
+            time_mm = int(wizard.ask('Choose a month', datetime.now().month))
+            time_dd = int(wizard.ask('Choose a day', datetime.now().day))
+            time_hh = int(wizard.ask('Choose an hour', datetime.now().hour))
+            time_MM = int(wizard.ask('Choose a minute', datetime.now().minute))
+            time_ss = int(wizard.ask('Choose a second', datetime.now().second))
+            event = ''.join([str(time_yy), str(format(time_mm, '02d')), 
+                            str(format(time_dd, '02d')), 'T', 
+                            str(format(time_hh, '02d')),
+                            str(format(time_mm, '02d')), 
+                            str(format(time_ss, '02d'))])
+        self.cue_locations.append(xpx.CueLocation(type=location_type,
+                                                  event=event))
         
 def get_context():
     return QEditorContext()

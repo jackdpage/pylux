@@ -93,17 +93,18 @@ def resolve_references(user_input):
         A list containing a list of integers.
     """
     reference_list = []
-    all_input = user_input.split(',')
-    for input_item in all_input:
-        if ':' in input_item:
-            limits = input_item.split(':')
-            i = int(limits[0])
-            while i <= int(limits[1]):
-                reference_list.append(i)
-                i = i+1
-        else:
-            reference_list.append(int(input_item))
-    reference_list.sort()
+    if len(user_input) > 0:
+        all_input = user_input.split(',')
+        for input_item in all_input:
+            if ':' in input_item:
+                limits = input_item.split(':')
+                i = int(limits[0])
+                while i <= int(limits[1]):
+                    reference_list.append(i)
+                    i = i+1
+            else:
+                reference_list.append(int(input_item))
+        reference_list.sort()
     return reference_list
 
 
