@@ -14,3 +14,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+import configparser
+
+import cli
+
+
+def main():
+
+    print('This is Pylux, version 0.4.0')
+    
+    config = configparser.ConfigParser()
+    config.read(['/Users/jack/Projects/pylux/pylux.conf'])
+
+    print('No plot file loaded')
+
+    init_globals = {'PLOT_FILE': None, 'CONFIG': config}
+
+    print('Launching command line interface')
+    cli.main(init_globals)
+
+
+if __name__ == '__main__':
+    __package__ = 'pylux'
+    main()

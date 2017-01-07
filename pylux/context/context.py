@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from pylux.clihelper import resolve_input, Interface 
+from clihelper import resolve_input, Interface 
 from importlib import import_module
 from tabulate import tabulate
 import sys
@@ -88,7 +88,6 @@ class Context:
         """
         self.plot_file = globals_dict['PLOT_FILE']
         self.config = globals_dict['CONFIG']
-        self.log_level = globals_dict['LOG_LEVEL']
         self.interface = Interface()
         self.post_init()
 

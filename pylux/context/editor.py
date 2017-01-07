@@ -22,12 +22,15 @@ editor is a CLI implementation of the Pylux plot editor, allowing
 for the reading and editing of Pylux plot files.
 """
 
-import pylux.clihelper
-from pylux.clihelper import ReferenceBuffer
-from pylux.context.context import Context, Command
-from pylux.lib import pseudotag, data
-import libxpx.xpx as xpx
+import clihelper
+import uuid
+from clihelper import ReferenceBuffer
+from context.context import Context, Command
+from lib import pseudotag, data, printer
 import xml.etree.ElementTree as ET
+
+# temporary solution before api is properly written
+import document
 
 
 class EditorContext(Context):
@@ -124,11 +127,13 @@ class EditorContext(Context):
 
     def file_open(self, parsed_input):
         '''Open a new plot file, discarding any present buffer.'''
-        self.plot_file.load(parsed_input[0])
+        self.load_location = parsed_input[0]
+        s = document.get_string_from_file(parsed_input[0])
+        self.plot_file = document.get_deserialised_document_from_string(s)
 
     def file_write(self, parsed_input):
         '''Write the contents of the file buffer to the original path.'''
-        self.plot_file.write(self.plot_file.load_location)
+        document.write_to_file(self.plot_file, self.load_location)
 
     def file_writeas(self, parsed_input):
         '''Write the contents of the file buffer to a new path.'''
@@ -136,7 +141,7 @@ class EditorContext(Context):
 
     def file_get(self, parsed_input):
         '''Print the original location of the plot file.'''
-        print(self.plot_file.load_location)
+        print(self.load_location)
 
     def file_set(self, parsed_input):
         '''Set the default save location for the plot file.'''
@@ -147,33 +152,34 @@ class EditorContext(Context):
     def metadata_list(self, parsed_input):
         '''List the values of all metadata in the plot file.'''
         self.interface.open('MET')
-        for meta in self.plot_file.metadata:
-            s = meta.name+': '+meta.value
-            self.interface.add(s, meta, 'MET')
+        for meta in document.get_metadata(self.plot_file):
+            s = meta['metadata-key']+': '+printer.get_metadata_value(meta)
+            self.interface.add(s, meta['uuid'], 'MET')
 
     def metadata_set(self, parsed_input):
-        metadata = self.interface.get('MET', parsed_input[0])
-        for meta in metadata:
-            meta.value = parsed_input[1]
+        metas = self.interface.get('MET', parsed_input[0])
+        for meta in metas:
+            document.get_by_uuid(self.plot_file, meta)['metadata-value'] = parsed_input[1]
 
     def metadata_remove(self, parsed_input):
         '''Remove a piece of metadata from the file.'''
-        metadata = self.interface.get('MET', parsed_input[0])
-        for meta in metadata:
-            self.plot_file.metadata.remove(meta)
+        metas = self.interface.get('MET', parsed_input[0])
+        for meta in metas:
+            document.remove_by_uuid(self.plot_file, meta)
 
     def metadata_get(self, parsed_input):
         '''Print the values of metadata matching a name.'''
         self.interface.open('MET')
-        for meta in self.plot_file.metadata:
-            if meta.name == parsed_input[0]:
-                s = meta.name+': '+meta.value
-                self.interface.add(s, meta, 'MET')
+        for meta in document.get_metadata(self.plot_file):
+            if meta['metadata-key'] == parsed_input[0]:
+                s = meta['metadata-key']+': '+printer.get_metadata_value(meta)
+                self.interface.add(s, meta['uuid'], 'MET')
 
     def metadata_new(self, parsed_input):
         '''Create a new metadata item.'''
-        self.plot_file.metadata.append(xpx.Metadata(name=parsed_input[0], 
-                                                    value=''))
+        self.plot_file.append({'type': 'metadata',
+                               'uuid': str(uuid.uuid4()),
+                               'metadata-key': parsed_input[0]})
 
     # Fixture commands
 
@@ -388,7 +394,7 @@ class EditorContext(Context):
             for output in scene.outputs:
                 function = self.plot_file.get_object_by_uuid(
                     output.function.uuid)
-                value = pylux.clihelper.ProgressBar()
+                value = clihelper.ProgressBar()
                 value = value+output.value
                 fixture = self.plot_file.get_fixture_for_function(function)
                 s = str(value)+' '+function.name+' ('+fixture.name+')'
@@ -415,7 +421,7 @@ class EditorContext(Context):
                 print('\033[3mRegistry: '+registry.name+'\033[0m')
                 for printline in printlines:
                     if printline[0] == registry:
-                        value = pylux.clihelper.ProgressBar()
+                        value = clihelper.ProgressBar()
                         value = value+printline[2]
                         s = ('DMX'+str(format(printline[1].address, '03d'))+
                              ' '+str(value))

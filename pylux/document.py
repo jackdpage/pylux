@@ -16,72 +16,81 @@
 
 
 import json
-import math
 
 
 # File operations. These functions load JSON documents from files and
 # deserialise into strings which can be used by object retrieval functions.
 
 def get_string_from_file(fp):
-	'''Load a file into a string.'''
+    '''Load a file into a string.'''
 
-	with open(fp, 'r') as f:
-		s = f.read()
+    with open(fp, 'r') as f:
+        s = f.read()
 
-	return s
+    return s
 
 
 def get_deserialised_document_from_string(s):
-	'''Deserialise a JSON document into a list.'''
+    '''Deserialise a JSON document into a list.'''
 
-	return json.loads(s)
+    return json.loads(s)
+
+
+def write_to_file(doc, fp):
+    '''Encode a document into a JSON file.'''
+
+    with open(fp, 'w') as f:
+        json.dump(doc, f)
 
 
 # Object retrieval functions. These functions search a deserialised documents
 # and return objects based on the given parameters.
 
 def get_by_uuid(doc, uuid):
-	'''Return object with given UUID.'''
+    '''Return object with given UUID.'''
 
-	for obj in doc:
-		if obj['uuid'] == uuid:
-			return obj
+    for obj in doc:
+        if obj['uuid'] == uuid:
+            return obj
 
 
 def get_by_key(doc, k):
-	'''Return objects which have a key in their dict.'''
+    '''Return objects which have a key in their dict.'''
 
-	matched = []
+    matched = []
 
-	for obj in doc:
-		if k in obj:
-			matched.append(obj)
+    for obj in doc:
+        if k in obj:
+            matched.append(obj)
 
-	return matched
+    return matched
 
 
 def get_by_value(doc, k, v):
-	'''Return objects which have a key matching a value.'''
+    '''Return objects which have a key matching a value.'''
 
-	matched = []
+    matched = []
 
-	for obj in get_by_key(doc, k):
-		if obj[k] == v:
-			matched.append(obj)
+    for obj in get_by_key(doc, k):
+        if obj[k] == v:
+            matched.append(obj)
 
-	return matched
-
-
-# Fixture processing functions. These functions take fixture objects as inputs,
-# and calculate some value based on its parameters. They do not however edit
-# the fixture objects themselves.
-
-def get_fixture_rotation(fixture):
-	'''Return the rotation of the fixture in the xy-plane.'''
-
-	return math.atan2(fixture[pos][0], fixture[pos][1])
+    return matched
 
 
-if __name__ == '__main__':
-	print('You have executed Pylux without an interface. You\'re not going to '
-		  'get far')
+def get_by_type(doc, type):
+    '''Return objects of a given type.'''
+
+    return get_by_value(doc, 'type', type)
+
+
+def get_metadata(doc):
+    '''Return all metadata objects.'''
+
+    return get_by_type(doc, 'metadata')
+
+
+def remove_by_uuid(doc, uuid):
+    '''Remove an object with a matching UUID.'''
+
+    doc.remove(get_by_uuid(doc, uuid))
