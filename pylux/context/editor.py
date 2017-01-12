@@ -28,6 +28,7 @@ from clihelper import ReferenceBuffer
 from context.context import Context, Command
 from lib import pseudotag, data, printer
 import xml.etree.ElementTree as ET
+import re
 
 # temporary solution before api is properly written
 import document
@@ -137,7 +138,7 @@ class EditorContext(Context):
 
     def file_writeas(self, parsed_input):
         '''Write the contents of the file buffer to a new path.'''
-        self.plot_file.write(parsed_input[0])
+        document.write_to_file(self.plot_file, parsed_input[0])
 
     def file_get(self, parsed_input):
         '''Print the original location of the plot file.'''
@@ -145,7 +146,7 @@ class EditorContext(Context):
 
     def file_set(self, parsed_input):
         '''Set the default save location for the plot file.'''
-        self.plot_file.load_location = parsed_input[0]
+        self.load_location = parsed_input[0]
 
     # Metadata commands
 
@@ -157,15 +158,15 @@ class EditorContext(Context):
             self.interface.add(s, meta['uuid'], 'MET')
 
     def metadata_set(self, parsed_input):
-        metas = self.interface.get('MET', parsed_input[0])
-        for meta in metas:
-            document.get_by_uuid(self.plot_file, meta)['metadata-value'] = parsed_input[1]
+        meta_ids = self.interface.get('MET', parsed_input[0])
+        for meta_id in meta_ids:
+            document.get_by_uuid(self.plot_file, meta_id)['metadata-value'] = parsed_input[1]
 
     def metadata_remove(self, parsed_input):
         '''Remove a piece of metadata from the file.'''
-        metas = self.interface.get('MET', parsed_input[0])
-        for meta in metas:
-            document.remove_by_uuid(self.plot_file, meta)
+        meta_ids = self.interface.get('MET', parsed_input[0])
+        for meta_id in metas_ids:
+            document.remove_by_uuid(self.plot_file, meta_id)
 
     def metadata_get(self, parsed_input):
         '''Print the values of metadata matching a name.'''
@@ -185,63 +186,70 @@ class EditorContext(Context):
 
     def fixture_new(self, parsed_input):
         '''Create a new fixture from scratch.'''
-        fixture = xpx.Fixture(name=parsed_input[0], functions=[], data={})
-        self.plot_file.fixtures.append(fixture)
+        self.plot_file.append({'type': 'fixture',
+                               'uuid': str(uuid.uuid4())})
 
     def fixture_from_template(self, parsed_input):
         '''Create a new fixture from a template file.'''
-        template_file = data.get_data('fixture/'+parsed_input[0]+'.xml')
+        template_file = data.get_data('fixture/'+parsed_input[0]+'.json')
         if not template_file:
             self.log(30, 'No fixture template with this name exists')
         else:
-            xfixture = ET.parse(template_file).getroot()
-            fixture = xpx.Fixture(element=xfixture)
-            self.plot_file.fixtures.append(fixture)
+            fixture = json.load(template_file)
+            fixture['uuid'] = str(uuidv4())
+            self.plot_file.append(fixture)
 
     def fixture_clone(self, parsed_input):
         '''Create a new fixture by copying an existing fixture.'''
-        src_fixtures = self.interface.get('FIX', parsed_input[0])
-        for src in src_fixtures:
-            new_fixture = src
-            new_fixture.uuid = str(xpx.uuid4())
-            self.plot_file.fixtures.append(new_fixture)
+        src_fixtures_ids = self.interface.get('FIX', parsed_input[0])
+        for src_id in src_fixtures_ids:
+            new_fixture = document.get_by_uuid(self.plot_file, src_id)
+            new_fixture['uuid'] = str(uuid4())
+            self.plot_file.append(new_fixture)
 
     def fixture_list(self, parsed_input):
         '''List all fixtures in the plot file.'''
         self.interface.open('FIX')
-        for fixture in self.plot_file.fixtures:
-            if 'type' in fixture.data:
-                fixture_type = fixture.data['type']
-            else:
-                fixture_type = 'n/a'
-            s = fixture.name+' ('+fixture_type+')'
-            self.interface.add(s, fixture, 'FIX')
+        for fixture in document.get_by_type(self.plot_file, 'fixture'):
+            s = printer.get_fixture_string(fixture)
+            self.interface.add(s, fixture['uuid'], 'FIX')
 
     def fixture_filter(self, parsed_input):
         '''List all fixtures that meet a certain criterion.'''
         self.interface.open('FIX')
-        key = parsed_input[0]
+        key = 'fixture-'+parsed_input[0]
         value = parsed_input[1]
-        for fixture in self.plot_file.fixtures:
-            if key in fixture.data:
-                if fixture.data[key] == value:
-                    s = fixture.name+' ('+key+'='+value+')'
-                    self.interface.add(s, fixture, 'FIX')
+        for fixture in document.get_by_type(self.plot_file, 'fixture'):
+            if key in fixture:
+                if fixture[key] == value:
+                    s = printer.get_fixture_string(fixture)+' ('+key+'='+value+')'
+                    self.interface.add(s, fixture['uuid'], 'FIX')
 
     def fixture_remove(self, parsed_input):
         '''Remove a fixture from the plot file.'''
-        fixtures = self.interface.get('FIX', parsed_input[0])
-        for fixture in fixtures:
-            self.plot_file.fixtures.remove(fixture)
+        fixtures_ids = self.interface.get('FIX', parsed_input[0])
+        for fixture_id in fixtures_ids:
+            document.remove_by_uuid(self.plot_file, fixture_id)
 
     def fixture_get(self, parsed_input):
         '''Print the values of a fixture's tags.'''
-        fixtures = self.interface.get('FIX', parsed_input[0])
-        for fixture in fixtures:
-            print('\033[1m'+fixture.name+'\033[0m')
-            print(str(len(fixture.data)), 'Data Tags: ')
-            for key, value in fixture.data.items():
-                print('    '+key+': '+value)
+        fixtures_ids = self.interface.get('FIX', parsed_input[0])
+        regexp = re.compile('fixture-.*')
+        for fixture_id in fixtures_ids:
+            fixture = document.get_by_uuid(self.plot_file, fixture_id)
+            s = printer.get_fixture_string(fixture)
+            print('\033[1m'+s+'\033[0m')
+            show_tags = {}
+            hide_tags = {}
+            for k, v in fixture.items():
+                if regexp.match(k):
+                    show_tags[k] = v
+                else:
+                    hide_tags[k] = v
+            print(str(len(show_tags)), 'Data Tags: (+'+str(len(hide_tags))+' hidden)')
+            for k, v in show_tags.items():
+                print('    '+k+': '+v)
+            
 
     def fixture_getall(self, parsed_input):
         '''Print the tags and functions of a fixture..'''
@@ -260,10 +268,10 @@ class EditorContext(Context):
 
     def fixture_set(self, parsed_input):
         '''Set the value of one of a fixture's tags.'''
-        fixtures = self.interface.get('FIX', parsed_input[0])
+        fixtures_ids = self.interface.get('FIX', parsed_input[0])
         tag = parsed_input[1]
         value = parsed_input[2]
-        for fixture in fixtures:
+        for fixture_id in fixtures_ids:
             # See if it is a special pseudo tag
             if tag in pseudotag.pseudotags:
                 pseudotag.pseudotags[tag](fixture, self, value)

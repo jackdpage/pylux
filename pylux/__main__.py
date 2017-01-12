@@ -28,9 +28,7 @@ def main():
     config = configparser.ConfigParser()
     config.read(['/Users/jack/Projects/pylux/pylux.conf'])
 
-    print('No plot file loaded')
-
-    init_globals = {'PLOT_FILE': None, 'CONFIG': config}
+    init_globals = {'PLOT_FILE': [], 'CONFIG': config}
 
     print('Launching command line interface')
     cli.main(init_globals)
