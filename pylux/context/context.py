@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from clihelper import resolve_input, Interface 
+import clihelper
+from clihelper import resolve_input, Interface
+import document
 from importlib import import_module
 from tabulate import tabulate
 import sys
@@ -49,6 +50,17 @@ class Context:
             ('command', False, 'The command to access information about')]))
         self.register(Command('q', self.utility_exit, []))
         self.register(Command('Q', self.utility_kill, []))
+
+        self.register(Command('l', self.generic_list, []))
+        self.register(Command('s', self.generic_set, [
+            ('type', True, 'The type of object to alter'),
+            ('ref', True, 'The reference of the object to alter'),
+            ('k', True, 'Key of the data to set'),
+            ('v', True, 'Value to set the data to')]))
+        self.register(Command('r', self.generic_remove, [
+            ('type', True, 'The type of object to remove'),
+            ('ref', True, 'The reference of the object to remove')]))
+
 
     def post_init(self):
         """Initialisation phase run once globals are loaded."""
@@ -103,8 +115,7 @@ class Context:
         """
         globals_dict = {
             'PLOT_FILE': self.plot_file,
-            'CONFIG': self.config,
-            'LOG_LEVEL': self.log_level}
+            'CONFIG': self.config}
         return globals_dict
 
     def register(self, command):
@@ -113,11 +124,6 @@ class Context:
         Add a command to the list of commands the user can invoke.
         """
         self.commands[command.mnemonic] = command
-
-    def log(self, level, message):
-        level_name = self.config['advanced']['log-'+str(level)]
-        if level >= self.log_level:
-            print(''.join([level_name,':',self.name,':',message,'\033[0m']))
 
     def utility_clear(self, parsed_input):
         '''Clear the screen.'''
@@ -172,6 +178,26 @@ class Context:
                            headers=['Usage', 'Function'],
                            tablefmt=self.config['cli']['help-table-format']))
 
+    def generic_list(self, parsed_input):
+        """List all objects in the plot file."""
+        for obj in self.plot_file:
+            clihelper.print_object(obj)
+
+    def generic_set(self, parsed_input):
+        """Set an arbitrary tag to a value."""
+        all_of_type = document.get_by_type(self.plot_file, parsed_input[0])
+        refs = clihelper.resolve_references(parsed_input[1])
+        for obj in all_of_type:
+            if obj['ref'] in refs:
+                obj[parsed_input[2]] = parsed_input[3]
+
+    def generic_remove(self, parsed_input):
+        """Remove an object from the document."""
+        all_of_type = document.get_by_type(self.plot_file, parsed_input[0])
+        refs = clihelper.resolve_references(parsed_input[1])
+        for obj in all_of_type:
+            if obj['ref'] in refs:
+                document.remove_by_uuid(self.plot_file, obj['uuid'])
 
 class Command:
 

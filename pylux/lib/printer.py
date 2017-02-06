@@ -1,8 +1,9 @@
 def get_metadata_value(meta):
+    s = meta['metadata-key']+': '
     if 'metadata-value' in meta:
-        return meta['metadata-value']
+        return s+meta['metadata-value']
     else:
-        return '\033[31mEmpty\033[0m'
+        return s+'\033[31mEmpty\033[0m'
 
 
 def get_fixture_string(fixture):
@@ -15,3 +16,20 @@ def get_fixture_string(fixture):
     else:
         type = 'n/a'
     return type+' - '+name
+
+
+def get_generic_string(obj):
+    if obj['type'] in PRINTER_INDEX:
+        return PRINTER_INDEX[obj['type']](obj)
+    else:
+        if 'name' in obj:
+            name = obj['name']
+        else:
+            name = '\033[31mUnnamed\033[0m'
+        type = obj['type']
+        return name+' ('+type+')'
+
+PRINTER_INDEX = {
+    'metadata': get_metadata_value,
+    'fixture': get_fixture_string,
+}

@@ -26,7 +26,7 @@ def main():
     print('This is Pylux, version 0.4.0')
     
     config = configparser.ConfigParser()
-    config.read(['/Users/jack/Projects/pylux/pylux.conf'])
+    config.read(['pylux.conf'])
 
     init_globals = {'PLOT_FILE': [], 'CONFIG': config}
 

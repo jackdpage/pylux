@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import itertools
 import json
 
 
@@ -84,6 +85,14 @@ def get_by_type(doc, type):
     return get_by_value(doc, 'type', type)
 
 
+def get_by_ref(doc, type, ref):
+    """Return an object of a given type and ref."""
+
+    objs = get_by_type(doc, type)
+
+    return get_by_value(objs, 'ref', ref)[0]
+
+
 def get_metadata(doc):
     '''Return all metadata objects.'''
 
@@ -94,3 +103,22 @@ def remove_by_uuid(doc, uuid):
     '''Remove an object with a matching UUID.'''
 
     doc.remove(get_by_uuid(doc, uuid))
+
+
+def remove_by_ref(doc, type, ref):
+    """Remove an object with a specific ref."""
+
+    objs = get_by_type(doc, type)
+    doc.remove(get_by_value(objs, 'ref', ref)[0])
+
+
+def autoref(doc, type):
+    """Return an available reference number for a given type."""
+
+    used_refs = []
+    for obj in get_by_type(doc, type):
+        used_refs.append(obj['ref'])
+
+    for n in itertools.count(start=1):
+        if n not in used_refs:
+            return n
