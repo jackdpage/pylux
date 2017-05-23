@@ -51,6 +51,10 @@ class Context:
         self.register(Command('q', self.utility_exit, []))
         self.register(Command('Q', self.utility_kill, []))
 
+        self.register(Command('fo', self.file_open, [
+            ('path', True, 'Path of the file to load.')]))
+        self.register(Command('fw', self.file_write, []))
+
         self.register(Command('l', self.generic_list, []))
         self.register(Command('s', self.generic_set, [
             ('type', True, 'The type of object to alter'),
@@ -131,10 +135,7 @@ class Context:
 
     def utility_exit(self, parsed_input):
         '''Quit the program and save the plot file to disk.'''
-        try:
-            self.plot_file.write(self.plot_file.load_location)
-        except AttributeError:
-            self.log(30, 'No plot file was loaded, nothing to save')
+        self.file_write(parsed_input)
         self.utility_kill(parsed_input)
 
     def utility_kill(self, parsed_input):
@@ -198,6 +199,16 @@ class Context:
         for obj in all_of_type:
             if obj['ref'] in refs:
                 document.remove_by_uuid(self.plot_file, obj['uuid'])
+
+    def file_open(self, parsed_input):
+        '''Open a new plot file, discarding any present buffer.'''
+        self.load_location = parsed_input[0]
+        s = document.get_string_from_file(parsed_input[0])
+        self.plot_file = document.get_deserialised_document_from_string(s)
+
+    def file_write(self, parsed_input):
+        '''Write the contents of the file buffer to the original path.'''
+        document.write_to_file(self.plot_file, self.load_location)
 
 class Command:
 

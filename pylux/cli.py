@@ -42,13 +42,9 @@ def main(init_globals):
                 context.set_globals(globals_dict)
             elif inputs[0][0] == ':':
                 globals_dict = context.get_globals()
-                try:
-                    context = get_context(inputs[0].split(':')[1])
-                except ImportError or AttributeError:
-                    context.log(30, 'Context does not exist')
-                else:
-                    context.set_globals(globals_dict)
+                context = get_context(inputs[0].split(':')[1])
+                context.set_globals(globals_dict)
             elif inputs[0] in context.commands:
                 context.process(inputs)
             else:
-                context.log(30, 'Command does not exist') 
+                print('Command does not exist')

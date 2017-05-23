@@ -18,6 +18,9 @@ def get_fixture_string(fixture):
     return type+' - '+name
 
 
+def get_registry_string(registry):
+    return 'none'
+
 def get_generic_string(obj):
     if obj['type'] in PRINTER_INDEX:
         return PRINTER_INDEX[obj['type']](obj)
@@ -32,4 +35,5 @@ def get_generic_string(obj):
 PRINTER_INDEX = {
     'metadata': get_metadata_value,
     'fixture': get_fixture_string,
+    'registry': get_registry_string
 }

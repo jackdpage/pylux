@@ -28,6 +28,7 @@ from clihelper import ReferenceBuffer
 from context.context import Context, Command
 from lib import pseudotag, data, printer
 import re
+import json
 
 # temporary solution before api is properly written
 import document
@@ -42,9 +43,7 @@ class EditorContext(Context):
 
         # Command Registration
 
-        self.register(Command('fo', self.file_open, [
-            ('path', True, 'Path of the file to load.')])) 
-        # self.register(Command('fw', self.file_write, []))
+
         # self.register(Command('fW', self.file_writeas, [
         #     ('path', True, 'Path to save the buffer to.')]))
         # self.register(Command('fg', self.file_get, []))
@@ -64,7 +63,7 @@ class EditorContext(Context):
             ('name', True, 'Name of the metadata to print the value of.')]))
 
         self.register(Command('xn', self.fixture_new, [
-            ('name', True, 'Human-readable name of the new fixture.')]))
+            ('ref', True, 'The reference to give this new fixture.')]))
         self.register(Command('xN', self.fixture_from_template, [
             ('template', True, 'Path to the file to load data from.')]))
         self.register(Command('xc', self.fixture_clone, [
@@ -81,10 +80,10 @@ class EditorContext(Context):
             ('tag', True, 'The name of the tag to print the vAlue of.')]))
         # self.register(Command('xG', self.fixture_getall, [
         #     ('FIX', True, 'The fixture to print the tags of.')]))
-        # self.register(Command('xs', self.fixture_set, [
-        #     ('FIX', True, 'The fixture to set a tag of.'),
-        #     ('tag', True, 'The name of the tag to set.'),
-        #     ('value', True, 'The value to set the tag to.')]))
+        self.register(Command('xs', self.fixture_set, [
+             ('FIX', True, 'The fixture to set a tag of.'),
+             ('tag', True, 'The name of the tag to set.'),
+             ('value', True, 'The value to set the tag to.')]))
         # self.register(Command('xa', self.fixture_address, [
         #     ('FIX', True, 'The fixture to assign addresses to.'),
         #     ('REG', True, 'The name of the universe to address in.'),
@@ -92,15 +91,15 @@ class EditorContext(Context):
         # self.register(Command('xA', self.fixture_unaddress, [
         #     ('FIX', True, 'The fixture to unassign addresses for.')]))
 
-        # self.register(Command('rl', self.registry_list, []))
-        # self.register(Command('rL', self.registry_query, [
-        #     ('REG', True, 'The registry to list used channels of.')]))
-        # self.register(Command('rn', self.registry_new, [
-        #     ('name', True, 'The name of the new registry.')]))
+        self.register(Command('rl', self.registry_list, []))
+        self.register(Command('rL', self.registry_query, [
+            ('REG', True, 'The registry to list used channels of.')]))
+        self.register(Command('rn', self.registry_new, [
+            ('name', True, 'The name of the new registry.')]))
         # self.register(Command('rp', self.registry_probe, [
         #     ('REG', True, 'The registry to probe the channels of.')]))
-        # self.register(Command('rr', self.registry_remove [
-        #     ('registry', True, 'The registry to remove.')]))
+        self.register(Command('rr', self.registry_remove, [
+            ('registry', True, 'The registry to remove.')]))
         # self.register(Command('ra', self.registry_add, [
         #     ('FNC', True, 'The function(s) to address.'),
         #     ('REG', True, 'The name of the registry to address in.'),
@@ -119,16 +118,6 @@ class EditorContext(Context):
         pass
 
     # File commands
-
-    def file_open(self, parsed_input):
-        '''Open a new plot file, discarding any present buffer.'''
-        self.load_location = parsed_input[0]
-        s = document.get_string_from_file(parsed_input[0])
-        self.plot_file = document.get_deserialised_document_from_string(s)
-
-    def file_write(self, parsed_input):
-        '''Write the contents of the file buffer to the original path.'''
-        document.write_to_file(self.plot_file, self.load_location)
 
     def file_writeas(self, parsed_input):
         '''Write the contents of the file buffer to a new path.'''
@@ -179,31 +168,39 @@ class EditorContext(Context):
                 'uuid': str(uuid.uuid4()),
                 'ref': ref,
                 'name': parsed_input[1],
-                'metadata-key': parsed_input[1]})
+                'metadata-key': parsed_input[1]
+            })
 
     # Fixture commands
 
     def fixture_new(self, parsed_input):
         '''Create a new fixture from scratch.'''
         if parsed_input[0] == 'auto':
-            refs = [document.autoref(self.plot_file, 'metadata')]
+            refs = [document.autoref(self.plot_file, 'fixture')]
         else:
             refs = clihelper.resolve_references(parsed_input[0])
         for ref in refs:
             self.plot_file.append({
                 'type': 'fixture',
                 'uuid': str(uuid.uuid4()),
-                'ref': ref})
+                'ref': ref
+            })
 
     def fixture_from_template(self, parsed_input):
         '''Create a new fixture from a template file.'''
-        template_file = data.get_data('fixture/'+parsed_input[0]+'.json')
+        if parsed_input[0] == 'auto':
+            refs = [document.autoref(self.plot_file, 'fixture')]
+        else:
+            refs = clihelper.resolve_references(parsed_input[0])
+        template_file = data.get_data('fixture/'+parsed_input[1]+'.json')
         if not template_file:
             print('does not exist')
         else:
-            fixture = json.load(template_file)
-            fixture['uuid'] = str(uuid4())
-            self.plot_file.append(fixture)
+            for ref in refs:
+                fixture = json.load(template_file)
+                fixture['ref'] = ref
+                fixture['uuid'] = str(uuid.uuid4())
+                self.plot_file.append(fixture)
 
     def fixture_clone(self, parsed_input):
         '''Create a new fixture by copying an existing fixture.'''
@@ -262,11 +259,9 @@ class EditorContext(Context):
     def fixture_set(self, parsed_input):
         '''Set the value of one of a fixture's tags.'''
         refs = clihelper.resolve_references(parsed_input[0])
-        k = parsed_input[1]
-        v = parsed_input[2]
-        for ref in refs:
-            f = document.get_by_ref(self.plot_file, 'fixture', ref)
-            f[k] = v
+        objs = [document.get_by_ref(self.plot_file, 'fixture', ref) for ref in refs]
+        for obj in objs:
+            obj[parsed_input[1]] = parsed_input[2]
 
     def fixture_address(self, parsed_input):
         '''Assign DMX addresses to a fixture.'''
@@ -300,36 +295,40 @@ class EditorContext(Context):
 
     def registry_new(self, parsed_input):
         '''Create a new registry.'''
-        registry = xpx.Registry(name=parsed_input[0], channels=[])
-        self.plot_file.registries.append(registry)
+        if parsed_input[0] == 'auto':
+            refs = [document.autoref(self.plot_file, 'registry')]
+        else:
+            refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            self.plot_file.append({
+                'type': 'registry',
+                'uuid': str(uuid.uuid4()),
+                'ref': ref
+            })
 
     def registry_remove(self, parsed_input):
         '''Delete one or more registries.'''
-        registries = self.interface.get('REG', parsed_input[0])
-        for registry in registries:
-            self.plot_file.registries.remove(registry)
+        refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            document.remove_by_ref(self.plot_file, 'registry', ref)
 
     def registry_list(self, parsed_input):
         '''List all registries.'''
-        self.interface.open('REG')
-        for registry in self.plot_file.registries:
-            s = (registry.name+' ('+str(len(registry.get_occupied_addresses()))
-                 +' occupied)')
-            self.interface.add(s, registry, 'REG') 
+        for reg in document.get_by_type(self.plot_file, 'registry'):
+            clihelper.print_object(reg)
 
     def registry_query(self, parsed_input):
         '''List the functions of all used channels in a registry.'''
-        registries = self.interface.get('REG', parsed_input[0])
-        self.interface.open('FNC')
-        for registry in registries:
-            print('\033[1mUniverse: '+registry.name+'\033[0m')
-            for channel in registry.channels:
-                address = channel.address
-                func = self.plot_file.get_object_by_uuid(channel.function.uuid)
-                fix = self.plot_file.get_fixture_for_function(func)
-                s = ('DMX'+str(format(address, '03d'))+': '+fix.name+' ('
-                     +func.name+')')
-                self.interface.add(s, func, 'FNC')
+        refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            r = document.get_by_ref(self.plot_file, 'registry', ref)
+            clihelper.print_object(r)
+            t = r['table']
+            print(str(len(t)), 'Used Addresses:')
+            for k, v in sorted(t.items()):
+                func = document.get_by_uuid(v)
+                fix = document.get_by_uuid(func['function-link'])
+                print('DMX'+str(format(k, '03d'))+': '+printer.get_generic_string(fix))
 
     def registry_probe(self, parsed_input):
         '''List channels and dimmer controlled lights.'''
