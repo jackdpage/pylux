@@ -54,6 +54,9 @@ class Context:
         self.register(Command('fo', self.file_open, [
             ('path', True, 'Path of the file to load.')]))
         self.register(Command('fw', self.file_write, []))
+        self.register(Command('fg', self.file_get, []))
+        self.register(Command('fs', self.file_set, [
+            ('path', True, 'Path to set load location to.')]))
 
         self.register(Command('l', self.generic_list, []))
         self.register(Command('s', self.generic_set, [
@@ -105,6 +108,7 @@ class Context:
         self.plot_file = globals_dict['PLOT_FILE']
         self.config = globals_dict['CONFIG']
         self.interface = Interface()
+        self.load_location = globals_dict['LOAD_LOC']
         self.post_init()
 
     def get_globals(self):
@@ -119,7 +123,8 @@ class Context:
         """
         globals_dict = {
             'PLOT_FILE': self.plot_file,
-            'CONFIG': self.config}
+            'CONFIG': self.config,
+            'LOAD_LOC': self.load_location}
         return globals_dict
 
     def register(self, command):
@@ -209,6 +214,14 @@ class Context:
     def file_write(self, parsed_input):
         '''Write the contents of the file buffer to the original path.'''
         document.write_to_file(self.plot_file, self.load_location)
+
+    def file_get(self, parsed_input):
+        '''Print the current load location.'''
+        print(self.load_location)
+
+    def file_set(self, parsed_input):
+        '''Set the load location to something else.'''
+        self.load_location = parsed_input[0]
 
 class Command:
 

@@ -28,7 +28,7 @@ def main():
     config = configparser.ConfigParser()
     config.read(['pylux.conf'])
 
-    init_globals = {'PLOT_FILE': [], 'CONFIG': config}
+    init_globals = {'PLOT_FILE': [], 'CONFIG': config, 'LOAD_LOC': ''}
 
     print('Launching command line interface')
     cli.main(init_globals)

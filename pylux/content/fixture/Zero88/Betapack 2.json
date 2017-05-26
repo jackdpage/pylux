@@ -1,0 +1,103 @@
+{
+  "type": "fixture",
+  "fixture-type": "Betapack 2",
+  "fixture-dimmer": "True",
+  "fixture-functions": [
+    {
+      "type": "function",
+      "name": "Channel 1",
+      "parameter": "Intensity",
+      "function-position": 1,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Channel 1",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Intensity"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Channel 2",
+      "parameter": "Intensity",
+      "function-position": 2,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Channel 2",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Intensity"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Channel 3",
+      "parameter": "Intensity",
+      "function-position": 3,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Channel 3",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Intensity"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Channel 4",
+      "parameter": "Intensity",
+      "function-position": 4,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Channel 4",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Intensity"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Channel 5",
+      "parameter": "Intensity",
+      "function-position": 5,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Channel 5",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Intensity"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Channel 6",
+      "parameter": "Intensity",
+      "function-position": 6,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Channel 6",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Intensity"
+        }
+      ]
+    }
+  ]
+}

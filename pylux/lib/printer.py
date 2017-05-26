@@ -7,8 +7,8 @@ def get_metadata_value(meta):
 
 
 def get_fixture_string(fixture):
-    if 'fixture-name' in fixture:
-        name = fixture['fixture-name']
+    if 'name' in fixture:
+        name = fixture['name']
     else:
         name = '\033[31mUnnamed\033[0m'
     if 'fixture-type' in fixture:
@@ -19,7 +19,19 @@ def get_fixture_string(fixture):
 
 
 def get_registry_string(registry):
-    return 'none'
+    if 'name' in registry:
+        name = registry['name']
+    else:
+        name = '\033[31mUnnamed\033[0m'
+    return 'DMX512 Universe - '+name
+
+
+def get_function_string(function):
+    name = function['name']
+    param = function['parameter']
+
+    return name+' ('+param+')'
+
 
 def get_generic_string(obj):
     if obj['type'] in PRINTER_INDEX:
@@ -35,5 +47,6 @@ def get_generic_string(obj):
 PRINTER_INDEX = {
     'metadata': get_metadata_value,
     'fixture': get_fixture_string,
-    'registry': get_registry_string
+    'registry': get_registry_string,
+    'function': get_function_string
 }

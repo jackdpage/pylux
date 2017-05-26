@@ -28,10 +28,10 @@ import os.path
 import logging
 import math
 import xml.etree.ElementTree as ET
+from tqdm import tqdm
 import pylux.reference as reference
-from lib import data
+from lib import data, tagger
 import document
-
 
 class LightingPlot():
 
@@ -145,9 +145,10 @@ class LightingPlot():
         """
         page_dims = self.get_page_dimensions()
         svg_root = ET.Element('svg')
-        svg_root.set('width', str(page_dims[0]))
-        svg_root.set('height', str(page_dims[1]))
+        svg_root.set('width', str(page_dims[0])+'mm')
+        svg_root.set('height', str(page_dims[1])+'mm')
         svg_root.set('xmlns', 'http://www.w3.org/2000/svg')
+        svg_root.set('viewBox', '0 0 '+str(page_dims[0])+' '+str(page_dims[1]))
         svg_tree = ET.ElementTree(element=svg_root)
         return svg_tree
 
@@ -339,8 +340,8 @@ class LightingPlot():
         plaster = self.get_plaster_coord()
         scale = float(self.options['scale'])
         plot_pos = lambda dim: (float(fixture['pos'+dim])*1000)
-        rotation = math.degrees(self.get_fixture_rotation(fixture))
-        colour = self.get_fixture_colour(fixture)
+        rotation = fixture['rotation']
+        colour = fixture['colour']
         symbol.set('transform', 'scale( '+str(1/scale)+' ) '
                    'translate('+str(centre*scale+plot_pos('X'))+' '+
                    str(plot_pos('Y')+plaster*scale)+') '
@@ -371,16 +372,6 @@ class LightingPlot():
         beam.set('stroke-width', self.options['line-weight-light'])
         beam.set('stroke-dasharray', self.options['beam-dasharray'])
         return beam
-
-    def get_fixture_rotation(self, fixture):
-        position = (float(fixture['posX']), float(fixture['posY']))
-        focus = (float(fixture['focusX']), float(fixture['focusY']))
-
-        return math.atan2(focus[1] - position[1], focus[0] - position[0])
-
-    def get_fixture_colour(self, fixture):
-
-        return reference.gel_colours[fixture['gel']]
 
     def get_fixture_focus_point(self, fixture):
         if self.options['focus-point-source-colour'] == 'True':
@@ -415,14 +406,14 @@ class LightingPlot():
             print('Plotted centre line')
             root.append(self.get_plaster_line())
             print('Plotted plaster line')
-            for fixture in self.fixtures:
+            for fixture in tqdm(self.fixtures, desc='Plotting fixtures: '):
+                tagger.tag_fixture_all(fixture)
                 if self.options['show-beams'] == 'True':
                     root.append(self.get_fixture_beam(fixture))
                 if self.options['show-focus-point'] == 'True':
                     root.append(self.get_fixture_focus_point(fixture))
                 root.append(self.get_fixture_icon(fixture))
-                print('Plotted '+fixture['fixture-type'])
-    
+
 
 class PlotOptions():
 

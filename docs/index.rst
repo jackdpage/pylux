@@ -4,9 +4,9 @@ Documentation for Pylux
 This documentation is aimed at both users and developers.
 
 .. WARNING::
-    This documentation is for the libxpx branch of Pylux, which is not 
-    currently released. This documentation is not necessarily coherent with 
-    the contents of the program.
+    This documentation is for the json branch of Pylux, which is not the
+    current master branch on GitHub. Therefore this documentation may not be
+    appropriate for the version of Pylux on the master branch.
 
 .. toctree::
     :maxdepth: 2

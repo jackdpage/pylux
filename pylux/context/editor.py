@@ -22,16 +22,14 @@ editor is a CLI implementation of the Pylux plot editor, allowing
 for the reading and editing of Pylux plot files.
 """
 
-import clihelper
-import uuid
-from clihelper import ReferenceBuffer
-from context.context import Context, Command
-from lib import pseudotag, data, printer
-import re
 import json
+import re
+import uuid
 
-# temporary solution before api is properly written
+import clihelper
+from context.context import Context, Command
 import document
+from lib import pseudotag, data, printer
 
 
 class EditorContext(Context):
@@ -42,13 +40,6 @@ class EditorContext(Context):
         self.name = 'editor'
 
         # Command Registration
-
-
-        # self.register(Command('fW', self.file_writeas, [
-        #     ('path', True, 'Path to save the buffer to.')]))
-        # self.register(Command('fg', self.file_get, []))
-        # self.register(Command('fs', self.file_set, [
-        #     ('path', True, 'Path to set as default save location.')]))
 
         self.register(Command('ml', self.metadata_list, []))
         self.register(Command('mn', self.metadata_new, [
@@ -65,6 +56,7 @@ class EditorContext(Context):
         self.register(Command('xn', self.fixture_new, [
             ('ref', True, 'The reference to give this new fixture.')]))
         self.register(Command('xN', self.fixture_from_template, [
+            ('ref', True, 'The reference to give this new fixture.'),
             ('template', True, 'Path to the file to load data from.')]))
         self.register(Command('xc', self.fixture_clone, [
             ('src', True, 'The fixture to make a copy of.'),
@@ -78,8 +70,8 @@ class EditorContext(Context):
         self.register(Command('xg', self.fixture_get, [
             ('ref', True, 'The fixture to get a tag from.'),
             ('tag', True, 'The name of the tag to print the vAlue of.')]))
-        # self.register(Command('xG', self.fixture_getall, [
-        #     ('FIX', True, 'The fixture to print the tags of.')]))
+        self.register(Command('xG', self.fixture_getall, [
+            ('FIX', True, 'The fixture to print the tags of.')]))
         self.register(Command('xs', self.fixture_set, [
              ('FIX', True, 'The fixture to set a tag of.'),
              ('tag', True, 'The name of the tag to set.'),
@@ -116,20 +108,6 @@ class EditorContext(Context):
 
     def post_init(self):
         pass
-
-    # File commands
-
-    def file_writeas(self, parsed_input):
-        '''Write the contents of the file buffer to a new path.'''
-        document.write_to_file(self.plot_file, parsed_input[0])
-
-    def file_get(self, parsed_input):
-        '''Print the original location of the plot file.'''
-        print(self.load_location)
-
-    def file_set(self, parsed_input):
-        '''Set the default save location for the plot file.'''
-        self.load_location = parsed_input[0]
 
     # Metadata commands
 
@@ -197,9 +175,13 @@ class EditorContext(Context):
             print('does not exist')
         else:
             for ref in refs:
-                fixture = json.load(template_file)
+                with open(template_file) as f:
+                    fixture = json.load(f)
                 fixture['ref'] = ref
                 fixture['uuid'] = str(uuid.uuid4())
+                if 'fixture-functions' in fixture:
+                    for function in fixture['fixture-functions']:
+                        function['uuid'] = str(uuid.uuid4())
                 self.plot_file.append(fixture)
 
     def fixture_clone(self, parsed_input):
@@ -243,18 +225,17 @@ class EditorContext(Context):
 
     def fixture_getall(self, parsed_input):
         '''Print the tags and functions of a fixture..'''
-        fixtures = self.interface.get('FIX', parsed_input[0])
-        self.interface.open('FNC')
-        for fixture in fixtures:
-            print('\033[1m'+fixture.name+'\033[0m')
-            print(str(len(fixture.data)), 'Data Tags: ')
-            for key, value in fixture.data.items():
-                print('    '+key+': '+value)
-            if len(fixture.functions):
-                print(str(len(fixture.functions)), 'DMX Functions:')
-                for function in fixture.functions:
-                    s = function.name
-                    self.interface.add(s, function, 'FNC', pre='    ')
+        refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            f = document.get_by_ref(self.plot_file, 'fixture', ref)
+            clihelper.print_object(f)
+            print(str(len(f)), 'Data Tags:')
+            for k, v in sorted(f.items()):
+                print('    ' + str(k) + ': ' + str(v))
+            if len(f['fixture-functions']):
+                print(str(len(f['fixture-functions'])), 'DMX Functions:')
+                for func in f['fixture-functions']:
+                    print('   ', printer.get_generic_string(func))
 
     def fixture_set(self, parsed_input):
         '''Set the value of one of a fixture's tags.'''

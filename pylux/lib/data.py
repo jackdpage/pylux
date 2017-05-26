@@ -38,13 +38,13 @@ def list_data(path, location='all'):
         for loc in PRIORITY:
             if os.path.isdir(os.path.join(LOCATIONS[loc], path)):
                 for data in os.listdir(os.path.join(LOCATIONS[loc], path)):
-                    files.append((loc, data))
+                    files.append(os.path.normpath(os.path.join(LOCATIONS[loc], path, data)))
         return files
     elif location in LOCATIONS:
         files = []
         if os.path.isdir(os.path.join(LOCATIONS[location], path)):
             for data in os.listdir(os.path.join(LOCATIONS[location], path)):
-                files.append((location, data))
+                files.append(os.path.abspath(data))
         return files
     else:
         return []
