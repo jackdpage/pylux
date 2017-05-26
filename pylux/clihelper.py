@@ -15,11 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from lib import printer
+
+PRINT_COLOURS = {
+    'metadata': 94,
+    'fixture': 92,
+    'registry': 93,
+    'function': 95,
+    'scene': 96,
+    'chase': 96
+}
+
+def print_object(obj, pre=''):
+    s = printer.get_generic_string(obj)
+    typ = obj['type']
+    ref = obj['ref']
+    print(pre+'\033[1m\033['+str(PRINT_COLOURS[typ])+'m'+str(ref)+'\033[0m '+s)
+
 
 class Interface:
     '''Manage multiple buffers at a time.'''
     def __init__(self):
         self.buffers = {}
+        self.entries = {}
 
     def add_buffer(self, s):
         self.buffers[s] = ReferenceBuffer()

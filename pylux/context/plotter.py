@@ -22,26 +22,25 @@ Context that provides commands to create lighting plot images in
 SVG format.
 """
 
-from pylux.context.context import Context, Command
+from context.context import Context, Command
+import clihelper
 import os.path
 import logging
 import math
-import cairosvg
 import xml.etree.ElementTree as ET
-import pylux.plot as plot
-import pylux.clihelper as clihelper
 import pylux.reference as reference
-from pylux import get_data
+from lib import data
+import document
 
 
 class LightingPlot():
 
     def __init__(self, plot_file, options):
-        self.fixtures = plot.FixtureList(plot_file).fixtures
+        self.fixtures = document.get_by_type(plot_file, 'fixture')
         self.fixtures = self.get_hung_fixtures()
         for fixture in self.fixtures:
             self.set_empty_fixture_data(fixture)
-        self.meta = plot.Metadata(plot_file).meta
+        self.meta = document.get_by_type(plot_file, 'metadata')
         self.options = options
 
     def get_hung_fixtures(self):
@@ -56,8 +55,7 @@ class LightingPlot():
         """
         hung_fixtures = []
         for fixture in self.fixtures:
-            if ('posX' in fixture.data and 'posY' in fixture.data
-                and 'focusX' in fixture.data and 'focusY' in fixture.data):
+            if 'pos' in fixture:
                 hung_fixtures.append(fixture)
         return hung_fixtures
 
@@ -66,8 +64,16 @@ class LightingPlot():
 
         Sets gel to white.
         """
-        if 'gel' not in fixture.data:
-            fixture.data['gel'] = 'White'
+        if 'gel' not in fixture:
+            fixture['gel'] = 'White'
+        pos = fixture['pos'].split(',')
+        foc = fixture['focus'].split(',')
+        fixture['posX'] = pos[0]
+        fixture['posY'] = pos[1]
+        fixture['posZ'] = pos[2]
+        fixture['focusX'] = foc[0]
+        fixture['focusY'] = foc[1]
+        fixture['focusZ'] = foc[2]
 
     def get_page_dimensions(self):
         """Return the physical size of the paper. 
@@ -105,10 +111,10 @@ class LightingPlot():
         y_values = []
         for fixture in self.fixtures:
             get_mm = lambda field: float(field)*1000
-            x_values.append(get_mm(fixture.data['posX']))
-            x_values.append(get_mm(fixture.data['focusX']))
-            y_values.append(get_mm(fixture.data['posY']))
-            y_values.append(get_mm(fixture.data['focusY']))
+            x_values.append(get_mm(fixture['posX']))
+            x_values.append(get_mm(fixture['focusX']))
+            y_values.append(get_mm(fixture['posY']))
+            y_values.append(get_mm(fixture['focusY']))
         x_range = max(x_values) - min(x_values)
         y_range = max(y_values) - min(y_values)
         return (x_range, y_range)
@@ -323,8 +329,8 @@ class LightingPlot():
             An ElementTree object representing an SVG 'g' element.
         """
         # Get the base SVG element
-        symbol_name = fixture.data['symbol']
-        tree = ET.parse(get_data('symbol/'+symbol_name+'.svg'))
+        symbol_name = fixture['symbol']
+        tree = ET.parse(data.get_data('symbol/'+symbol_name+'.svg'))
         root = tree.getroot()
         svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
         symbol = root.find('ns0:g', svg_ns)
@@ -332,9 +338,9 @@ class LightingPlot():
         centre = self.get_page_dimensions()[0]/2
         plaster = self.get_plaster_coord()
         scale = float(self.options['scale'])
-        plot_pos = lambda dim: (float(fixture.data['pos'+dim])*1000)
-        rotation = fixture.get_rotation()
-        colour = fixture.get_colour()
+        plot_pos = lambda dim: (float(fixture['pos'+dim])*1000)
+        rotation = math.degrees(self.get_fixture_rotation(fixture))
+        colour = self.get_fixture_colour(fixture)
         symbol.set('transform', 'scale( '+str(1/scale)+' ) '
                    'translate('+str(centre*scale+plot_pos('X'))+' '+
                    str(plot_pos('Y')+plaster*scale)+') '
@@ -347,20 +353,52 @@ class LightingPlot():
         return symbol
 
     def get_fixture_beam(self, fixture):
+        if self.options['beam-source-colour'] == 'True':
+            colour = self.get_fixture_colour(fixture)
+        else:
+            colour = 'black'
         beam = ET.Element('path')
         scale = float(self.options['scale'])
         centre = self.get_page_dimensions()[0]/2
         plaster = self.get_plaster_coord()
-        startx = (float(fixture.data['posX'])*1000)*(1/scale)+centre
-        starty = (float(fixture.data['posY'])*1000)*(1/scale)+plaster
-        endx = (float(fixture.data['focusX'])*1000)*(1/scale)+centre
-        endy = (float(fixture.data['focusY'])*1000)*(1/scale)+plaster
+        startx = (float(fixture['posX'])*1000)*(1/scale)+centre
+        starty = (float(fixture['posY'])*1000)*(1/scale)+plaster
+        endx = (float(fixture['focusX'])*1000)*(1/scale)+centre
+        endy = (float(fixture['focusY'])*1000)*(1/scale)+plaster
         beam.set('d', 'M '+str(startx)+' '+str(starty)+
                       ' L '+str(endx)+' '+str(endy))
-        beam.set('stroke', 'black')
+        beam.set('stroke', colour)
         beam.set('stroke-width', self.options['line-weight-light'])
         beam.set('stroke-dasharray', self.options['beam-dasharray'])
         return beam
+
+    def get_fixture_rotation(self, fixture):
+        position = (float(fixture['posX']), float(fixture['posY']))
+        focus = (float(fixture['focusX']), float(fixture['focusY']))
+
+        return math.atan2(focus[1] - position[1], focus[0] - position[0])
+
+    def get_fixture_colour(self, fixture):
+
+        return reference.gel_colours[fixture['gel']]
+
+    def get_fixture_focus_point(self, fixture):
+        if self.options['focus-point-source-colour'] == 'True':
+            colour = self.get_fixture_colour(fixture)
+        else:
+            colour = 'black'
+        point = ET.Element('circle')
+        scale = float(self.options['scale'])
+        centre = self.get_page_dimensions()[0]/2
+        plaster = self.get_plaster_coord()
+        posx = float(fixture['focusX'])*1000*(1/scale)+centre
+        posy = float(fixture['focusY'])*1000*(1/scale)+plaster
+        point.set('cx', str(posx))
+        point.set('cy', str(posy))
+        point.set('r', str(self.options['focus-point-radius']))
+        point.set('fill', colour)
+
+        return point
 
     def generate_plot(self):
         if not self.can_fit_page():
@@ -369,16 +407,21 @@ class LightingPlot():
             self.lighting_plot = self.get_empty_plot()
             root = self.lighting_plot.getroot()
             root.append(self.get_page_border())
-            try:
-                root.append(self.get_background_image())
-            except FileNotFoundError:
-                print('Yeah it kind of didn\'t work. Just going to ignore this')
+#            try:
+#                root.append(self.get_background_image())
+#            except FileNotFoundError:
+#                print('Yeah it kind of didn\'t work. Just going to ignore this')
             root.append(self.get_centre_line())
+            print('Plotted centre line')
             root.append(self.get_plaster_line())
+            print('Plotted plaster line')
             for fixture in self.fixtures:
                 if self.options['show-beams'] == 'True':
                     root.append(self.get_fixture_beam(fixture))
+                if self.options['show-focus-point'] == 'True':
+                    root.append(self.get_fixture_focus_point(fixture))
                 root.append(self.get_fixture_icon(fixture))
+                print('Plotted '+fixture['fixture-type'])
     
 
 class PlotOptions():
@@ -494,7 +537,7 @@ class PlotterContext(Context):
             self.plot.lighting_plot.write(os.path.expanduser(parsed_input[0]))
         elif parsed_input[0].split('.')[-1] == 'pdf':
             plot_bytes = ET.tostring(self.plot.lighting_plot.getroot())
-            cairosvg.svg2pdf(bytestring=plot_bytes, write_to=parsed_input[0])
+#            cairosvg.svg2pdf(bytestring=plot_bytes, write_to=parsed_input[0])
         else:
             print('WARNING: File format not supported, writing as SVG')
             self.plot.lighting_plot.write(os.path.expanduser(parsed_input[0]))

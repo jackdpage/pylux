@@ -1,7 +1,6 @@
-# __main__.py is part of Pylux
-#
 # Pylux is a program for the management of lighting documentation
 # Copyright 2015 Jack Page
+#
 # Pylux is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,24 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import configparser
 
-import cli
-
-
-def main():
-
-    print('This is Pylux, version 0.4.0')
-    
-    config = configparser.ConfigParser()
-    config.read(['pylux.conf'])
-
-    init_globals = {'PLOT_FILE': [], 'CONFIG': config}
-
-    print('Launching command line interface')
-    cli.main(init_globals)
-
-
-if __name__ == '__main__':
-    __package__ = 'pylux'
-    main()

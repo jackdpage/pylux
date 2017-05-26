@@ -50,3 +50,21 @@ Chases
     Sequential scenes with additional data such as fade and dwell times.
 
 These data types are referred to often in the remainder of this guide.
+
+Each of these object types will have an arbitrary number of key/value pairs
+associated with them. These pairs may contain any type of information, but
+there are four which are common to all object types:
+
+type
+    The type of object. For example metadata or fixture.
+
+uuid
+    A universally unique identifier pointing to this object.
+
+ref
+    A human-readable identifier unique to this object within others of its
+    type.
+
+name
+    A non-required field which acts as the fallback when no other information
+    about the object is available.
