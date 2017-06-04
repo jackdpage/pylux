@@ -1,25 +1,31 @@
-<svg xmlns:ns0="http://www.w3.org/2000/svg" height="210mm" viewBox="0 0 297 210" width="297mm" xmlns="http://www.w3.org/2000/svg"><path d="M 10.0 10.0 L 287.0 10.0 L 287.0 200.0 L 10.0 200.0 L 10.0 10.0" fill="white" stroke="black" stroke-width="0.8" /><path d="M 148.5 10.0 L 148.5 200.0" stroke="black" stroke-dasharray="4, 0.5, 1, 1.5" stroke-width="0.6" /><path d="M 10.0 20.0 L 287.0 20.0" stroke="black" stroke-dasharray="3, 0.7" stroke-width="0.6" /><ns0:g transform="scale( 0.02 ) translate(7425.0 1000.0) rotate(45.0)">
+<svg xmlns:ns0="http://www.w3.org/2000/svg" height="210mm" viewBox="0 0 297 210" width="297mm" xmlns="http://www.w3.org/2000/svg"><path d="M 10.0 10.0 L 287.0 10.0 L 287.0 200.0 L 10.0 200.0 L 10.0 10.0" fill="white" stroke="black" stroke-width="0.8" /><ns0:g id="layer1" transform="scale(0.02) translate(7425.0 4000.0)">
+    <ns0:rect class="scenery" height="3000" id="rect4485" stroke-width="20.0" style="fill:#ffffff;fill-opacity:1;stroke:#444444;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" width="6000" x="-3000" y="-3000" />
+    <ns0:path class="batten" d="M -4500,-2000 V 4000" id="path4487" stroke-width="40.0" style="fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <ns0:path class="batten" d="M 4500,-2000 V 4000" id="path4489" stroke-width="40.0" style="fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <ns0:path class="batten" d="M -4000,-2000 H 4000" id="path4491" stroke-width="40.0" style="fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </ns0:g>
+<path d="M 148.5 10.0 L 148.5 200.0" stroke="black" stroke-dasharray="4, 0.5, 1, 1.5" stroke-width="0.6" /><path d="M 10.0 80.0 L 287.0 80.0" stroke="black" stroke-dasharray="3, 0.7" stroke-width="0.6" /><ns0:g transform="scale( 0.02 ) translate(2925.0 4500.0) rotate(-18.43494882292201)">
     <ns0:path class="outer" d="M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75" fill="#FFCB86" stroke="black" stroke-width="40.0" />
 </ns0:g>
-<ns0:g transform="scale( 0.02 ) translate(7425.0 1500.0) rotate(39.80557109226519)">
+<ns0:g transform="scale( 0.02 ) translate(2925.0 4500.0) rotate(-18.43494882292201)">
     <ns0:path class="outer" d="M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75" fill="#486FFF" stroke="black" stroke-width="40.0" />
 </ns0:g>
-<ns0:g transform="scale( 0.02 ) translate(7425.0 2000.0) rotate(33.690067525979785)">
+<ns0:g transform="scale( 0.02 ) translate(2925.0 5000.0) rotate(-23.962488974578186)">
     <ns0:path class="outer" d="M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75" fill="#FCD419" stroke="black" stroke-width="40.0" />
 </ns0:g>
-<ns0:g transform="scale( 0.02 ) translate(7425.0 2500.0) rotate(26.56505117707799)">
+<ns0:g transform="scale( 0.02 ) translate(2925.0 5500.0) rotate(-29.054604099077146)">
     <ns0:path class="outer" d="M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75" fill="#E4DCFF" stroke="black" stroke-width="40.0" />
 </ns0:g>
-<ns0:g transform="scale( 0.02 ) translate(7425.0 3000.0) rotate(18.43494882292201)">
+<ns0:g transform="scale( 0.02 ) translate(11925.0 6000.0) rotate(-146.30993247402023)">
     <ns0:path class="outer" d="M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75" fill="#FFD1AC" stroke="black" stroke-width="40.0" />
 </ns0:g>
-<ns0:g transform="scale( 0.02 ) translate(7425.0 3500.0) rotate(9.462322208025617)">
+<ns0:g transform="scale( 0.02 ) translate(11925.0 6500.0) rotate(-142.12501634890182)">
     <ns0:path class="outer" d="M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75" fill="#89FA19" stroke="black" stroke-width="40.0" />
 </ns0:g>
-<ns0:g transform="scale( 0.02 ) translate(7425.0 4000.0) rotate(0.0)">
+<ns0:g transform="scale( 0.02 ) translate(11925.0 7000.0) rotate(-138.3664606634298)">
     <ns0:path class="outer" d="M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75" fill="#29C0F9" stroke="black" stroke-width="40.0" />
 </ns0:g>
-<ns0:g transform="scale( 0.02 ) translate(7425.0 4500.0) rotate(-9.462322208025617)">
+<ns0:g transform="scale( 0.02 ) translate(11925.0 7500.0) rotate(-135.0)">
     <ns0:path class="outer" d="M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75" fill="#B101DD" stroke="black" stroke-width="40.0" />
 </ns0:g>
 </svg>

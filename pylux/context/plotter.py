@@ -38,8 +38,6 @@ class LightingPlot():
     def __init__(self, plot_file, options):
         self.fixtures = document.get_by_type(plot_file, 'fixture')
         self.fixtures = self.get_hung_fixtures()
-        for fixture in self.fixtures:
-            self.set_empty_fixture_data(fixture)
         self.meta = document.get_by_type(plot_file, 'metadata')
         self.options = options
 
@@ -58,22 +56,6 @@ class LightingPlot():
             if 'pos' in fixture:
                 hung_fixtures.append(fixture)
         return hung_fixtures
-
-    def set_empty_fixture_data(self, fixture):
-        """If a fixture has empty data slots, set to defaults.
-
-        Sets gel to white.
-        """
-        if 'gel' not in fixture:
-            fixture['gel'] = 'White'
-        pos = fixture['pos'].split(',')
-        foc = fixture['focus'].split(',')
-        fixture['posX'] = pos[0]
-        fixture['posY'] = pos[1]
-        fixture['posZ'] = pos[2]
-        fixture['focusX'] = foc[0]
-        fixture['focusY'] = foc[1]
-        fixture['focusZ'] = foc[2]
 
     def get_page_dimensions(self):
         """Return the physical size of the paper. 
@@ -309,7 +291,7 @@ class LightingPlot():
         sidebar_box.set('stroke-width', str(self.options['line-weight-heavy']))
         # Create title text
         text_title = ET.SubElement(sidebar, 'text')
-        text_title.text = self.meta['production']
+        text_title.text = 'test text'
         text_title.set('text-anchor', 'middle')
         text_title.set('x', str(page_dims[0]-margin-0.5*sidebar_width))
         text_title.set('y', str(margin+10))
@@ -398,10 +380,10 @@ class LightingPlot():
             self.lighting_plot = self.get_empty_plot()
             root = self.lighting_plot.getroot()
             root.append(self.get_page_border())
-#            try:
-#                root.append(self.get_background_image())
-#            except FileNotFoundError:
-#                print('Yeah it kind of didn\'t work. Just going to ignore this')
+            try:
+                root.append(self.get_background_image())
+            except FileNotFoundError:
+                print('Yeah it kind of didn\'t work. Just going to ignore this')
             root.append(self.get_centre_line())
             print('Plotted centre line')
             root.append(self.get_plaster_line())
@@ -413,6 +395,9 @@ class LightingPlot():
                 if self.options['show-focus-point'] == 'True':
                     root.append(self.get_fixture_focus_point(fixture))
                 root.append(self.get_fixture_icon(fixture))
+            if self.options['title-block'] != 'None':
+                root.append(self.get_title_block())
+            print('Added title block')
 
 
 class PlotOptions():

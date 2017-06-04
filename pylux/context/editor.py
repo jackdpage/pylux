@@ -29,7 +29,7 @@ import uuid
 import clihelper
 from context.context import Context, Command
 import document
-from lib import pseudotag, data, printer
+from lib import data, printer
 
 
 class EditorContext(Context):
