@@ -1,0 +1,87 @@
+{
+  "type": "fixture",
+  "fixture-type": "IRGBW PAR64",
+  "symbol": "Generic/RGBW PAR64",
+  "fixture-functions": [
+    {
+      "type": "function",
+      "name": "Intensity",
+      "parameter": "Intensity",
+      "function-position": 1,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Intensity",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Intensity"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Red",
+      "parameter": "Red",
+      "function-position": 1,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Red",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Red"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Green",
+      "parameter": "Green",
+      "function-position": 1,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Green",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Green"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Blue",
+      "parameter": "Blue",
+      "function-position": 1,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Blue",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Blue"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "White",
+      "parameter": "White",
+      "function-position": 1,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "White",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "White"
+        }
+      ]
+    }
+  ]
+}

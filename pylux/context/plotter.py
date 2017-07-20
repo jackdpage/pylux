@@ -53,7 +53,7 @@ class LightingPlot():
         """
         hung_fixtures = []
         for fixture in self.fixtures:
-            if 'pos' in fixture:
+            if 'posX' and 'posY' in fixture:
                 hung_fixtures.append(fixture)
         return hung_fixtures
 
