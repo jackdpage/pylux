@@ -112,6 +112,45 @@ def remove_by_ref(doc, type, ref):
     doc.remove(get_by_value(objs, 'ref', ref)[0])
 
 
+def get_function_by_uuid(doc, uuid):
+    '''Get a function by its UUID.'''
+
+    for f in get_by_type(doc, 'fixture'):
+        if 'fixture-functions' in f:
+            for func in f['fixture-functions']:
+                if func['uuid'] == uuid:
+                    return func
+
+def get_function_parent(doc, func):
+    '''Get the associated fixture of a function.'''
+
+    for f in get_by_type(doc, 'fixture'):
+        if 'fixture-functions' in f:
+            if func in f['fixture-functions']:
+                return f
+
+
+def get_occupied_addresses(reg):
+    """Get a list of occupied addresses in a registry"""
+    return sorted(reg['table'].keys())
+
+
+def get_available_addresses(reg):
+    """Get available addresses in a registry."""
+    all = [i for i in range(1, 513)]
+    occupied = get_occupied_addresses(reg)
+    available = [i for i in all if i not in occupied]
+    return sorted(available)
+
+
+def get_start_address(reg, n):
+    """Get start address in a registry given a required length."""
+    available = get_available_addresses(reg)
+    for addr in available:
+        if set([i for i in range(addr, addr+n)]).issubset(available):
+            return addr
+
+
 def autoref(doc, type):
     """Return an available reference number for a given type."""
 

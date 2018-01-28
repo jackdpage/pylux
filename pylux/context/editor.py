@@ -69,17 +69,17 @@ class EditorContext(Context):
             ('ref', True, 'The fixture to remove.')]))
         self.register(Command('xg', self.fixture_get, [
             ('ref', True, 'The fixture to get a tag from.'),
-            ('tag', True, 'The name of the tag to print the vAlue of.')]))
+            ('tag', True, 'The name of the tag to print the value of.')]))
         self.register(Command('xG', self.fixture_getall, [
             ('FIX', True, 'The fixture to print the tags of.')]))
         self.register(Command('xs', self.fixture_set, [
              ('FIX', True, 'The fixture to set a tag of.'),
              ('tag', True, 'The name of the tag to set.'),
              ('value', True, 'The value to set the tag to.')]))
-        # self.register(Command('xa', self.fixture_address, [
-        #     ('FIX', True, 'The fixture to assign addresses to.'),
-        #     ('REG', True, 'The name of the universe to address in.'),
-        #     ('address', True, 'The addresses to begin addressing at.')]))
+        self.register(Command('xa', self.fixture_address, [
+             ('ref', True, 'The fixture to assign addresses to.'),
+             ('reg', True, 'The name of the universe to address in.'),
+             ('addr', True, 'The addresses to begin addressing at.')]))
         # self.register(Command('xA', self.fixture_unaddress, [
         #     ('FIX', True, 'The fixture to unassign addresses for.')]))
 
@@ -87,6 +87,7 @@ class EditorContext(Context):
         self.register(Command('rL', self.registry_query, [
             ('REG', True, 'The registry to list used channels of.')]))
         self.register(Command('rn', self.registry_new, [
+            ('ref', True, 'The reference to give this new registry.'),
             ('name', True, 'The name of the new registry.')]))
         # self.register(Command('rp', self.registry_probe, [
         #     ('REG', True, 'The registry to probe the channels of.')]))
@@ -113,7 +114,7 @@ class EditorContext(Context):
 
     def metadata_list(self, parsed_input):
         '''List the values of all metadata in the plot file.'''
-        for meta in document.get_metadata(self.plot_file):
+        for meta in clihelper.refsort(document.get_metadata(self.plot_file)):
             clihelper.print_object(meta)
 
     def metadata_set(self, parsed_input):
@@ -196,7 +197,7 @@ class EditorContext(Context):
 
     def fixture_list(self, parsed_input):
         '''List all fixtures in the plot file.'''
-        for fix in document.get_by_type(self.plot_file, 'fixture'):
+        for fix in clihelper.refsort(document.get_by_type(self.plot_file, 'fixture')):
             clihelper.print_object(fix)
 
     def fixture_filter(self, parsed_input):
@@ -246,20 +247,18 @@ class EditorContext(Context):
 
     def fixture_address(self, parsed_input):
         '''Assign DMX addresses to a fixture.'''
-        fixtures = self.interface.get('FIX', parsed_input[0])
-        registries = self.interface.get('REG', parsed_input[1])
-        for fixture in fixtures:
-            n_chan = len(fixture.functions)
-            for registry in registries:
-                if parsed_input[2] == 'auto':
-                    addr = registry.get_start_address(n_chan)
-                else:
-                    addr = int(parsed_input[2])
-                for function in fixture.functions:
-                    chan_obj = xpx.RegistryChannel(
-                        address=addr, function=xpx.XPXReference(function.uuid))
-                    registry.channels.append(chan_obj)
-                    addr += 1
+        refs = clihelper.resolve_references(parsed_input[0])
+        reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[1]))
+        for ref in refs:
+            f = document.get_by_ref(self.plot_file, 'fixture', ref)
+            if parsed_input[2] == 'auto':
+                n = len(f['fixture-functions'])
+                addr = document.get_start_address(reg, n)
+            else:
+                addr = int(parsed_input[2])
+            for func in f['fixture-functions']:
+                reg['table'][addr] = func['uuid']
+                addr += 1
 
     def fixture_unaddress(self, parsed_input):
         '''Unassign addresses in all universes for this fixture.'''
@@ -284,7 +283,8 @@ class EditorContext(Context):
             self.plot_file.append({
                 'type': 'registry',
                 'uuid': str(uuid.uuid4()),
-                'ref': ref
+                'ref': ref,
+                'table': {}
             })
 
     def registry_remove(self, parsed_input):
@@ -295,7 +295,7 @@ class EditorContext(Context):
 
     def registry_list(self, parsed_input):
         '''List all registries.'''
-        for reg in document.get_by_type(self.plot_file, 'registry'):
+        for reg in clihelper.refsort(document.get_by_type(self.plot_file, 'registry')):
             clihelper.print_object(reg)
 
     def registry_query(self, parsed_input):
@@ -304,12 +304,14 @@ class EditorContext(Context):
         for ref in refs:
             r = document.get_by_ref(self.plot_file, 'registry', ref)
             clihelper.print_object(r)
-            t = r['table']
+            t = {int(i): r['table'][i] for i in r['table']}
             print(str(len(t)), 'Used Addresses:')
             for k, v in sorted(t.items()):
-                func = document.get_by_uuid(v)
-                fix = document.get_by_uuid(func['function-link'])
-                print('DMX'+str(format(k, '03d'))+': '+printer.get_generic_string(fix))
+                func = document.get_function_by_uuid(self.plot_file, v)
+                f = document.get_function_parent(self.plot_file, func)
+                print(''.join(['DMX',str(format(k, '03d')),': ',
+                               printer.get_generic_string(f),' (',
+                               printer.get_generic_string(func),')']))
 
     def registry_probe(self, parsed_input):
         '''List channels and dimmer controlled lights.'''

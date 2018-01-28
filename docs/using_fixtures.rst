@@ -48,7 +48,18 @@ Now if you re-run ``xl``, you will see::
     1 PAR64 MFL - SL pipe end
 
 When using ``xs``, you can actually use any tag you like in place of ``name`` 
-and that tag will be added to the data dictionary with the value you provide. 
+and that tag will be added to the data dictionary with the value you provide.
+
+Reserved Attributes
+~~~~~~~~~~~~~~~~~~~
+
+These attributes are regularly set automatically based on other attributes,
+therefore they should not be used as they will be overwritten:
+
+* ``colour`` overwritten based on the contents of ``gel``
+* ``focusX`` ``focusY`` ``focusZ`` overwritten based on ``focus``
+* ``posX`` ``posY`` ``posZ`` overwritten based on ``pos``
+* ``rotation`` overwritten based on ``focus`` and ``pos``
 
 Cloning Fixtures
 ----------------

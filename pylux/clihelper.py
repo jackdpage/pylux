@@ -165,3 +165,7 @@ def resolve_input(inputs_list, number_args):
     if args_list[-1] == '':
         args_list.pop(-1)
     return args_list
+
+def refsort(objs):
+    """Sort a list of objects by their reference number"""
+    return sorted(objs, key=lambda i:i['ref'])

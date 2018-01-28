@@ -72,12 +72,11 @@ class Report:
                 hung_fixtures.append(fixture)
         hung_fixtures.sort(key=lambda fix: int(fix['ref']))
         # Create metadata list
-        metadata_list = document.get_by_type(self.plot_file, 'metadata')
+        metadata = {i['metadata-key']: i['metadata-value'] for i in document.get_by_type(self.plot_file, 'metadata')}
         # Render template
         self.content = template.render(cues=cues, fixtures=fixture_list,
-                                       meta=metadata_list, hung=hung_fixtures,
+                                       metadata=metadata, hung=hung_fixtures,
                                        options=options)
-
 
 class ReporterContext(Context):
 

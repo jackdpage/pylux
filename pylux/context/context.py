@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import clihelper
-from clihelper import resolve_input, Interface
+from clihelper import resolve_input
 import document
 from importlib import import_module
 from tabulate import tabulate
@@ -107,7 +107,6 @@ class Context:
         """
         self.plot_file = globals_dict['PLOT_FILE']
         self.config = globals_dict['CONFIG']
-        self.interface = Interface()
         self.load_location = globals_dict['LOAD_LOC']
         self.post_init()
 

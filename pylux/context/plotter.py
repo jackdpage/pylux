@@ -291,7 +291,7 @@ class LightingPlot():
         sidebar_box.set('stroke-width', str(self.options['line-weight-heavy']))
         # Create title text
         text_title = ET.SubElement(sidebar, 'text')
-        text_title.text = 'test text'
+        text_title.text = document.get_by_value(self.meta, 'metadata-key', 'Production')[0]['metadata-value']
         text_title.set('text-anchor', 'middle')
         text_title.set('x', str(page_dims[0]-margin-0.5*sidebar_width))
         text_title.set('y', str(margin+10))
