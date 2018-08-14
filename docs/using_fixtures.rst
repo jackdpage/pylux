@@ -109,3 +109,15 @@ This then prints the following::
         3 Channel 4
         4 Channel 5
         5 Channel 6
+
+Assigning DMX Addresses to Fixtures
+-----------------------------------
+
+The data patching a fixture function to a DMX address exists in Registry
+objects, although it is a fixture command which is used to assign these
+addresses.
+
+You will need to create a registry object for each universe you use::
+
+    rn 0
+

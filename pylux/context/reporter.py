@@ -108,11 +108,7 @@ class ReporterContext(Context):
 
     def template_list(self, parsed_input):
         '''List the templates installed on this system.'''
-        self.interface.open('TMP')
-        templates = data.list_data('template')
-        for template in templates:
-            s = template[1]+' ('+template[0]+')'
-            self.templates.append((s, template, 'TMP'))
+        pass
 
     def report_generate(self, parsed_input):
         '''Create a new report from a template in a temporary buffer.'''

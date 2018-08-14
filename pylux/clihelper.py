@@ -22,68 +22,6 @@ def print_object(obj, pre=''):
     s = printer.get_generic_string(obj, pre)
     print(s)
 
-
-class Interface:
-    '''Manage multiple buffers at a time.'''
-    def __init__(self):
-        self.buffers = {}
-        self.entries = {}
-
-    def add_buffer(self, s):
-        self.buffers[s] = ReferenceBuffer()
-
-    def get(self, buff, user_input):
-        return self.buffers[buff].get(user_input)
-
-    def open(self, buff):
-        self.buffers[buff].begin()
-
-    def add(self, s, obj, buff, pre=''):
-        self.buffers[buff].append(obj, s, pre)
-
-
-class ReferenceBuffer:
-    '''Contains one set of interface references.
-
-    The user can specify which reference buffer they wish to write 
-    interface references to. (By default they are written to STD) 
-    This allows multiple references to be accessed simultaneously.
-    '''
-    def __init__(self, colour=0):
-        self.option_list = {}
-        self.colour = colour
-
-    def set_colour(self, colour):
-        self.colour = colour
-    
-    def add(self, ref, obj):
-        '''Add an object to the buffer.'''
-        self.option_list[ref] = obj
-
-    def get(self, refs):
-        objs = []
-        if refs == 'all':
-            for ref, obj in self.option_list.items():
-                objs.append(obj)
-        else:
-            for ref in resolve_references(refs):
-                objs.append(self.option_list[ref])
-        return objs
-
-    def clear(self):
-        '''Clear the reference buffer.'''
-        self.option_list.clear()
-
-    def begin(self):
-        '''Start the buffer from empty.'''
-        self.clear()
-
-    def append(self, obj, s, pre):
-        '''Append and print an object in the buffer.'''
-        i = len(self.option_list)
-        self.add(i, obj)
-        print(pre+'\033[1m\033['+str(self.colour)+'m'+str(i)+'\033[0m '+s)
-    
  
 def resolve_references(user_input):
     """Parse the reference input.
@@ -155,6 +93,7 @@ def resolve_input(inputs_list, number_args):
     if args_list[-1] == '':
         args_list.pop(-1)
     return args_list
+
 
 def refsort(objs):
     """Sort a list of objects by their reference number"""

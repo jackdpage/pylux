@@ -264,16 +264,16 @@ class EditorContext(Context):
                 reg['table'][addr] = func['uuid']
                 addr += 1
 
-    def fixture_unaddress(self, parsed_input):
-        '''Unassign addresses in all universes for this fixture.'''
-        fixtures = self.interface.get('FIX', parsed_input[0])
-        for fixture in fixtures:
-            functions = [function.uuid for function in fixture.functions]
-            for registry in self.plot_file.registries:
-                # BUG: does not check last channel if len(channels) > 1
-                for channel in registry.channels:
-                    if channel.function.uuid in functions:
-                        registry.channels.remove(channel)
+    # def fixture_unaddress(self, parsed_input):
+    #     '''Unassign addresses in all universes for this fixture.'''
+    #     fixtures = self.interface.get('FIX', parsed_input[0])
+    #     for fixture in fixtures:
+    #         functions = [function.uuid for function in fixture.functions]
+    #         for registry in self.plot_file.registries:
+    #             # BUG: does not check last channel if len(channels) > 1
+    #             for channel in registry.channels:
+    #                 if channel.function.uuid in functions:
+    #                     registry.channels.remove(channel)
 
     # Registry commands
 
@@ -317,22 +317,22 @@ class EditorContext(Context):
                                printer.get_generic_string(f),' (',
                                printer.get_generic_string(func),')']))
 
-    def registry_probe(self, parsed_input):
-        '''List channels and dimmer controlled lights.'''
-        registries = self.interface.get('REG', parsed_input[0])
-        self.interface.open('FNC')
-        for registry in registries:
-            print('\033[1mUniverse: '+registry.name+'\033[0m')
-            for channel in registry.channels:
-                address = channel.address
-                func = self.plot_file.get_object_by_uuid(channel.function.uuid)
-                fixture = self.plot_file.get_fixture_for_function(func)
-                s = ('DMX'+str(format(address, '03d'))+': '+fixture.name+' ('
-                     +func.name+')')
-                self.interface.add(s, func, 'FNC')
-                controlled = self.plot_file.get_fixtures_for_dimmer_function(func)
-                for dimmed_fixture in controlled:
-                    print('\t→ '+dimmed_fixture.name)
+    # def registry_probe(self, parsed_input):
+    #     '''List channels and dimmer controlled lights.'''
+    #     registries = self.interface.get('REG', parsed_input[0])
+    #     self.interface.open('FNC')
+    #     for registry in registries:
+    #         print('\033[1mUniverse: '+registry.name+'\033[0m')
+    #         for channel in registry.channels:
+    #             address = channel.address
+    #             func = self.plot_file.get_object_by_uuid(channel.function.uuid)
+    #             fixture = self.plot_file.get_fixture_for_function(func)
+    #             s = ('DMX'+str(format(address, '03d'))+': '+fixture.name+' ('
+    #                  +func.name+')')
+    #             self.interface.add(s, func, 'FNC')
+    #             controlled = self.plot_file.get_fixtures_for_dimmer_function(func)
+    #             for dimmed_fixture in controlled:
+    #                 print('\t→ '+dimmed_fixture.name)
 
     def registry_add(self, parsed_input):
         '''Manually add a function to a registry.'''
@@ -350,74 +350,74 @@ class EditorContext(Context):
 
     # Scene commands
 
-    def scene_list(self, parsed_input):
-        '''List all scenes.'''
-        self.interface.open('SCN')
-        for scene in self.plot_file.scenes:
-            s = scene.name+' (Affects '+str(len(scene.outputs))+' functions)'
-            self.interface.add(s, scene, 'SCN')
-
-    def scene_new(self, parsed_input):
-        '''Create a new scene.'''
-        outputs = []
-        for output in parsed_input[0].split(';'):
-            functions = self.interface.get('FNC', output.split('@')[0])
-            for function in functions:
-                outputs.append(xpx.OutputState(
-                    function=xpx.XPXReference(function.uuid),
-                    value=output.split('@')[1]))
-        self.plot_file.scenes.append(xpx.Scene(outputs=outputs, 
-                                               name=parsed_input[1]))
-
-    def scene_getall(self, parsed_input):
-        '''Display the outputs of a scene.'''
-        self.interface.open('FNC')
-        scenes = self.interface.get('SCN', parsed_input[0])
-        for scene in scenes:
-            print('\033[1mScene: '+scene.name+'\033[0m')
-            for output in scene.outputs:
-                function = self.plot_file.get_object_by_uuid(
-                    output.function.uuid)
-                value = clihelper.ProgressBar()
-                value = value+output.value
-                fixture = self.plot_file.get_fixture_for_function(function)
-                s = str(value)+' '+function.name+' ('+fixture.name+')'
-                self.interface.add(s, function, 'FNC')
-
-    def scene_getall_dmx(self, parsed_input):
-        '''Display the outputs of a scene in terms of DMX channels.'''
-        self.interface.open('FNC')
-        scenes = self.interface.get('SCN', parsed_input[0])
-        for scene in scenes:
-            printlines = []
-            registries = []
-            print('\033[1mScene: '+scene.name+'\033[0m')
-            for output in scene.outputs:
-                function = self.plot_file.get_object_by_uuid(
-                    output.function.uuid)
-                channels = self.plot_file.get_channels_for_function(function)
-                for channel in channels:
-                    registry = self.plot_file.get_registry_for_channel(channel)
-                    if registry not in registries:
-                        registries.append(registry)
-                    printlines.append((registry, channel, output.value))
-            for registry in registries:
-                print('\033[3mRegistry: '+registry.name+'\033[0m')
-                for printline in printlines:
-                    if printline[0] == registry:
-                        value = clihelper.ProgressBar()
-                        value = value+printline[2]
-                        s = ('DMX'+str(format(printline[1].address, '03d'))+
-                             ' '+str(value))
-                        self.interface.add(s, printline[1].function, 'FNC')
-
-    def scene_remove(self, parsed_input):
-        '''Remove a scene.'''
-        scenes = self.interface.get('SCN', parsed_input[0])
-        for scene in scenes:
-            self.plot_file.remove(scene)
-
-    # Chase commands
+    # def scene_list(self, parsed_input):
+    #     '''List all scenes.'''
+    #     self.interface.open('SCN')
+    #     for scene in self.plot_file.scenes:
+    #         s = scene.name+' (Affects '+str(len(scene.outputs))+' functions)'
+    #         self.interface.add(s, scene, 'SCN')
+    #
+    # def scene_new(self, parsed_input):
+    #     '''Create a new scene.'''
+    #     outputs = []
+    #     for output in parsed_input[0].split(';'):
+    #         functions = self.interface.get('FNC', output.split('@')[0])
+    #         for function in functions:
+    #             outputs.append(xpx.OutputState(
+    #                 function=xpx.XPXReference(function.uuid),
+    #                 value=output.split('@')[1]))
+    #     self.plot_file.scenes.append(xpx.Scene(outputs=outputs,
+    #                                            name=parsed_input[1]))
+    #
+    # def scene_getall(self, parsed_input):
+    #     '''Display the outputs of a scene.'''
+    #     self.interface.open('FNC')
+    #     scenes = self.interface.get('SCN', parsed_input[0])
+    #     for scene in scenes:
+    #         print('\033[1mScene: '+scene.name+'\033[0m')
+    #         for output in scene.outputs:
+    #             function = self.plot_file.get_object_by_uuid(
+    #                 output.function.uuid)
+    #             value = clihelper.ProgressBar()
+    #             value = value+output.value
+    #             fixture = self.plot_file.get_fixture_for_function(function)
+    #             s = str(value)+' '+function.name+' ('+fixture.name+')'
+    #             self.interface.add(s, function, 'FNC')
+    #
+    # def scene_getall_dmx(self, parsed_input):
+    #     '''Display the outputs of a scene in terms of DMX channels.'''
+    #     self.interface.open('FNC')
+    #     scenes = self.interface.get('SCN', parsed_input[0])
+    #     for scene in scenes:
+    #         printlines = []
+    #         registries = []
+    #         print('\033[1mScene: '+scene.name+'\033[0m')
+    #         for output in scene.outputs:
+    #             function = self.plot_file.get_object_by_uuid(
+    #                 output.function.uuid)
+    #             channels = self.plot_file.get_channels_for_function(function)
+    #             for channel in channels:
+    #                 registry = self.plot_file.get_registry_for_channel(channel)
+    #                 if registry not in registries:
+    #                     registries.append(registry)
+    #                 printlines.append((registry, channel, output.value))
+    #         for registry in registries:
+    #             print('\033[3mRegistry: '+registry.name+'\033[0m')
+    #             for printline in printlines:
+    #                 if printline[0] == registry:
+    #                     value = clihelper.ProgressBar()
+    #                     value = value+printline[2]
+    #                     s = ('DMX'+str(format(printline[1].address, '03d'))+
+    #                          ' '+str(value))
+    #                     self.interface.add(s, printline[1].function, 'FNC')
+    #
+    # def scene_remove(self, parsed_input):
+    #     '''Remove a scene.'''
+    #     scenes = self.interface.get('SCN', parsed_input[0])
+    #     for scene in scenes:
+    #         self.plot_file.remove(scene)
+    #
+    # # Chase commands
 
     # Import commands
 
