@@ -15,15 +15,16 @@ def get_fixture_string(fixture):
         type = fixture['fixture-type']
     else:
         type = 'n/a'
+    ref = fixture['ref']
     return type+' - '+name
 
 
 def get_registry_string(registry):
-    if 'name' in registry:
-        name = registry['name']
+    if 'patch' in registry:
+        patch = registry['patch']
     else:
-        name = '\033[31mUnnamed\033[0m'
-    return 'DMX512 Universe - '+name
+        patch = '\033[31mUnpatched\033[0m'
+    return 'DMX512 Universe - '+patch
 
 
 def get_function_string(function):
@@ -33,9 +34,15 @@ def get_function_string(function):
     return name+' ('+param+')'
 
 
-def get_generic_string(obj):
+def get_generic_string(obj, pre=''):
     if obj['type'] in PRINTER_INDEX:
-        return PRINTER_INDEX[obj['type']](obj)
+        if 'ref' in obj:
+            ref_print = ''.join(['\033[1m\033[',
+                                 str(PRINTER_INDEX[obj['type']][1]), 'm',
+                                 str(obj['ref']), '\033[0m '])
+        else: ref_print = ''
+        s = pre + ref_print + PRINTER_INDEX[obj['type']][0](obj)
+        return s
     else:
         if 'name' in obj:
             name = obj['name']
@@ -44,9 +51,11 @@ def get_generic_string(obj):
         type = obj['type']
         return name+' ('+type+')'
 
+
 PRINTER_INDEX = {
-    'metadata': get_metadata_value,
-    'fixture': get_fixture_string,
-    'registry': get_registry_string,
-    'function': get_function_string
+    'metadata': (get_metadata_value, 94),
+    'fixture': (get_fixture_string, 92),
+    'registry': (get_registry_string, 93),
+    'function': (get_function_string, 95),
+    'scene': (None, 96)
 }

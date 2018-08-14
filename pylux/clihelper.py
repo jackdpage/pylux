@@ -17,20 +17,10 @@
 
 from lib import printer
 
-PRINT_COLOURS = {
-    'metadata': 94,
-    'fixture': 92,
-    'registry': 93,
-    'function': 95,
-    'scene': 96,
-    'chase': 96
-}
 
 def print_object(obj, pre=''):
-    s = printer.get_generic_string(obj)
-    typ = obj['type']
-    ref = obj['ref']
-    print(pre+'\033[1m\033['+str(PRINT_COLOURS[typ])+'m'+str(ref)+'\033[0m '+s)
+    s = printer.get_generic_string(obj, pre)
+    print(s)
 
 
 class Interface:

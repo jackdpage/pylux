@@ -1,0 +1,23 @@
+{
+  "type": "fixture",
+  "manufacturer": "Generic",
+  "fixture-type": "Dimmer",
+  "fixture-functions": [
+    {
+      "type": "function",
+      "name": "Intensity",
+      "parameter": "Intensity",
+      "function-position": 1,
+      "ranges": [
+        {
+          "type": "function-range",
+          "name": "Intensity",
+          "range-start": 0,
+          "range-end": 255,
+          "range-type": "linear",
+          "parameter": "Intensity"
+        }
+      ]
+    }
+  ]
+}

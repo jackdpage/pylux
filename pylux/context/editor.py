@@ -23,6 +23,7 @@ for the reading and editing of Pylux plot files.
 """
 
 import json
+import math
 import re
 import uuid
 
@@ -84,7 +85,7 @@ class EditorContext(Context):
         #     ('FIX', True, 'The fixture to unassign addresses for.')]))
 
         self.register(Command('rl', self.registry_list, []))
-        self.register(Command('rL', self.registry_query, [
+        self.register(Command('rq', self.registry_query, [
             ('REG', True, 'The registry to list used channels of.')]))
         self.register(Command('rn', self.registry_new, [
             ('ref', True, 'The reference to give this new registry.'),
@@ -106,6 +107,9 @@ class EditorContext(Context):
         #     ('SCN', True, 'The scene to display the outputs of.')]))
         # self.register(Command('sG', self.scene_getall_dmx, [
         #     ('SCN', True, 'The scene to display the outputs of.')]))
+        self.register(Command('ia', self.import_ascii, [
+            ('file', True, 'Patch of the ASCII file to import.'),
+            ('target', True, 'The type of target to import from the file')]))
 
     def post_init(self):
         pass
@@ -414,6 +418,36 @@ class EditorContext(Context):
             self.plot_file.remove(scene)
 
     # Chase commands
+
+    # Import commands
+
+    def import_ascii(self, parsed_input):
+        with open(parsed_input[0]) as f:
+            raw = f.readlines()
+
+        if parsed_input[1] == 'patch':
+            entries = []
+            r = re.compile('Patch.*')
+            # Scan file for lines beginning with the Patch keyword and populate
+            # into list for parsing.
+            for l in raw:
+                match = re.match(r, l)
+                if match: entries.append(match.string)
+            # For each patch line found, find each mapping within the line and
+            # add to the plot file using the built in command.
+            r = re.compile('[0-9]*<[0-9]{0,3}')
+            template = self.config['ascii']['conventional-template']
+            for e in entries:
+                maps = re.findall(r, e)
+                for f in maps:
+                    ref = f.split('<')[0]
+                    addr = int(f.split('<')[1])
+                    dmx = addr%512
+                    univ = math.floor(addr/512)
+                    self.fixture_from_template([f.split('<')[0], template])
+                    self.fixture_address([ref, univ, dmx])
+        else:
+            print('Target type not supported yet')
 
 
 def get_context():
