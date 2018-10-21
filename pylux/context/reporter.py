@@ -33,9 +33,8 @@ import document
 class Report:
 
     def __init__(self, plot_file):
-        print(data.list_data('template/'))
         self.environment = Environment(lstrip_blocks=True, trim_blocks=True, 
-                                loader=FileSystemLoader(os.path.normpath(os.path.expanduser('~/Documents/GitHub/pylux/pylux/content/template'))))
+                                loader=FileSystemLoader([i+'/template' for i in data.LOCATIONS.values()]))
         self.plot_file = plot_file
 
     def generate(self, template, options):

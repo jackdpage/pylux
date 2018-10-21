@@ -177,7 +177,7 @@ class EditorContext(Context):
             refs = clihelper.resolve_references(parsed_input[0])
         template_file = data.get_data('fixture/'+parsed_input[1]+'.json')
         if not template_file:
-            print('does not exist')
+            print('Template does not exist')
         else:
             for ref in refs:
                 with open(template_file) as f:
@@ -444,7 +444,7 @@ class EditorContext(Context):
                     addr = int(f.split('<')[1])
                     dmx = addr%512
                     univ = math.floor(addr/512)
-                    self.fixture_from_template([f.split('<')[0], template])
+                    self.fixture_from_template([ref, template])
                     self.fixture_address([ref, univ, dmx])
         else:
             print('Target type not supported yet')
