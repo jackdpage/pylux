@@ -29,7 +29,7 @@ import logging
 import math
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
-import pylux.reference as reference
+import reference
 from lib import data, tagger
 import document
 
@@ -289,14 +289,28 @@ class LightingPlot():
                           ' L '+str(left_border)+' '+str(page_dims[1]-margin))
         sidebar_box.set('stroke', 'black')
         sidebar_box.set('stroke-width', str(self.options['line-weight-heavy']))
-        # Create title text
-        text_title = ET.SubElement(sidebar, 'text')
+        # Create title text within HTML foreignObject element (to support text wrapping)
+        html_cont = ET.SubElement(sidebar, 'foreignObject')
+        html_cont.set('width', str(get_sidebar_width(self)))
+        html_cont.set('height', str(page_dims[1]-2*margin))
+        html_cont.set('x', str(left_border))
+        html_cont.set('y', str(margin))
+        text_title = ET.SubElement(html_cont, 'p')
         text_title.text = document.get_by_value(self.meta, 'metadata-key', 'Production')[0]['metadata-value']
-        text_title.set('text-anchor', 'middle')
-        text_title.set('x', str(page_dims[0]-margin-0.5*sidebar_width))
-        text_title.set('y', str(margin+10))
-        text_title.set('font-size', str(7))
-        text_title.set('style', 'text-transform:uppercase')
+        text_title.set('xmlns', 'http://www.w3.org/1999/xhtml')
+
+        def generate_title_text_style(self):
+            style = []
+            style.append(('text-transform','uppercase'))
+            style.append(('font-size', str(self.options['font-size-title'])+'pt'))
+
+            style_str = ''
+            for i in style:
+                style_str += i[0]+':'+i[1]+';'
+
+            return style_str
+
+        text_title.set('style', generate_title_text_style(self))
         return sidebar
 
     def get_fixture_icon(self, fixture):

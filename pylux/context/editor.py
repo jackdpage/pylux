@@ -99,6 +99,15 @@ class EditorContext(Context):
         #     ('REG', True, 'The name of the registry to address in.'),
         #     ('address', True, 'The address to begin addressing at.')]))
 
+        self.register(Command('qn', self.cue_new, [
+            ('ref', True, 'The reference to give this new cue.'),
+            ('moves', False, 'The fixture movement data to initialise.')]))
+        self.register(Command('qr', self.cue_remove, [
+            ('cue', True, 'The cue to remove.')]))
+        self.register(Command('ql', self.cue_list, []))
+        self.register(Command('qg', self.cue_getall, [
+            ('cue', True, 'The cue to probe.')]))
+
         # self.register(Command('sl', self.scene_list, []))
         # self.register(Command('sn', self.scene_new, [
         #     ('outputs', True, 'In the form FNC@###;FNC@###.'),
@@ -347,6 +356,66 @@ class EditorContext(Context):
             chan_obj = xpx.RegistryChannel(address=addr, function=function)
             registry.channels.append(chan_obj)
             addr += 1
+
+    # Cue commands
+
+    def cue_new(self, parsed_input):
+        '''Create a new cue.'''
+        if parsed_input[0] == 'auto':
+            refs = [document.autoref(self.plot_file, 'cue')]
+        else:
+            refs = clihelper.resolve_references(parsed_input[0])
+
+        moves = []
+        if len(parsed_input) == 2:
+            raw = parsed_input[1]
+            for move in raw.split(';'):
+                frefs = clihelper.resolve_references(move.split('@')[0])
+                for ref in frefs:
+                    f = document.get_by_ref(self.plot_file, 'fixture', ref)
+                    # Search through fixture functions for first function which 
+                    # controls intensity, and assume that this is the master 
+                    # intensity, then add this to the move instruction.
+                    for function in f['fixture-functions']:
+                        if function['parameter'] == 'Intensity':
+                            func = function['uuid']
+                    moves.append({'func': func, 'level': move.split('@')[1]})
+
+        for ref in refs:
+            self.plot_file.append({
+                'type': 'cue',
+                'uuid': str(uuid.uuid4()),
+                'ref': ref,
+                'moves': moves,
+            })
+
+    def cue_remove(self, parsed_input):
+        '''Remove a cue.'''
+        refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            document.remove_by_ref(self.plot_file, 'cue', ref)
+
+    def cue_list(self, parsed_input):
+        '''List all cues'''
+        for cue in clihelper.refsort(document.get_by_type(self.plot_file, 'cue')):
+            clihelper.print_object(cue)
+
+    def cue_getall(self, parsed_input):
+        '''Display the outputs of a scene.'''
+        refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            q = document.get_by_ref(self.plot_file, 'cue', ref)
+            clihelper.print_object(q)
+            for move in q['moves']:
+                func = document.get_function_by_uuid(self.plot_file, move['func'])
+                f = document.get_function_parent(self.plot_file, func)
+                bar = printer.ProgressBar()
+                bar += int(move['level'])
+                print(''.join([
+                    printer.get_generic_ref(f),
+                    str(bar)]))
+
+
 
     # Scene commands
 
