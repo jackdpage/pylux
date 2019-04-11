@@ -7,16 +7,16 @@ def get_metadata_value(meta):
 
 
 def get_fixture_string(fixture):
-    if 'name' in fixture:
-        name = fixture['name']
+    if 'label' in fixture:
+        label = fixture['label']
     else:
-        name = '\033[31mUnnamed\033[0m'
+        label = '\033[31mUnnamed\033[0m'
     if 'fixture-type' in fixture:
         type = fixture['fixture-type']
     else:
         type = 'n/a'
     ref = fixture['ref']
-    return type+' - '+name
+    return type+' - '+label
 
 
 def get_registry_string(registry):

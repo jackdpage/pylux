@@ -126,11 +126,12 @@ class EditorContext(Context):
     # Metadata commands
 
     def metadata_list(self, parsed_input):
-        '''List the values of all metadata in the plot file.'''
+        """List the values of all metadata in the plot file."""
         for meta in clihelper.refsort(document.get_metadata(self.plot_file)):
             clihelper.print_object(meta)
 
     def metadata_set(self, parsed_input):
+        """Sets the value of a piece of metadata."""
         refs = clihelper.resolve_references(parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'metadata', ref) for ref in refs]
         for obj in objs:
@@ -491,10 +492,21 @@ class EditorContext(Context):
     # Import commands
 
     def import_ascii(self, parsed_input):
+        """
+        Import data from a USITT ASCII file, such as that exported by ETC Eos.
+        Specify a data target to import.
+        Supported targets are:
+            conventional_patch: Reads Patch lines only. Only supports dimmer
+            patching, which will be patched using the template defined in the
+            config.
+            eos_patch: Reads special $Patch lines added by Eos, which support
+            database values and personalities.
+        """
+        target = parsed_input[1]
         with open(parsed_input[0]) as f:
             raw = f.readlines()
 
-        if parsed_input[1] == 'patch':
+        if target == 'conventional_patch':
             entries = []
             r = re.compile('Patch.*')
             # Scan file for lines beginning with the Patch keyword and populate
@@ -515,8 +527,66 @@ class EditorContext(Context):
                     univ = math.floor(addr/512)
                     self.fixture_from_template([ref, template])
                     self.fixture_address([ref, univ, dmx])
+
+        elif target == 'eos_patch':
+            entries = []
+            entry = []
+            start_r = re.compile('\$Patch.*')
+            end_r = re.compile('^\s*$')
+            # Scan file for lines beginning with $Patch keyword, add the line
+            # and all following lines to the entries list, until a blank line
+            # is reached.
+            for l in raw:
+                match_start = re.match(start_r, l)
+                match_end = re.match(end_r, l)
+                if match_start:
+                    # If this is the start of a $Patch entry, begin adding the
+                    # lines to the current entry.
+                    entry.append(l)
+                if entry != []:
+                    # If we're in a $Patch block (i.e. current entry isn't
+                    # empty, add all lines to the current entry, unless they
+                    # are blank, in which case we know we've reached the end
+                    # of the block, so add the current entry to the entries
+                    # list.
+                    if match_end:
+                        entries.append(entry)
+                        entry = []
+                    else:
+                        entry.append(l)
+            # Now we're ready to begin adding this complete $Patch entry list
+            # to our file.
+
+            # Just using the conventional template for now until full
+            # personality support is added.
+            template = self.config['ascii']['conventional-template']
+
+            for e in entries:
+                ref = e[0].split(' ')[1]
+                addr = int(e[0].split(' ')[3])
+                dmx = addr % 512
+                univ = math.floor(addr / 512)
+                self.fixture_from_template([ref, template])
+                self.fixture_address([ref, univ, dmx])
+
+                # We've dealt with the main $Patch line, now go through the
+                # remaining lines to see if we can map any further data into
+                # our show file.
+
+                def resolve_line(l):
+                    l = l.lstrip()
+                    l = l.strip()
+                    return l.split(' ', maxsplit=1)
+
+                for l in e:
+                    res = resolve_line(l)
+                    if res[0] == '$$TextGel':
+                        self.fixture_set([ref, 'gel', res[1]])
+                    if res[0] == 'Text':
+                        self.fixture_set([ref, 'label', res[1]])
+
         else:
-            print('Target type not supported yet')
+            print('Unsupported target . See the help page for this command for a list of supported targets.')
 
 
 def get_context():
