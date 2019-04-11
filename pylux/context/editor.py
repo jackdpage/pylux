@@ -74,15 +74,18 @@ class EditorContext(Context):
         self.register(Command('xG', self.fixture_getall, [
             ('FIX', True, 'The fixture to print the tags of.')]))
         self.register(Command('xs', self.fixture_set, [
-             ('FIX', True, 'The fixture to set a tag of.'),
-             ('tag', True, 'The name of the tag to set.'),
-             ('value', True, 'The value to set the tag to.')]))
+            ('FIX', True, 'The fixture to set a tag of.'),
+            ('tag', True, 'The name of the tag to set.'),
+            ('value', True, 'The value to set the tag to.')]))
         self.register(Command('xa', self.fixture_address, [
-             ('ref', True, 'The fixture to assign addresses to.'),
-             ('reg', True, 'The name of the universe to address in.'),
-             ('addr', True, 'The addresses to begin addressing at.')]))
+            ('ref', True, 'The fixture to assign addresses to.'),
+            ('reg', True, 'The name of the universe to address in.'),
+            ('addr', True, 'The addresses to begin addressing at.')]))
         # self.register(Command('xA', self.fixture_unaddress, [
         #     ('FIX', True, 'The fixture to unassign addresses for.')]))
+        self.register(Command('xct', self.fixture_complete_from_template, [
+            ('ref', True, 'The fixture to update values of.'),
+            ('template', True, 'Path to the file to load data from.')]))
 
         self.register(Command('rl', self.registry_list, []))
         self.register(Command('rq', self.registry_query, [
@@ -287,6 +290,35 @@ class EditorContext(Context):
 
     # Registry commands
 
+    def fixture_complete_from_template(self, parsed_input):
+        """Compare a fixture with a specified template. If any tags exist in
+        the template and not the fixture, add them from the template. Do not
+        overwrite any existing tags in the fixture."""
+        refs = clihelper.resolve_references(parsed_input[0])
+        template = parsed_input[1]
+        template_file = data.get_data('fixture/' + parsed_input[1] + '.json')
+        if not template_file:
+            print('Template does not exist')
+        else:
+            for ref in refs:
+                dest = document.get_by_ref(self.plot_file, 'fixture', int(ref))
+                with open(template_file) as f:
+                    source = json.load(f)
+                for tag in source:
+                    if tag not in dest:
+                        dest[tag] = source[tag]
+                if 'fixture-functions' in source:
+                    if 'fixture-functions' not in dest:
+                        dest['fixture-functions'] = source['fixture-functions']
+                        for func in dest['fixture-functions']:
+                            func['uuid'] = str(uuid.uuid4())
+                    else:
+                        existing_funcs = [i['name'] for i in dest['fixture-functions']]
+                        for func in source['fixture-functions']:
+                            if func['name'] not in existing_funcs:
+                                func['uuid'] = str(uuid.uuid4())
+                                dest['fixture-functions'].append(func)
+
     def registry_new(self, parsed_input):
         '''Create a new registry.'''
         if parsed_input[0] == 'auto':
@@ -415,8 +447,6 @@ class EditorContext(Context):
                 print(''.join([
                     printer.get_generic_ref(f),
                     str(bar)]))
-
-
 
     # Scene commands
 
