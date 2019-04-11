@@ -1,7 +1,7 @@
 {
   "type": "fixture",
   "manufacturer": "Generic",
-  "fixture-type": "Dimmer",
+  "fixture-type": "Parcan",
   "fixture-functions": [
     {
       "type": "function",

@@ -190,17 +190,17 @@ class EditorContext(Context):
             refs = clihelper.resolve_references(parsed_input[0])
         template_file = data.get_data('fixture/'+parsed_input[1]+'.json')
         if not template_file:
-            print('Template does not exist')
-        else:
-            for ref in refs:
-                with open(template_file) as f:
-                    fixture = json.load(f)
-                fixture['ref'] = ref
-                fixture['uuid'] = str(uuid.uuid4())
-                if 'fixture-functions' in fixture:
-                    for function in fixture['fixture-functions']:
-                        function['uuid'] = str(uuid.uuid4())
-                self.plot_file.append(fixture)
+            print('Template {0} does not exist, reverting to fallback.'.format(parsed_input[1]))
+            template_file = data.get_data('fixture/'+self.config['editor']['fallback-template']+'.json')
+        for ref in refs:
+            with open(template_file) as f:
+                fixture = json.load(f)
+            fixture['ref'] = ref
+            fixture['uuid'] = str(uuid.uuid4())
+            if 'fixture-functions' in fixture:
+                for function in fixture['fixture-functions']:
+                    function['uuid'] = str(uuid.uuid4())
+            self.plot_file.append(fixture)
 
     def fixture_clone(self, parsed_input):
         '''Create a new fixture by copying an existing fixture.'''
@@ -376,19 +376,20 @@ class EditorContext(Context):
     #             for dimmed_fixture in controlled:
     #                 print('\t→ '+dimmed_fixture.name)
 
-    def registry_add(self, parsed_input):
-        '''Manually add a function to a registry.'''
-        functions = self.interface.get('FNC', parsed_input[0])
-        registries = self.interface.get('REG', parsed_input[1])
-        n_chan = len(functions)
-        if parsed_input[2] == 'auto':
-            addr = registry.get_start_address(n_chan)
-        else:
-            addr = int(parsed_input[2])
-        for function in functions:
-            chan_obj = xpx.RegistryChannel(address=addr, function=function)
-            registry.channels.append(chan_obj)
-            addr += 1
+
+#   def registry_add(self, parsed_input):
+#       '''Manually add a function to a registry.'''
+#       functions = self.interface.get('FNC', parsed_input[0])
+#       registry = self.interface.get('REG', parsed_input[1])
+#       n_chan = len(functions)
+#       if parsed_input[2] == 'auto':
+#           addr = registry.get_start_address(n_chan)
+#       else:
+#           addr = int(parsed_input[2])
+#       for function in functions:
+#           chan_obj = xpx.RegistryChannel(address=addr, function=function)
+#           registry.channels.append(chan_obj)
+#           addr += 1
 
     # Cue commands
 
@@ -536,6 +537,34 @@ class EditorContext(Context):
         with open(parsed_input[0]) as f:
             raw = f.readlines()
 
+        def extract_blocks(start_regex):
+            # Utility function to extract blocks of data beginning with given
+            # regex pattern and ending with a blank line. Returns as a list
+            # of lines for easy parsing.
+            blocks = []
+            current_block = []
+            start_r = re.compile(start_regex)
+            end_r = re.compile('^\s*$')
+            for l in raw:
+                if re.match(start_r, l):
+                    current_block.append(l)
+                if current_block != []:
+                    # We only want to perform the following functions if we're
+                    # already in a block, to prevent adding the whole document.
+                    if re.match(end_r, l):
+                        blocks.append(current_block)
+                        current_block = []
+                    else:
+                        current_block.append(l)
+            return blocks
+
+        def resolve_line(line):
+            # Strips down lines in blocks and returns them in a key/value
+            # format.
+            line = line.lstrip()
+            line = line.strip()
+            return line.split(' ', maxsplit=1)
+
         if target == 'conventional_patch':
             entries = []
             r = re.compile('Patch.*')
@@ -559,56 +588,37 @@ class EditorContext(Context):
                     self.fixture_address([ref, univ, dmx])
 
         elif target == 'eos_patch':
-            entries = []
-            entry = []
-            start_r = re.compile('\$Patch.*')
-            end_r = re.compile('^\s*$')
-            # Scan file for lines beginning with $Patch keyword, add the line
-            # and all following lines to the entries list, until a blank line
-            # is reached.
-            for l in raw:
-                match_start = re.match(start_r, l)
-                match_end = re.match(end_r, l)
-                if match_start:
-                    # If this is the start of a $Patch entry, begin adding the
-                    # lines to the current entry.
-                    entry.append(l)
-                if entry != []:
-                    # If we're in a $Patch block (i.e. current entry isn't
-                    # empty, add all lines to the current entry, unless they
-                    # are blank, in which case we know we've reached the end
-                    # of the block, so add the current entry to the entries
-                    # list.
-                    if match_end:
-                        entries.append(entry)
-                        entry = []
-                    else:
-                        entry.append(l)
-            # Now we're ready to begin adding this complete $Patch entry list
-            # to our file.
+            personality_blocks = extract_blocks('\$Personality.*')
+            patch_blocks = extract_blocks('\$Patch.*')
+            personalities = {}
 
-            # Just using the conventional template for now until full
-            # personality support is added.
-            template = self.config['ascii']['conventional-template']
+            for block in personality_blocks:
+                ref = block[0].split(' ')[1]
+                pers = {}
+                for l in block:
+                    res = resolve_line(l)
+                    if res[0] == '$$Manuf':
+                        pers['manufacturer'] = res[1]
+                    if res[0] == '$$Model':
+                        pers['fixture-type'] = res[1]
+                if 'manufacturer' in pers and 'fixture-type' in pers:
+                    pers['template'] = pers['manufacturer']+'/'+pers['fixture-type']
+                personalities[ref.strip()] = pers
 
-            for e in entries:
-                ref = e[0].split(' ')[1]
-                addr = int(e[0].split(' ')[3])
+            for patch in patch_blocks:
+                ref = patch[0].split(' ')[1]
+                pers = patch[0].split(' ')[2]
+                if pers in personalities:
+                    template = personalities[pers]['template']
+                else:
+                    template = self.config['ascii']['conventional-template']
+                addr = int(patch[0].split(' ')[3])
                 dmx = addr % 512
                 univ = math.floor(addr / 512)
                 self.fixture_from_template([ref, template])
                 self.fixture_address([ref, univ, dmx])
 
-                # We've dealt with the main $Patch line, now go through the
-                # remaining lines to see if we can map any further data into
-                # our show file.
-
-                def resolve_line(l):
-                    l = l.lstrip()
-                    l = l.strip()
-                    return l.split(' ', maxsplit=1)
-
-                for l in e:
+                for l in patch:
                     res = resolve_line(l)
                     if res[0] == '$$TextGel':
                         self.fixture_set([ref, 'gel', res[1]])
@@ -616,7 +626,7 @@ class EditorContext(Context):
                         self.fixture_set([ref, 'label', res[1]])
 
         else:
-            print('Unsupported target . See the help page for this command for a list of supported targets.')
+            print('Unsupported target. See the help page for this command for a list of supported targets.')
 
 
 def get_context():
