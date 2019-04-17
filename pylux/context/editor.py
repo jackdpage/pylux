@@ -267,6 +267,10 @@ class EditorContext(Context):
         '''Assign DMX addresses to a fixture.'''
         refs = clihelper.resolve_references(parsed_input[0])
         reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[1]))
+        while not reg:
+            print('No registry with id {0}, creating a new one'.format(parsed_input[1]))
+            self.registry_new([str(parsed_input[1])])
+            reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[1]))
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
             n = len(f['personality'])

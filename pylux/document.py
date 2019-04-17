@@ -90,8 +90,11 @@ def get_by_ref(doc, type, ref):
     """Return an object of a given type and ref."""
 
     objs = get_by_type(doc, type)
-
-    return get_by_value(objs, 'ref', ref)[0]
+    result = get_by_value(objs, 'ref', ref)
+    if len(result) > 0:
+        return get_by_value(objs, 'ref', ref)[0]
+    else:
+        return False
 
 
 def get_metadata(doc):
