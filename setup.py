@@ -30,7 +30,7 @@ setup(
     ],
     keywords='lighting theatre stage tech',
     packages=['pylux', 'pylux.context', 'pylux.lib'],
-    install_requires=['tabulate', 'Jinja2', 'cairosvg'],
+    install_requires=['tabulate', 'Jinja2', 'cairosvg', 'tqdm'],
     package_data={
         'pylux': ['settings.conf', 
                   'fixture/*.xml', 

@@ -98,10 +98,11 @@ class EditorContext(Context):
         #     ('REG', True, 'The registry to probe the channels of.')]))
         self.register(Command('rr', self.registry_remove, [
             ('registry', True, 'The registry to remove.')]))
-        # self.register(Command('ra', self.registry_add, [
-        #     ('FNC', True, 'The function(s) to address.'),
-        #     ('REG', True, 'The name of the registry to address in.'),
-        #     ('address', True, 'The address to begin addressing at.')]))
+        self.register(Command('ra', self.registry_add, [
+            ('FIX', True, 'The fixture the functions lie in to address.'),
+            ('FNC', True, 'The range of functions within the fixture to patch.'),
+            ('REG', True, 'Registry id to patch within.'),
+            ('addr', True, 'The address to begin patching at.')]))
 
         self.register(Command('qn', self.cue_new, [
             ('ref', True, 'The reference to give this new cue.'),
@@ -294,14 +295,11 @@ class EditorContext(Context):
     #                 if channel.function.uuid in functions:
     #                     registry.channels.remove(channel)
 
-    # Registry commands
-
     def fixture_complete_from_template(self, parsed_input):
         """Compare a fixture with a specified template. If any tags exist in
         the template and not the fixture, add them from the template. Do not
         overwrite any existing tags in the fixture."""
         refs = clihelper.resolve_references(parsed_input[0])
-        template = parsed_input[1]
         template_file = data.get_data('fixture/' + parsed_input[1] + '.json')
         if not template_file:
             print('Template does not exist')
@@ -324,6 +322,8 @@ class EditorContext(Context):
                             if func['name'] not in existing_funcs:
                                 func['uuid'] = str(uuid.uuid4())
                                 dest['personality'].append(func)
+
+    # Registry commands
 
     def registry_new(self, parsed_input):
         '''Create a new registry.'''
@@ -365,37 +365,20 @@ class EditorContext(Context):
                                printer.get_generic_string(f),' (',
                                printer.get_generic_string(func),')']))
 
-    # def registry_probe(self, parsed_input):
-    #     '''List channels and dimmer controlled lights.'''
-    #     registries = self.interface.get('REG', parsed_input[0])
-    #     self.interface.open('FNC')
-    #     for registry in registries:
-    #         print('\033[1mUniverse: '+registry.name+'\033[0m')
-    #         for channel in registry.channels:
-    #             address = channel.address
-    #             func = self.plot_file.get_object_by_uuid(channel.function.uuid)
-    #             fixture = self.plot_file.get_fixture_for_function(func)
-    #             s = ('DMX'+str(format(address, '03d'))+': '+fixture.name+' ('
-    #                  +func.name+')')
-    #             self.interface.add(s, func, 'FNC')
-    #             controlled = self.plot_file.get_fixtures_for_dimmer_function(func)
-    #             for dimmed_fixture in controlled:
-    #                 print('\t→ '+dimmed_fixture.name)
-
-
-#   def registry_add(self, parsed_input):
-#       '''Manually add a function to a registry.'''
-#       functions = self.interface.get('FNC', parsed_input[0])
-#       registry = self.interface.get('REG', parsed_input[1])
-#       n_chan = len(functions)
-#       if parsed_input[2] == 'auto':
-#           addr = registry.get_start_address(n_chan)
-#       else:
-#           addr = int(parsed_input[2])
-#       for function in functions:
-#           chan_obj = xpx.RegistryChannel(address=addr, function=function)
-#           registry.channels.append(chan_obj)
-#           addr += 1
+    def registry_add(self, parsed_input):
+        """Manually assign one function in a registry table."""
+        fix = document.get_by_ref(self.plot_file, 'fixture', clihelper.resolve_references(parsed_input[0])[0])
+        func_refs = clihelper.resolve_references(parsed_input[1])
+        reg = document.get_by_ref(self.plot_file, 'registry', parsed_input[2])
+        while not reg:
+            print('No registry with id {0}, creating a new one'.format(parsed_input[2]))
+            self.registry_new([str(parsed_input[2])])
+            reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[2]))
+        addr = int(parsed_input[3])
+        for func in func_refs:
+            uuid = document.get_by_ref(fix['personality'], 'function', func)['uuid']
+            reg['table'][addr] = uuid
+            addr += 1
 
     # Cue commands
 
@@ -623,7 +606,7 @@ class EditorContext(Context):
                         pers.append({
                             'type': 'function',
                             'name': parameters[res[1].split()[0]],
-                            'offset': int(res[1].split()[2])
+                            'ref': int(res[1].split()[2])
                         })
                 template['personality'] = pers
                 templates[pers_ref.strip()] = template
