@@ -54,7 +54,6 @@ class EditorContext(Context):
             ('ref', True, 'The metadata to remove.')]))
         self.register(Command('mg', self.metadata_get, [
             ('name', True, 'Name of the metadata to print the value of.')]))
-
         self.register(Command('xn', self.fixture_new, [
             ('ref', True, 'The reference to give this new fixture.')]))
         self.register(Command('xN', self.fixture_from_template, [
@@ -82,20 +81,17 @@ class EditorContext(Context):
             ('ref', True, 'The fixture to assign addresses to.'),
             ('reg', True, 'The name of the universe to address in.'),
             ('addr', True, 'The addresses to begin addressing at.')]))
-        # self.register(Command('xA', self.fixture_unaddress, [
-        #     ('FIX', True, 'The fixture to unassign addresses for.')]))
+        self.register(Command('xA', self.fixture_unaddress, [
+            ('FIX', True, 'The fixture to unassign addresses for.')]))
         self.register(Command('xct', self.fixture_complete_from_template, [
-            ('ref', True, 'The fixture to update values of.'),
+            ('FIX', True, 'The fixture to update values of.'),
             ('template', True, 'Path to the file to load data from.')]))
-
         self.register(Command('rl', self.registry_list, []))
         self.register(Command('rq', self.registry_query, [
             ('REG', True, 'The registry to list used channels of.')]))
         self.register(Command('rn', self.registry_new, [
             ('ref', True, 'The reference to give this new registry.'),
             ('name', True, 'The name of the new registry.')]))
-        # self.register(Command('rp', self.registry_probe, [
-        #     ('REG', True, 'The registry to probe the channels of.')]))
         self.register(Command('rr', self.registry_remove, [
             ('registry', True, 'The registry to remove.')]))
         self.register(Command('ra', self.registry_add, [
@@ -103,7 +99,6 @@ class EditorContext(Context):
             ('FNC', True, 'The range of functions within the fixture to patch.'),
             ('REG', True, 'Registry id to patch within.'),
             ('addr', True, 'The address to begin patching at.')]))
-
         self.register(Command('qn', self.cue_new, [
             ('ref', True, 'The reference to give this new cue.'),
             ('moves', False, 'The fixture movement data to initialise.')]))
@@ -112,7 +107,6 @@ class EditorContext(Context):
         self.register(Command('ql', self.cue_list, []))
         self.register(Command('qg', self.cue_getall, [
             ('cue', True, 'The cue to probe.')]))
-
         # self.register(Command('sl', self.scene_list, []))
         # self.register(Command('sn', self.scene_new, [
         #     ('outputs', True, 'In the form FNC@###;FNC@###.'),
@@ -284,16 +278,16 @@ class EditorContext(Context):
                     reg['table'][addr] = func['uuid']
                     addr += 1
 
-    # def fixture_unaddress(self, parsed_input):
-    #     '''Unassign addresses in all universes for this fixture.'''
-    #     fixtures = self.interface.get('FIX', parsed_input[0])
-    #     for fixture in fixtures:
-    #         functions = [function.uuid for function in fixture.functions]
-    #         for registry in self.plot_file.registries:
-    #             # BUG: does not check last channel if len(channels) > 1
-    #             for channel in registry.channels:
-    #                 if channel.function.uuid in functions:
-    #                     registry.channels.remove(channel)
+    def fixture_unaddress(self, parsed_input):
+        """Remove all entries for functions in this fixture which appear in any registry."""
+        refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            f = document.get_by_ref(self.plot_file, 'fixture', ref)
+            funcs = [func['uuid'] for func in f['personality']]
+            for reg in document.get_by_type(self.plot_file, 'registry'):
+                for d in deepcopy(reg['table']):
+                    if reg['table'][d] in funcs:
+                        del reg['table'][d]
 
     def fixture_complete_from_template(self, parsed_input):
         """Compare a fixture with a specified template. If any tags exist in
