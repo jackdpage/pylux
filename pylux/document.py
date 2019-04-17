@@ -17,6 +17,7 @@
 
 import itertools
 import json
+import uuid
 
 
 # File operations. These functions load JSON documents from files and
@@ -116,17 +117,18 @@ def get_function_by_uuid(doc, uuid):
     '''Get a function by its UUID.'''
 
     for f in get_by_type(doc, 'fixture'):
-        if 'fixture-functions' in f:
-            for func in f['fixture-functions']:
+        if 'personality' in f:
+            for func in f['personality']:
                 if func['uuid'] == uuid:
                     return func
+
 
 def get_function_parent(doc, func):
     '''Get the associated fixture of a function.'''
 
     for f in get_by_type(doc, 'fixture'):
-        if 'fixture-functions' in f:
-            if func in f['fixture-functions']:
+        if 'personality' in f:
+            if func in f['personality']:
                 return f
 
 
@@ -151,9 +153,16 @@ def get_start_address(reg, n):
             return addr
 
 
+def fill_missing_function_uuids(fix):
+    """Add new UUIDs to the functions of a fixture where they are missing."""
+    if 'personality' in fix:
+        for func in fix['personality']:
+            if 'uuid' not in func:
+                func['uuid'] = str(uuid.uuid4())
+
+
 def autoref(doc, type):
     """Return an available reference number for a given type."""
-
     used_refs = []
     for obj in get_by_type(doc, type):
         used_refs.append(obj['ref'])

@@ -29,9 +29,8 @@ def get_registry_string(registry):
 
 def get_function_string(function):
     name = function['name']
-    param = function['parameter']
 
-    return name+' ('+param+')'
+    return name
 
 
 def get_cue_string(cue):

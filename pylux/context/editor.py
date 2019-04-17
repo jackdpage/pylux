@@ -26,6 +26,7 @@ import json
 import math
 import re
 import uuid
+from copy import deepcopy
 
 import clihelper
 from context.context import Context, Command
@@ -192,13 +193,13 @@ class EditorContext(Context):
         if not template_file:
             print('Template {0} does not exist, reverting to fallback.'.format(parsed_input[1]))
             template_file = data.get_data('fixture/'+self.config['editor']['fallback-template']+'.json')
+        with open(template_file) as f:
+            fixture = json.load(f)
         for ref in refs:
-            with open(template_file) as f:
-                fixture = json.load(f)
             fixture['ref'] = ref
             fixture['uuid'] = str(uuid.uuid4())
-            if 'fixture-functions' in fixture:
-                for function in fixture['fixture-functions']:
+            if 'personality' in fixture:
+                for function in fixture['personality']:
                     function['uuid'] = str(uuid.uuid4())
             self.plot_file.append(fixture)
 
@@ -250,9 +251,9 @@ class EditorContext(Context):
             print(str(len(f)), 'Data Tags:')
             for k, v in sorted(f.items()):
                 print('    ' + str(k) + ': ' + str(v))
-            if len(f['fixture-functions']):
-                print(str(len(f['fixture-functions'])), 'DMX Functions:')
-                for func in f['fixture-functions']:
+            if len(f['personality']):
+                print(str(len(f['personality'])), 'DMX Functions:')
+                for func in f['personality']:
                     print('   ', printer.get_generic_string(func))
 
     def fixture_set(self, parsed_input):
@@ -268,14 +269,15 @@ class EditorContext(Context):
         reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[1]))
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
-            if parsed_input[2] == 'auto':
-                n = len(f['fixture-functions'])
-                addr = document.get_start_address(reg, n)
-            else:
-                addr = int(parsed_input[2])
-            for func in f['fixture-functions']:
-                reg['table'][addr] = func['uuid']
-                addr += 1
+            n = len(f['personality'])
+            if n > 0 and parsed_input[2] not in ['0', 0]:
+                if parsed_input[2] == 'auto':
+                    addr = document.get_start_address(reg, n)
+                else:
+                    addr = int(parsed_input[2])
+                for func in f['personality']:
+                    reg['table'][addr] = func['uuid']
+                    addr += 1
 
     # def fixture_unaddress(self, parsed_input):
     #     '''Unassign addresses in all universes for this fixture.'''
@@ -307,17 +309,17 @@ class EditorContext(Context):
                 for tag in source:
                     if tag not in dest:
                         dest[tag] = source[tag]
-                if 'fixture-functions' in source:
-                    if 'fixture-functions' not in dest:
-                        dest['fixture-functions'] = source['fixture-functions']
-                        for func in dest['fixture-functions']:
+                if 'personality' in source:
+                    if 'personality' not in dest:
+                        dest['personality'] = source['personality']
+                        for func in dest['personality']:
                             func['uuid'] = str(uuid.uuid4())
                     else:
-                        existing_funcs = [i['name'] for i in dest['fixture-functions']]
-                        for func in source['fixture-functions']:
+                        existing_funcs = [i['name'] for i in dest['personality']]
+                        for func in source['personality']:
                             if func['name'] not in existing_funcs:
                                 func['uuid'] = str(uuid.uuid4())
-                                dest['fixture-functions'].append(func)
+                                dest['personality'].append(func)
 
     def registry_new(self, parsed_input):
         '''Create a new registry.'''
@@ -410,7 +412,7 @@ class EditorContext(Context):
                     # Search through fixture functions for first function which 
                     # controls intensity, and assume that this is the master 
                     # intensity, then add this to the move instruction.
-                    for function in f['fixture-functions']:
+                    for function in f['personality']:
                         if function['parameter'] == 'Intensity':
                             func = function['uuid']
                     moves.append({'func': func, 'level': move.split('@')[1]})
@@ -590,41 +592,61 @@ class EditorContext(Context):
         elif target == 'eos_patch':
             personality_blocks = extract_blocks('\$Personality.*')
             patch_blocks = extract_blocks('\$Patch.*')
-            personalities = {}
+            templates = {}
+            parameters = {}
 
+            # Look through parameters saved in this ASCII file and make our
+            # own list to we can refer to them later.
+            r = re.compile('\$ParamType +([0-9]*) ([0-9]*) (.*)')
+            for l in raw:
+                match = re.match(r, l)
+                if match:
+                    parameters[match.group(1)] = match.group(3).strip()
+
+            # Look through personalities saved in this ASCII file and make our
+            # own list of them so we can refer to them later.
             for block in personality_blocks:
-                ref = block[0].split(' ')[1]
-                pers = {}
+                pers_ref = block[0].split(' ')[1]
+                pers = []
+                template = {'type': 'fixture'}
                 for l in block:
                     res = resolve_line(l)
                     if res[0] == '$$Manuf':
-                        pers['manufacturer'] = res[1]
+                        template['manufacturer'] = res[1]
                     if res[0] == '$$Model':
-                        pers['fixture-type'] = res[1]
-                if 'manufacturer' in pers and 'fixture-type' in pers:
-                    pers['template'] = pers['manufacturer']+'/'+pers['fixture-type']
-                personalities[ref.strip()] = pers
+                        template['fixture-type'] = res[1]
+                    if res[0] == '$$PersChan':
+                        pers.append({
+                            'type': 'function',
+                            'name': parameters[res[1].split()[0]],
+                            'offset': int(res[1].split()[2])
+                        })
+                template['personality'] = pers
+                templates[pers_ref.strip()] = template
 
             for patch in patch_blocks:
-                ref = patch[0].split(' ')[1]
-                pers = patch[0].split(' ')[2]
-                if pers in personalities:
-                    template = personalities[pers]['template']
-                else:
-                    template = self.config['ascii']['conventional-template']
+                fix_ref = patch[0].split(' ')[1]
+                # We have to make a deep copy of the template, to ensure that
+                # we aren't adjusting the personality and functions in place
+                # when we add UUIDs
+                template = deepcopy(templates[patch[0].split(' ')[2]])
                 addr = int(patch[0].split(' ')[3])
                 dmx = addr % 512
                 univ = math.floor(addr / 512)
-                self.fixture_from_template([ref, template])
-                self.fixture_address([ref, univ, dmx])
-
+                self.fixture_new([fix_ref])
+                for k in template:
+                    self.fixture_set([fix_ref, k, template[k]])
+                document.fill_missing_function_uuids(document.get_by_ref(self.plot_file, 'fixture', int(fix_ref)))
+                # Patch the fixture from the address in the @Patch line
+                self.fixture_address([fix_ref, univ, dmx])
+                # We've dealt with the main @Patch line, now we can scan through
+                # the rest of the block and see if we can merge in anything else.
                 for l in patch:
                     res = resolve_line(l)
                     if res[0] == '$$TextGel':
-                        self.fixture_set([ref, 'gel', res[1]])
+                        self.fixture_set([fix_ref, 'gel', res[1]])
                     if res[0] == 'Text':
-                        self.fixture_set([ref, 'label', res[1]])
-
+                        self.fixture_set([fix_ref, 'label', res[1]])
         else:
             print('Unsupported target. See the help page for this command for a list of supported targets.')
 
