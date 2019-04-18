@@ -10,7 +10,7 @@ def get_fixture_string(fixture):
     if 'label' in fixture:
         label = fixture['label']
     else:
-        label = '\033[31mUnnamed\033[0m'
+        label = '\033[31mUnlabelled\033[0m'
     if 'fixture-type' in fixture:
         type = fixture['fixture-type']
     else:
@@ -34,12 +34,12 @@ def get_function_string(function):
 
 
 def get_cue_string(cue):
-    if 'name' in cue:
-        name = cue['name']
+    if 'label' in cue:
+        label = cue['label']
     else:
-        name = '\033[31mUnnamed\033[0m'
-    moves = str(len(cue['moves']))
-    return 'Cue - '+name+' ('+moves+' moves)'
+        label = '\033[31mUnnamed\033[0m'
+    levels = str(len(cue['levels']))
+    return 'Cue - '+label+' ('+levels+' levels)'
 
 
 def get_generic_ref(obj):

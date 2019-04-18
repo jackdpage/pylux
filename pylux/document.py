@@ -164,6 +164,13 @@ def fill_missing_function_uuids(fix):
                 func['uuid'] = str(uuid.uuid4())
 
 
+def find_fixture_intens(fix):
+    if 'personality' in fix:
+        for func in fix['personality']:
+            if func['name'] == 'Intens':
+                return func
+
+
 def get_function_patch_location(doc, func):
     """Finds a function in all registries and returns registry, address tuple."""
     locations = []

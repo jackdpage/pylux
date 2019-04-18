@@ -102,9 +102,12 @@ class EditorContext(Context):
             ('FNC', True, 'The range of functions within the fixture to patch.'),
             ('REG', True, 'Registry id to patch within.'),
             ('addr', True, 'The address to begin patching at.')]))
-        self.register(Command('qn', self.cue_new, [
+        self.register(Command('qn', self.cue_new_notrack, [
             ('ref', True, 'The reference to give this new cue.'),
             ('moves', False, 'The fixture movement data to initialise.')]))
+        self.register(Command('qN', self.cue_new_track, [
+            ('ref', True, 'The reference to give this new cue.'),
+            ('moves', False, 'The moves to make relative from the previous cue.')]))
         self.register(Command('qr', self.cue_remove, [
             ('cue', True, 'The cue to remove.')]))
         self.register(Command('ql', self.cue_list, []))
@@ -394,18 +397,18 @@ class EditorContext(Context):
 
     # Cue commands
 
-    def cue_new(self, parsed_input):
-        '''Create a new cue.'''
+    def cue_new_notrack(self, parsed_input):
+        """Create a new cue."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'cue')]
         else:
             refs = clihelper.resolve_references(parsed_input[0])
 
-        moves = []
+        levels = []
         if len(parsed_input) == 2:
             raw = parsed_input[1]
-            for move in raw.split(';'):
-                frefs = clihelper.resolve_references(move.split('@')[0])
+            for level in raw.split(';'):
+                frefs = clihelper.resolve_references(level.split('@')[0])
                 for ref in frefs:
                     f = document.get_by_ref(self.plot_file, 'fixture', ref)
                     # Search through fixture functions for first function which 
@@ -414,15 +417,19 @@ class EditorContext(Context):
                     for function in f['personality']:
                         if function['parameter'] == 'Intensity':
                             func = function['uuid']
-                            moves.append({'func': func, 'level': move.split('@')[1]})
+                            levels.append({'func': func, 'level': level.split('@')[1]})
 
         for ref in refs:
             self.plot_file.append({
                 'type': 'cue',
                 'uuid': str(uuid.uuid4()),
                 'ref': ref,
-                'moves': moves,
+                'levels': levels,
             })
+
+    def cue_new_track(self, parsed_input):
+        """Create a new cue, tracking forward values from the previous cue."""
+        pass
 
     def cue_remove(self, parsed_input):
         '''Remove a cue.'''
@@ -441,14 +448,37 @@ class EditorContext(Context):
         for ref in refs:
             q = document.get_by_ref(self.plot_file, 'cue', ref)
             clihelper.print_object(q)
-            for move in q['moves']:
-                func = document.get_function_by_uuid(self.plot_file, move['func'])
+            for level in q['levels']:
+                func = document.get_function_by_uuid(self.plot_file, level['func'])
                 f = document.get_function_parent(self.plot_file, func)
+                if level['level'][0] == 'H':
+                    intens_level = int(level['level'][1:], 16)
+                else:
+                    intens_level = int(level['level'])
                 bar = printer.ProgressBar()
-                bar += int(move['level'])
+                bar += intens_level
                 print(''.join([
                     printer.get_generic_ref(f),
                     str(bar)]))
+
+    def cue_set(self, parsed_input):
+        """Set the value of a tag in a cue."""
+        refs = clihelper.resolve_references(parsed_input[0])
+        objs = [document.get_by_ref(self.plot_file, 'cue', ref) for ref in refs]
+        for obj in objs:
+            obj[parsed_input[1]] = parsed_input[2]
+
+    def cue_set_fixture_level(self, parsed_input):
+        """Set the level of a fixture's intensity for a cue."""
+        cue_refs = clihelper.resolve_references(parsed_input[0])
+        fix_refs = clihelper.resolve_references(parsed_input[1])
+        level = parsed_input[2]
+        for cue_ref in cue_refs:
+            cue = document.get_by_ref(self.plot_file, 'cue', cue_ref)
+            for fix_ref in fix_refs:
+                fix = document.get_by_ref(self.plot_file, 'fixture', fix_ref)
+                intens_func = document.find_fixture_intens(fix)
+                cue['levels'].append({'func': intens_func['uuid'], 'level': level})
 
     # Scene commands
 
@@ -646,6 +676,26 @@ class EditorContext(Context):
                         self.fixture_set([fix_ref, 'gel', res[1]])
                     if res[0] == 'Text':
                         self.fixture_set([fix_ref, 'label', res[1]])
+
+        elif target == 'cues':
+            cue_blocks = extract_blocks('Cue.*')
+            for cue in cue_blocks:
+                cue_ref = cue[0].split()[1]
+                self.cue_new_notrack([cue_ref])
+                for l in cue:
+                    res = resolve_line(l)
+                    if res[0] == 'Text':
+                        self.cue_set([cue_ref, 'label', res[1]])
+                    elif res[0] == 'Up':
+                        self.cue_set([cue_ref, 'fade-up', res[1]])
+                    elif res[0] == 'Down':
+                        self.cue_set([cue_ref, 'fade-down', res[1]])
+                    elif res[0] == 'Chan':
+                        for level in res[1].split():
+                            self.cue_set_fixture_level([cue_ref,
+                                                        level.split('@')[0],
+                                                        level.split('@')[1]])
+
         else:
             print('Unsupported target. See the help page for this command for a list of supported targets.')
 
