@@ -31,7 +31,7 @@ from copy import deepcopy
 import clihelper
 from context.context import Context, Command
 import document
-from lib import data, printer
+from lib import data, printer, tagger
 
 
 class EditorContext(Context):
@@ -77,6 +77,9 @@ class EditorContext(Context):
             ('FIX', True, 'The fixture to set a tag of.'),
             ('tag', True, 'The name of the tag to set.'),
             ('value', True, 'The value to set the tag to.')]))
+        self.register(Command('xS', self.fixture_generate_autotags, [
+            ('FIX', True, 'The fixture to generate tags for.'),
+            ('target', False, 'The type of tags to generate. Omit for all.')]))
         self.register(Command('xa', self.fixture_address, [
             ('ref', True, 'The fixture to assign addresses to.'),
             ('reg', True, 'The name of the universe to address in.'),
@@ -317,6 +320,21 @@ class EditorContext(Context):
                                 func['uuid'] = str(uuid.uuid4())
                                 dest['personality'].append(func)
 
+    def fixture_generate_autotags(self, parsed_input):
+        """Uses the tagger class to automatically populate tags in fixtures."""
+        refs = clihelper.resolve_references(parsed_input[0])
+        if len(parsed_input) < 2:
+            target = 'all'
+        else:
+            target = parsed_input[1]
+        function_map = {'all': tagger.tag_fixture_all,
+                        'colour': tagger.tag_fixture_colour,
+                        'rotation': tagger.tag_fixture_rotation,
+                        'patch': tagger.tag_fixture_patch}
+        for ref in refs:
+            f = document.get_by_ref(self.plot_file, 'fixture', int(ref))
+            function_map[target](self.plot_file, f)
+
     # Registry commands
 
     def registry_new(self, parsed_input):
@@ -396,7 +414,7 @@ class EditorContext(Context):
                     for function in f['personality']:
                         if function['parameter'] == 'Intensity':
                             func = function['uuid']
-                    moves.append({'func': func, 'level': move.split('@')[1]})
+                            moves.append({'func': func, 'level': move.split('@')[1]})
 
         for ref in refs:
             self.plot_file.append({
@@ -594,9 +612,9 @@ class EditorContext(Context):
                     res = resolve_line(l)
                     if res[0] == '$$Manuf':
                         template['manufacturer'] = res[1]
-                    if res[0] == '$$Model':
+                    elif res[0] == '$$Model':
                         template['fixture-type'] = res[1]
-                    if res[0] == '$$PersChan':
+                    elif res[0] == '$$PersChan':
                         pers.append({
                             'type': 'function',
                             'name': parameters[res[1].split()[0]],

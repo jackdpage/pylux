@@ -137,7 +137,7 @@ def get_function_parent(doc, func):
 
 def get_occupied_addresses(reg):
     """Get a list of occupied addresses in a registry"""
-    return sorted(reg['table'].keys())
+    return sorted([int(d) for d in reg['table'].keys()])
 
 
 def get_available_addresses(reg):
@@ -162,6 +162,16 @@ def fill_missing_function_uuids(fix):
         for func in fix['personality']:
             if 'uuid' not in func:
                 func['uuid'] = str(uuid.uuid4())
+
+
+def get_function_patch_location(doc, func):
+    """Finds a function in all registries and returns registry, address tuple."""
+    locations = []
+    for reg in get_by_type(doc, 'registry'):
+        for d in reg['table']:
+            if reg['table'][d] == func['uuid']:
+                locations.append((reg['ref'], d))
+    return locations
 
 
 def autoref(doc, type):

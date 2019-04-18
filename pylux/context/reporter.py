@@ -62,7 +62,7 @@ class Report:
         # Create fixtures list
         fixtures = document.get_by_type(self.plot_file, 'fixture')
         for fixture in fixtures:
-            tagger.tag_fixture_all(fixture)
+            tagger.tag_fixture_all(self.plot_file, fixture)
         fixture_list = sorted(fixtures, key=lambda fix: int(fix['ref']))
         # Create hung fixtures list
         hung_fixtures = []
