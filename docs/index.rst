@@ -1,13 +1,6 @@
 Documentation for Pylux
 =======================
 
-This documentation is aimed at both users and developers.
-
-.. WARNING::
-    This documentation is for the json branch of Pylux, which is not the
-    current master branch on GitHub. Therefore this documentation may not be
-    appropriate for the version of Pylux on the master branch.
-
 .. toctree::
     :maxdepth: 2
     :caption: User Guide
@@ -17,6 +10,7 @@ This documentation is aimed at both users and developers.
     using_metadata
     using_fixtures
     using_cues
+    importing_data
     generating_reports
 
 .. toctree::
