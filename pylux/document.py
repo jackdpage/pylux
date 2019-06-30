@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import decimal
 import itertools
 import json
 import uuid
@@ -47,7 +48,6 @@ def write_to_file(doc, fp):
 
 # Object retrieval functions. These functions search a deserialised documents
 # and return objects based on the given parameters.
-
 def get_by_uuid(doc, uuid):
     '''Return object with given UUID.'''
 
@@ -89,12 +89,10 @@ def get_by_type(doc, type):
 def get_by_ref(doc, type, ref):
     """Return an object of a given type and ref."""
 
-    objs = get_by_type(doc, type)
-    result = get_by_value(objs, 'ref', ref)
-    if len(result) > 0:
-        return get_by_value(objs, 'ref', ref)[0]
-    else:
-        return False
+    for obj in get_by_type(doc, type):
+        if decimal.Decimal(obj['ref']).normalize() == decimal.Decimal(ref).normalize():
+            return obj
+    return False
 
 
 def get_metadata(doc):

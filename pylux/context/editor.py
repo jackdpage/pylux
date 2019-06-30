@@ -207,7 +207,7 @@ class EditorContext(Context):
     def fixture_clone(self, parsed_input):
         '''Create a new fixture by copying an existing fixture.'''
         src = document.get_by_ref(self.plot_file, 'fixture', int(parsed_input[0]))
-        dest = clihelper.resolve_references(parsed_input[1])
+        dest = clihelper.resolve_dec_references(parsed_input[1])
         for loc in dest:
             new = dict.copy(src)
             new['uuid'] = str(uuid.uuid4())
@@ -234,8 +234,8 @@ class EditorContext(Context):
             document.remove_by_ref(self.plot_file, 'fixture', ref)
 
     def fixture_get(self, parsed_input):
-        '''Print the values of a fixture's tags.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        '''Print the values of all a fixture's tags.'''
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
             clihelper.print_object(f)
@@ -647,8 +647,8 @@ class EditorContext(Context):
                     elif res[0] == '$$PersChan':
                         pers.append({
                             'type': 'function',
-                            'name': parameters[res[1].split()[0]],
-                            'ref': int(res[1].split()[2])
+                            'param': parameters[res[1].split()[0]],
+                            'offset': int(res[1].split()[2])
                         })
                 template['personality'] = pers
                 templates[pers_ref.strip()] = template

@@ -16,13 +16,47 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from lib import printer
+import document
+import decimal
+
+
+DECIMAL_PRECISION = decimal.Decimal('0.001')
 
 
 def print_object(obj, pre=''):
     s = printer.get_generic_string(obj, pre)
     print(s)
 
- 
+
+def safe_resolve_dec_references(doc, type, user_input):
+    """Parse decimal reference input.
+
+    Takes the user input string as a list of comma-separated values, the values
+    being either individual references or ranges of references represented by a
+    colon. Resloves this collection of references into a list of valid
+    string representations of decimals. Checks that each of these references
+    actually represents an object in the show file, and returns the resulting
+    list."""
+    reference_list = []
+    if len(user_input) > 0:
+        all_input = user_input.split(',')
+        for input_item in all_input:
+            if ':' in input_item:
+                limits = input_item.split(':')
+                i = decimal.Decimal(limits[0])
+                while i <= decimal.Decimal(limits[1]):
+                    if document.get_by_ref(doc, type, i):
+                        reference_list.append(i)
+                    i += DECIMAL_PRECISION
+            else:
+                i = decimal.Decimal(input_item)
+                if document.get_by_ref(doc, type, i):
+                    reference_list.append(i)
+        # Sorts the list, strips trailing zeros and converts all decimals to strings
+        normalised_list = [str(i.normalize()) for i in sorted(reference_list)]
+    return normalised_list
+
+
 def resolve_references(user_input):
     """Parse the reference input.
     
@@ -52,6 +86,24 @@ def resolve_references(user_input):
                 reference_list.append(int(input_item))
         reference_list.sort()
     return reference_list
+
+
+def resolve_dec_references(user_input):
+    """Decimal version of the above."""
+    reference_list = []
+    if len(user_input) > 0:
+        all_input = user_input.split(',')
+        for input_item in all_input:
+            if ':' in input_item:
+                limits = input_item.split(':')
+                i = decimal.Decimal(limits[0])
+                while i <= decimal.Decimal(limits[1]):
+                    reference_list.append(i)
+                    i += DECIMAL_PRECISION
+            else:
+                reference_list.append(decimal.Decimal(input_item))
+        reference_list.sort()
+    return [str(i) for i in reference_list]
 
 
 def resolve_input(inputs_list, number_args):
@@ -97,4 +149,4 @@ def resolve_input(inputs_list, number_args):
 
 def refsort(objs):
     """Sort a list of objects by their reference number"""
-    return sorted(objs, key=lambda i:i['ref'])
+    return sorted(objs, key=lambda i: decimal.Decimal(i['ref']))
