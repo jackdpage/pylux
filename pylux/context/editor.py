@@ -113,14 +113,10 @@ class EditorContext(Context):
         self.register(Command('ql', self.cue_list, []))
         self.register(Command('qg', self.cue_getall, [
             ('cue', True, 'The cue to probe.')]))
-        # self.register(Command('sl', self.scene_list, []))
-        # self.register(Command('sn', self.scene_new, [
-        #     ('outputs', True, 'In the form FNC@###;FNC@###.'),
-        #     ('name', True, 'The name of the scene.')]))
-        # self.register(Command('sg', self.scene_getall, [
-        #     ('SCN', True, 'The scene to display the outputs of.')]))
-        # self.register(Command('sG', self.scene_getall_dmx, [
-        #     ('SCN', True, 'The scene to display the outputs of.')]))
+        self.register(Command('qs', self.cue_set, [
+            ('cue', True, 'The cue to set the value of.'),
+            ('tag', True, 'The key to assign this new value.'),
+            ('value', True, 'The value to assign to this key.')]))
         self.register(Command('ia', self.import_ascii, [
             ('file', True, 'Patch of the ASCII file to import.'),
             ('target', True, 'The type of target to import from the file')]))
@@ -229,7 +225,7 @@ class EditorContext(Context):
 
     def fixture_remove(self, parsed_input):
         '''Remove a fixture from the plot file.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'fixture', ref)
 
@@ -245,7 +241,7 @@ class EditorContext(Context):
 
     def fixture_getall(self, parsed_input):
         '''Print the tags and functions of a fixture..'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
             clihelper.print_object(f)
@@ -259,7 +255,7 @@ class EditorContext(Context):
 
     def fixture_set(self, parsed_input):
         '''Set the value of one of a fixture's tags.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'fixture', ref) for ref in refs]
         for obj in objs:
             obj[parsed_input[1]] = parsed_input[2]
@@ -391,7 +387,7 @@ class EditorContext(Context):
             reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[2]))
         addr = int(parsed_input[3])
         for func in func_refs:
-            uuid = document.get_by_ref(fix['personality'], 'function', func)['uuid']
+            uuid = document.get_by_value(fix['personality'], 'offset', func)['uuid']
             reg['table'][addr] = uuid
             addr += 1
 
@@ -402,13 +398,13 @@ class EditorContext(Context):
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'cue')]
         else:
-            refs = clihelper.resolve_references(parsed_input[0])
+            refs = clihelper.resolve_dec_references(parsed_input[0])
 
         levels = []
         if len(parsed_input) == 2:
             raw = parsed_input[1]
             for level in raw.split(';'):
-                frefs = clihelper.resolve_references(level.split('@')[0])
+                frefs = clihelper.resolve_dec_references(level.split('@')[0])
                 for ref in frefs:
                     f = document.get_by_ref(self.plot_file, 'fixture', ref)
                     # Search through fixture functions for first function which 
@@ -433,7 +429,7 @@ class EditorContext(Context):
 
     def cue_remove(self, parsed_input):
         '''Remove a cue.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        refs = clihelper.safe_resolve_dec_references(parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'cue', ref)
 
@@ -444,7 +440,7 @@ class EditorContext(Context):
 
     def cue_getall(self, parsed_input):
         '''Display the outputs of a scene.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         for ref in refs:
             q = document.get_by_ref(self.plot_file, 'cue', ref)
             clihelper.print_object(q)
@@ -463,15 +459,15 @@ class EditorContext(Context):
 
     def cue_set(self, parsed_input):
         """Set the value of a tag in a cue."""
-        refs = clihelper.resolve_references(parsed_input[0])
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'cue', ref) for ref in refs]
         for obj in objs:
             obj[parsed_input[1]] = parsed_input[2]
 
     def cue_set_fixture_level(self, parsed_input):
         """Set the level of a fixture's intensity for a cue."""
-        cue_refs = clihelper.resolve_references(parsed_input[0])
-        fix_refs = clihelper.resolve_references(parsed_input[1])
+        cue_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
+        fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
         level = parsed_input[2]
         for cue_ref in cue_refs:
             cue = document.get_by_ref(self.plot_file, 'cue', cue_ref)
@@ -479,77 +475,6 @@ class EditorContext(Context):
                 fix = document.get_by_ref(self.plot_file, 'fixture', fix_ref)
                 intens_func = document.find_fixture_intens(fix)
                 cue['levels'].append({'func': intens_func['uuid'], 'level': level})
-
-    # Scene commands
-
-    # def scene_list(self, parsed_input):
-    #     '''List all scenes.'''
-    #     self.interface.open('SCN')
-    #     for scene in self.plot_file.scenes:
-    #         s = scene.name+' (Affects '+str(len(scene.outputs))+' functions)'
-    #         self.interface.add(s, scene, 'SCN')
-    #
-    # def scene_new(self, parsed_input):
-    #     '''Create a new scene.'''
-    #     outputs = []
-    #     for output in parsed_input[0].split(';'):
-    #         functions = self.interface.get('FNC', output.split('@')[0])
-    #         for function in functions:
-    #             outputs.append(xpx.OutputState(
-    #                 function=xpx.XPXReference(function.uuid),
-    #                 value=output.split('@')[1]))
-    #     self.plot_file.scenes.append(xpx.Scene(outputs=outputs,
-    #                                            name=parsed_input[1]))
-    #
-    # def scene_getall(self, parsed_input):
-    #     '''Display the outputs of a scene.'''
-    #     self.interface.open('FNC')
-    #     scenes = self.interface.get('SCN', parsed_input[0])
-    #     for scene in scenes:
-    #         print('\033[1mScene: '+scene.name+'\033[0m')
-    #         for output in scene.outputs:
-    #             function = self.plot_file.get_object_by_uuid(
-    #                 output.function.uuid)
-    #             value = clihelper.ProgressBar()
-    #             value = value+output.value
-    #             fixture = self.plot_file.get_fixture_for_function(function)
-    #             s = str(value)+' '+function.name+' ('+fixture.name+')'
-    #             self.interface.add(s, function, 'FNC')
-    #
-    # def scene_getall_dmx(self, parsed_input):
-    #     '''Display the outputs of a scene in terms of DMX channels.'''
-    #     self.interface.open('FNC')
-    #     scenes = self.interface.get('SCN', parsed_input[0])
-    #     for scene in scenes:
-    #         printlines = []
-    #         registries = []
-    #         print('\033[1mScene: '+scene.name+'\033[0m')
-    #         for output in scene.outputs:
-    #             function = self.plot_file.get_object_by_uuid(
-    #                 output.function.uuid)
-    #             channels = self.plot_file.get_channels_for_function(function)
-    #             for channel in channels:
-    #                 registry = self.plot_file.get_registry_for_channel(channel)
-    #                 if registry not in registries:
-    #                     registries.append(registry)
-    #                 printlines.append((registry, channel, output.value))
-    #         for registry in registries:
-    #             print('\033[3mRegistry: '+registry.name+'\033[0m')
-    #             for printline in printlines:
-    #                 if printline[0] == registry:
-    #                     value = clihelper.ProgressBar()
-    #                     value = value+printline[2]
-    #                     s = ('DMX'+str(format(printline[1].address, '03d'))+
-    #                          ' '+str(value))
-    #                     self.interface.add(s, printline[1].function, 'FNC')
-    #
-    # def scene_remove(self, parsed_input):
-    #     '''Remove a scene.'''
-    #     scenes = self.interface.get('SCN', parsed_input[0])
-    #     for scene in scenes:
-    #         self.plot_file.remove(scene)
-    #
-    # # Chase commands
 
     # Import commands
 

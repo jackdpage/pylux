@@ -165,7 +165,7 @@ def fill_missing_function_uuids(fix):
 def find_fixture_intens(fix):
     if 'personality' in fix:
         for func in fix['personality']:
-            if func['name'] == 'Intens':
+            if func['param'] == 'Intens':
                 return func
 
 

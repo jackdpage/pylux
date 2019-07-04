@@ -28,9 +28,10 @@ def get_registry_string(registry):
 
 
 def get_function_string(function):
-    name = function['name']
+    name = function['param']
+    offset = ''.join(['\033[1m\033[95m', str(function['offset']), '\033[0m '])
 
-    return name
+    return offset+name
 
 
 def get_cue_string(cue):
