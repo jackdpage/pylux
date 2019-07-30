@@ -175,8 +175,7 @@ def get_function_patch_location(doc, func):
     for reg in get_by_type(doc, 'registry'):
         for d in reg['table']:
             if reg['table'][d] == func['uuid']:
-                locations.append((reg['ref'], d))
-    return locations
+                return reg['ref'], d
 
 
 def autoref(doc, type):

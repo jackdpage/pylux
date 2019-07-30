@@ -25,10 +25,10 @@ def tag_fixture_rotation(doc, fixture):
 
 def tag_fixture_patch(doc, fixture):
     if 'personality' in fixture:
-        start_func = document.get_by_ref(fixture['personality'], 'function', 1)
+        start_func = document.get_by_value(fixture['personality'], 'offset', 1)[0]
         if start_func:
-            locations = document.get_function_patch_location(doc, start_func)
-            fixture['patch-start'] = locations
+            location = document.get_function_patch_location(doc, start_func)
+            fixture['patch-start'] = location
 
 
 def tag_fixture_all(doc, fixture):
