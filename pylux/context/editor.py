@@ -102,6 +102,8 @@ class EditorContext(Context):
             ('FNC', True, 'The range of functions within the fixture to patch.'),
             ('REG', True, 'Registry id to patch within.'),
             ('addr', True, 'The address to begin patching at.')]))
+        self.register(Command('rS', self.registry_summarise, [
+            ('REG', True, 'The registry to give an overview of.')]))
         self.register(Command('qn', self.cue_new_notrack, [
             ('ref', True, 'The reference to give this new cue.'),
             ('moves', False, 'The fixture movement data to initialise.')]))
@@ -263,11 +265,12 @@ class EditorContext(Context):
     def fixture_address(self, parsed_input):
         '''Assign DMX addresses to a fixture.'''
         refs = clihelper.resolve_references(parsed_input[0])
-        reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[1]))
+        univ = int(parsed_input[1])
+        reg = document.get_by_ref(self.plot_file, 'registry', univ)
         while not reg:
-            print('No registry with id {0}, creating a new one'.format(parsed_input[1]))
-            self.registry_new([str(parsed_input[1])])
-            reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[1]))
+            print('No registry with id {0}, creating a new one'.format(univ))
+            self.registry_new([str(univ)])
+            reg = document.get_by_ref(self.plot_file, 'registry', univ)
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
             n = len(f['personality'])
@@ -277,6 +280,14 @@ class EditorContext(Context):
                 else:
                     addr = int(parsed_input[2])
                 for func in f['personality']:
+                    if addr > 512:
+                        univ += 1
+                        reg = document.get_by_ref(self.plot_file, 'registry', univ)
+                        while not reg:
+                            print('No registry with id {0}, creating a new one'.format(univ))
+                            self.registry_new([str(univ)])
+                            reg = document.get_by_ref(self.plot_file, 'registry', univ)
+                        addr = addr % 512
                     reg['table'][addr] = func['uuid']
                     addr += 1
 
@@ -390,6 +401,22 @@ class EditorContext(Context):
             uuid = document.get_by_value(fix['personality'], 'offset', func)['uuid']
             reg['table'][addr] = uuid
             addr += 1
+
+    def registry_summarise(self, parsed_input):
+        """Show a table of DMX addresses of a registry to see at a glance which addresses are occupied."""
+        refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            r = document.get_by_ref(self.plot_file, 'registry', ref)
+            clihelper.print_object(r)
+            current_row = '    00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15'
+            for i in range(1, 514):
+                if i % 16 == 1:
+                    print(current_row)
+                    current_row = str(format(i, '03d')) + '  '
+                if str(i) in r['table'] or i in r['table']:
+                    current_row += '\033[31m#\033[0m  '
+                else:
+                    current_row += '\033[92m-\033[0m  '
 
     # Cue commands
 
@@ -573,8 +600,14 @@ class EditorContext(Context):
                         pers.append({
                             'type': 'function',
                             'param': parameters[res[1].split()[0]],
-                            'offset': int(res[1].split()[2])
+                            'offset': int(res[1].split()[2]),
                         })
+                        if int(res[1].split()[1]) == 2:
+                            pers.append({
+                                'type': 'function',
+                                'param': parameters[res[1].split()[0]]+' (16b)',
+                                'offset': int(res[1].split()[3])
+                            })
                 template['personality'] = pers
                 templates[pers_ref.strip()] = template
 
