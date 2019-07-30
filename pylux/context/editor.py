@@ -408,9 +408,12 @@ class EditorContext(Context):
         for ref in refs:
             r = document.get_by_ref(self.plot_file, 'registry', ref)
             clihelper.print_object(r)
-            current_row = '    00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15'
+            current_row = '   '
+            width = int(self.config['cli']['registry-summary-width'])
+            for i in range(0, width):
+                current_row += ' '+str(format(i, '02d'))
             for i in range(1, 514):
-                if i % 16 == 1:
+                if i % width == 1 or i == 513:
                     print(current_row)
                     current_row = str(format(i, '03d')) + '  '
                 if str(i) in r['table'] or i in r['table']:
