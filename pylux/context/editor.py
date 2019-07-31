@@ -113,8 +113,11 @@ class EditorContext(Context):
         self.register(Command('qr', self.cue_remove, [
             ('cue', True, 'The cue to remove.')]))
         self.register(Command('ql', self.cue_list, []))
-        self.register(Command('qg', self.cue_getall, [
+        self.register(Command('qg', self.cue_get_intens, [
             ('cue', True, 'The cue to probe.')]))
+        self.register(Command('qgx', self.cue_get_fixture_levels, [
+            ('cue', True, 'The cue to probe.'),
+            ('fix', True, 'The fixture(s) to match for.')]))
         self.register(Command('qs', self.cue_set, [
             ('cue', True, 'The cue to set the value of.'),
             ('tag', True, 'The key to assign this new value.'),
@@ -468,24 +471,40 @@ class EditorContext(Context):
         for cue in clihelper.refsort(document.get_by_type(self.plot_file, 'cue')):
             clihelper.print_object(cue)
 
-    def cue_getall(self, parsed_input):
-        '''Display the outputs of a scene.'''
+    def cue_get_intens(self, parsed_input):
+        """Display the fixture intensity levels in a cue."""
         refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         for ref in refs:
             q = document.get_by_ref(self.plot_file, 'cue', ref)
             clihelper.print_object(q)
             for level in q['levels']:
                 func = document.get_function_by_uuid(self.plot_file, level['func'])
-                f = document.get_function_parent(self.plot_file, func)
-                if level['level'][0] == 'H':
-                    intens_level = int(level['level'][1:], 16)
-                else:
-                    intens_level = int(level['level'])
-                bar = printer.ProgressBar()
-                bar += intens_level
-                print(''.join([
-                    printer.get_generic_ref(f),
-                    str(bar)]))
+                if func['param'] == 'Intens':
+                    f = document.get_function_parent(self.plot_file, func)
+                    bar = printer.ProgressBar()
+                    bar += level['level']
+                    print(''.join([
+                        printer.get_generic_ref(f),
+                        str(bar)]))
+
+    def cue_get_fixture_levels(self, parsed_input):
+        """Get the values of all parameters of a particular fixture in a given cue."""
+        cue_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
+        for cue_ref in cue_refs:
+            cue = document.get_by_ref(self.plot_file, 'cue', cue_ref)
+            clihelper.print_object(cue)
+            fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
+            for fix_ref in fix_refs:
+                fix = document.get_by_ref(self.plot_file, 'fixture', fix_ref)
+                intens_uuid = document.find_fixture_intens(fix)['uuid']
+                for level in cue['levels']:
+                    func = document.get_function_by_uuid(self.plot_file, level['func'])
+                    if func['uuid'] == intens_uuid:
+                        bar = printer.ProgressBar()
+                        bar += level['level']
+                        print(''.join([printer.get_generic_ref(fix), str(bar)]))
+                    if document.get_function_parent(self.plot_file, func) == fix:
+                        print('    '+printer.get_generic_string(func)+' @ '+str(level['level']))
 
     def cue_set(self, parsed_input):
         """Set the value of a tag in a cue."""
@@ -499,12 +518,30 @@ class EditorContext(Context):
         cue_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
         level = parsed_input[2]
+        if level[0] == 'H':
+            # Convert hexadecimal strings to integers
+            level = int(level[1:3], 16)
         for cue_ref in cue_refs:
             cue = document.get_by_ref(self.plot_file, 'cue', cue_ref)
             for fix_ref in fix_refs:
                 fix = document.get_by_ref(self.plot_file, 'fixture', fix_ref)
                 intens_func = document.find_fixture_intens(fix)
                 cue['levels'].append({'func': intens_func['uuid'], 'level': level})
+
+    def _cue_set_function_level(self, cue, func, level):
+        """Set the level of a function, in a cue."""
+        fix = document.get_function_parent(self.plot_file, func)
+        # Check to see if the function is a 16 bit function by checking for
+        # functions with the (16b) suffix with the same name
+        fine_func = document.get_by_value(fix['personality'], 'param', func['param']+' (16b)')
+        if fine_func:
+            # Logic to determine 16bit values
+            upper_bit = math.floor(int(level)/256)
+            lower_bit = int(level) % 256
+            cue['levels'].append({'func': func['uuid'], 'level': upper_bit})
+            cue['levels'].append({'func': fine_func[0]['uuid'], 'level': lower_bit})
+        else:
+            cue['levels'].append({'func': func['uuid'], 'level': level})
 
     # Import commands
 
@@ -551,6 +588,15 @@ class EditorContext(Context):
             line = line.strip()
             return line.split(' ', maxsplit=1)
 
+        # Look through parameters saved in this ASCII file and make our
+        # own list to we can refer to them later.
+        parameters = {}
+        r = re.compile('\$ParamType +([0-9]*) ([0-9]*) (.*)')
+        for l in raw:
+            match = re.match(r, l)
+            if match:
+                parameters[match.group(1)] = match.group(3).strip()
+
         if target == 'conventional_patch':
             entries = []
             r = re.compile('Patch.*')
@@ -577,15 +623,6 @@ class EditorContext(Context):
             personality_blocks = extract_blocks('\$Personality.*')
             patch_blocks = extract_blocks('\$Patch.*')
             templates = {}
-            parameters = {}
-
-            # Look through parameters saved in this ASCII file and make our
-            # own list to we can refer to them later.
-            r = re.compile('\$ParamType +([0-9]*) ([0-9]*) (.*)')
-            for l in raw:
-                match = re.match(r, l)
-                if match:
-                    parameters[match.group(1)] = match.group(3).strip()
 
             # Look through personalities saved in this ASCII file and make our
             # own list of them so we can refer to them later.
@@ -656,6 +693,24 @@ class EditorContext(Context):
                             self.cue_set_fixture_level([cue_ref,
                                                         level.split('@')[0],
                                                         level.split('@')[1]])
+                    elif res[0] == '$$Param':
+                        fixture = document.get_by_ref(self.plot_file, 'fixture', res[1].split()[0])
+                        for param_level in res[1].split():
+                            if '@' in param_level:
+                                param_type = parameters[param_level.split('@')[0]]
+                                # If this parameter is Intens, it will be referring to a 16 bit value, which we have
+                                # probably already added as an 8 bit from the generic levels lines. Therefore, we will
+                                # remove the 8 bit entry and replace with this 16 bit entry.
+                                if param_type == 'Intens':
+                                    intens_uuid = document.find_fixture_intens(fixture)['uuid']
+                                    cue_levels = document.get_by_ref(self.plot_file, 'cue', cue_ref)['levels']
+                                    for level in cue_levels:
+                                        if level['func'] == intens_uuid:
+                                            cue_levels.remove(level)
+                                param_value = param_level.split('@')[1]
+                                func = document.get_by_value(fixture['personality'], 'param', param_type)[0]
+                                self._cue_set_function_level(document.get_by_ref(self.plot_file, 'cue', cue_ref),
+                                                             func, param_value)
 
         else:
             print('Unsupported target. See the help page for this command for a list of supported targets.')
