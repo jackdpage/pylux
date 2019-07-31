@@ -45,8 +45,8 @@ class EditorContext(Context):
 
         self.register(Command('ml', self.metadata_list, []))
         self.register(Command('mn', self.metadata_new, [
-            ('ref', True, 'Reference to assign to the metadata.'),
-            ('name', True, 'The name of the metadata to add.')]))
+            ('ref', True, 'Reference to assign to the metadata or auto.'),
+            ('key', True, 'The key to give the new metadata.')]))
         self.register(Command('ms', self.metadata_set, [
             ('ref', True, 'The metadata to set the value of.'),
             ('value', True, 'Value for the metadata to take.')]))
@@ -72,7 +72,7 @@ class EditorContext(Context):
             ('ref', True, 'The fixture to get a tag from.'),
             ('tag', True, 'The name of the tag to print the value of.')]))
         self.register(Command('xG', self.fixture_getall, [
-            ('FIX', True, 'The fixture to print the tags of.')]))
+            ('fix', True, 'The fixture to print the tags of.')]))
         self.register(Command('xs', self.fixture_set, [
             ('FIX', True, 'The fixture to set a tag of.'),
             ('tag', True, 'The name of the tag to set.'),
@@ -132,12 +132,12 @@ class EditorContext(Context):
     # Metadata commands
 
     def metadata_list(self, parsed_input):
-        """List the values of all metadata in the plot file."""
+        """List the values of all metadata key/value pairs."""
         for meta in clihelper.refsort(document.get_metadata(self.plot_file)):
             clihelper.print_object(meta)
 
     def metadata_set(self, parsed_input):
-        """Sets the value of a piece of metadata."""
+        """Set the value of metadata entry."""
         refs = clihelper.resolve_references(parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'metadata', ref) for ref in refs]
         for obj in objs:
@@ -145,18 +145,18 @@ class EditorContext(Context):
             obj['name'] = parsed_input[1]
 
     def metadata_remove(self, parsed_input):
-        '''Remove a piece of metadata from the file.'''
+        """Remove a metadata entry."""
         refs = clihelper.resolve_references(parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'metadata', ref)
 
     def metadata_get(self, parsed_input):
-        '''Print the values of metadata matching a name.'''
+        """Print the value of all metadata entries that match a given key."""
         for match in document.get_by_value(self.plot_file, 'metadata-key', parsed_input[0]):
             clihelper.print_object(match)
 
     def metadata_new(self, parsed_input):
-        '''Create a new metadata item.'''
+        """Create a new metadata entry with a given key."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'metadata')]
         else:
@@ -173,7 +173,7 @@ class EditorContext(Context):
     # Fixture commands
 
     def fixture_new(self, parsed_input):
-        '''Create a new fixture from scratch.'''
+        """Create a new fixture with no data, other than reference and UUID."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'fixture')]
         else:
@@ -186,7 +186,8 @@ class EditorContext(Context):
             })
 
     def fixture_from_template(self, parsed_input):
-        '''Create a new fixture from a template file.'''
+        """Load an existing file containing a fixture template and create one or more new fixtures from this. UUIDs
+        will be assigned to all fixtures and functions if they contain them."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'fixture')]
         else:
@@ -206,7 +207,8 @@ class EditorContext(Context):
             self.plot_file.append(fixture)
 
     def fixture_clone(self, parsed_input):
-        '''Create a new fixture by copying an existing fixture.'''
+        """Copy an existing fixture an arbitrary number of times, keeping all data the same except references and
+        UUIDs of the fixture itself and functions."""
         src = document.get_by_ref(self.plot_file, 'fixture', int(parsed_input[0]))
         dest = clihelper.resolve_dec_references(parsed_input[1])
         for loc in dest:
@@ -216,12 +218,12 @@ class EditorContext(Context):
             self.plot_file.append(new)
 
     def fixture_list(self, parsed_input):
-        '''List all fixtures in the plot file.'''
+        """List all fixtures by reference with their fixture type and label if applicable."""
         for fix in clihelper.refsort(document.get_by_type(self.plot_file, 'fixture')):
             clihelper.print_object(fix)
 
     def fixture_filter(self, parsed_input):
-        '''List all fixtures that meet a certain criterion.'''
+        """List all fixtures which have a data tag with a specified key/value combination."""
         k = parsed_input[0]
         v = parsed_input[1]
         fixtures = document.get_by_type(self.plot_file, 'fixture')
@@ -229,13 +231,13 @@ class EditorContext(Context):
             clihelper.print_object(match)
 
     def fixture_remove(self, parsed_input):
-        '''Remove a fixture from the plot file.'''
+        """Remove a fixture."""
         refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'fixture', ref)
 
     def fixture_get(self, parsed_input):
-        '''Print the values of all a fixture's tags.'''
+        """Print the contents of a fixture's data dictionary, showing all key/value data tag pairs it cointains."""
         refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
@@ -245,7 +247,8 @@ class EditorContext(Context):
                 print('    '+str(k)+': '+str(v))
 
     def fixture_getall(self, parsed_input):
-        '''Print the tags and functions of a fixture..'''
+        """Print the contents of a fixture's data dictionary as for fixture_get. Also print a list of functions the
+        fixture has and their offset values."""
         refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
@@ -259,14 +262,18 @@ class EditorContext(Context):
                     print('   ', printer.get_generic_string(func))
 
     def fixture_set(self, parsed_input):
-        '''Set the value of one of a fixture's tags.'''
+        """Set the value of a fixture's data tag with a specified key."""
         refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'fixture', ref) for ref in refs]
         for obj in objs:
             obj[parsed_input[1]] = parsed_input[2]
 
     def fixture_address(self, parsed_input):
-        '''Assign DMX addresses to a fixture.'''
+        """Register the functions of a fixture in a specified registry, beginning from a specified address. Register
+        the functions in the order of their offset value. Alternatively, provide auto in place of the address to
+        pick an automatic starting address. Note that by default functions will overflow into the next registry if a
+        registry is filled before all functions are registered. If registries with the specified references do not
+        exist, new ones will be created. Registries are assumed to start at zero, in ArtNet style."""
         refs = clihelper.resolve_references(parsed_input[0])
         univ = int(parsed_input[1])
         reg = document.get_by_ref(self.plot_file, 'registry', univ)
@@ -334,7 +341,10 @@ class EditorContext(Context):
                                 dest['personality'].append(func)
 
     def fixture_generate_autotags(self, parsed_input):
-        """Uses the tagger class to automatically populate tags in fixtures."""
+        """Automatically populate data tags in a fixture, which can be inferred from other pre-existing data tags.
+        Options are colour (from gel), rotation (from pos and focus) and patch (by cross-referencing against
+        registries). This command is also occasionally run automatically, for example when generating a report or
+        plot."""
         refs = clihelper.resolve_references(parsed_input[0])
         if len(parsed_input) < 2:
             target = 'all'
@@ -351,7 +361,7 @@ class EditorContext(Context):
     # Registry commands
 
     def registry_new(self, parsed_input):
-        '''Create a new registry.'''
+        """Create a new, empty registry."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'registry')]
         else:
@@ -365,18 +375,18 @@ class EditorContext(Context):
             })
 
     def registry_remove(self, parsed_input):
-        '''Delete one or more registries.'''
+        """Remove a registry."""
         refs = clihelper.resolve_references(parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'registry', ref)
 
     def registry_list(self, parsed_input):
-        '''List all registries.'''
+        """List all registries and their patch, if applicable."""
         for reg in clihelper.refsort(document.get_by_type(self.plot_file, 'registry')):
             clihelper.print_object(reg)
 
     def registry_query(self, parsed_input):
-        '''List the functions of all used channels in a registry.'''
+        """Print all used addresses in a registry, and the fixtures and functions they are occupied by."""
         refs = clihelper.resolve_references(parsed_input[0])
         for ref in refs:
             r = document.get_by_ref(self.plot_file, 'registry', ref)
@@ -391,7 +401,8 @@ class EditorContext(Context):
                                printer.get_generic_string(func),')']))
 
     def registry_add(self, parsed_input):
-        """Manually assign one function in a registry table."""
+        """Manually assign one function by its offset value from a specified fixture in a registry table. Or specify
+        a range of functions to assign incrementally from the given starting address."""
         fix = document.get_by_ref(self.plot_file, 'fixture', clihelper.resolve_references(parsed_input[0])[0])
         func_refs = clihelper.resolve_references(parsed_input[1])
         reg = document.get_by_ref(self.plot_file, 'registry', parsed_input[2])
@@ -406,7 +417,9 @@ class EditorContext(Context):
             addr += 1
 
     def registry_summarise(self, parsed_input):
-        """Show a table of DMX addresses of a registry to see at a glance which addresses are occupied."""
+        """Show a table of  addresses of a registry to see at a glance which addresses are occupied. No further
+        information is given on what occupies each individual address. Use registry_query for more detailed
+        information."""
         refs = clihelper.resolve_references(parsed_input[0])
         for ref in refs:
             r = document.get_by_ref(self.plot_file, 'registry', ref)
@@ -427,7 +440,9 @@ class EditorContext(Context):
     # Cue commands
 
     def cue_new_notrack(self, parsed_input):
-        """Create a new cue."""
+        """Create a new cue. Optionally provide a semi-colon separated list of fixtures @ levels. For example
+        1@100;2@50;10@80. The intensity will be assumed to be the first found function with the Intens parameter and
+        this will be added to the cue at this level."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'cue')]
         else:
@@ -457,22 +472,24 @@ class EditorContext(Context):
             })
 
     def cue_new_track(self, parsed_input):
-        """Create a new cue, tracking forward values from the previous cue."""
+        """Not yet implemented."""
         pass
 
     def cue_remove(self, parsed_input):
-        '''Remove a cue.'''
+        """Remove a cue."""
         refs = clihelper.safe_resolve_dec_references(parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'cue', ref)
 
     def cue_list(self, parsed_input):
-        '''List all cues'''
+        """Print a list of all cues in reference order, showing the number of levels they contain and labels if
+        applicable."""
         for cue in clihelper.refsort(document.get_by_type(self.plot_file, 'cue')):
             clihelper.print_object(cue)
 
     def cue_get_intens(self, parsed_input):
-        """Display the fixture intensity levels in a cue."""
+        """Display the fixture intensity levels in a cue. Filters the cue levels and displays only those which
+        correspond to intensity parameters, as determined by those with the Intens param tag."""
         refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         for ref in refs:
             q = document.get_by_ref(self.plot_file, 'cue', ref)
@@ -488,7 +505,8 @@ class EditorContext(Context):
                         str(bar)]))
 
     def cue_get_fixture_levels(self, parsed_input):
-        """Get the values of all parameters of a particular fixture in a given cue."""
+        """As for cue_get_intens, except only for a specified range of fixtures. In addition to the determined
+        fixture intensity level, also display the raw values of all other parameters in the cue."""
         cue_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         for cue_ref in cue_refs:
             cue = document.get_by_ref(self.plot_file, 'cue', cue_ref)
@@ -507,14 +525,16 @@ class EditorContext(Context):
                         print('    '+printer.get_generic_string(func)+' @ '+str(level['level']))
 
     def cue_set(self, parsed_input):
-        """Set the value of a tag in a cue."""
+        """Set the value of a data tag with a given key in a cue."""
         refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'cue', ref) for ref in refs]
         for obj in objs:
             obj[parsed_input[1]] = parsed_input[2]
 
     def cue_set_fixture_level(self, parsed_input):
-        """Set the level of a fixture's intensity for a cue."""
+        """Set the level of a fixture's intensity for a cue. The function for this is determined by the first
+        function with the Intens param tag. Therefore this will not work correctly for fixtures with multiple
+        intensity parameters. For fixtures with 16bit intensity parameters, this will only change the major byte."""
         cue_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
         level = parsed_input[2]
@@ -529,7 +549,8 @@ class EditorContext(Context):
                 cue['levels'].append({'func': intens_func['uuid'], 'level': level})
 
     def _cue_set_function_level(self, cue, func, level):
-        """Set the level of a function, in a cue."""
+        """Set the level of a function, in a cue. For internal usage only: accepts cue and function objects, rather
+        than references."""
         fix = document.get_function_parent(self.plot_file, func)
         # Check to see if the function is a 16 bit function by checking for
         # functions with the (16b) suffix with the same name
@@ -555,6 +576,8 @@ class EditorContext(Context):
             config.
             eos_patch: Reads special $Patch lines added by Eos, which support
             database values and personalities.
+            cues: Reads both conventional USITT cues, which will show intensity levels only, then reads special Eos
+            parameter level cues, which contain cue data for all other parameters.
         """
         target = parsed_input[1]
         with open(parsed_input[0]) as f:
