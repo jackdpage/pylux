@@ -37,24 +37,10 @@ def safe_resolve_dec_references(doc, type, user_input):
     string representations of decimals. Checks that each of these references
     actually represents an object in the show file, and returns the resulting
     list."""
-    reference_list = []
-    if len(user_input) > 0:
-        all_input = user_input.split(',')
-        for input_item in all_input:
-            if ':' in input_item:
-                limits = input_item.split(':')
-                i = decimal.Decimal(limits[0])
-                while i <= decimal.Decimal(limits[1]):
-                    if document.get_by_ref(doc, type, i):
-                        reference_list.append(i)
-                    i += DECIMAL_PRECISION
-            else:
-                i = decimal.Decimal(input_item)
-                if document.get_by_ref(doc, type, i):
-                    reference_list.append(i)
-        # Sorts the list, strips trailing zeros and converts all decimals to strings
-        normalised_list = [str(i.normalize()) for i in sorted(reference_list)]
-    return normalised_list
+    # Start with the complete possible range of reference numbers
+    reference_list = resolve_dec_references(user_input)
+    # Only return those who have an existing object
+    return [i for i in reference_list if document.get_by_ref(doc, type, i)]
 
 
 def resolve_references(user_input, precision=1):
@@ -63,8 +49,8 @@ def resolve_references(user_input, precision=1):
     From a user input string of references, generate a list of 
     integers that can then be passed to the Interface class to 
     return objects. Parse comma separated values such as a,b,c 
-    and colon separated ranges such as a:b, or a combination of 
-    the two such as a,b:c,d:e,f.
+    and greater-than sign separated ranges such as a>b, or a combination of
+    the two such as a,b>c,d>e,f.
 
     Args:
         user_input: the input string that the user entered.
@@ -76,8 +62,8 @@ def resolve_references(user_input, precision=1):
     if len(user_input) > 0:
         all_input = user_input.split(',')
         for input_item in all_input:
-            if ':' in input_item:
-                limits = input_item.split(':')
+            if '>' in input_item:
+                limits = input_item.split('>')
                 i = decimal.Decimal(limits[0])
                 while i <= decimal.Decimal(limits[1]):
                     reference_list.append(i)

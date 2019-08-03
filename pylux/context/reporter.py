@@ -29,12 +29,14 @@ import os
 from lib import data, tagger
 from context.context import Context, Command
 import document
+import clihelper
+
 
 class Report:
 
     def __init__(self, plot_file):
-        self.environment = Environment(lstrip_blocks=True, trim_blocks=True, 
-                                loader=FileSystemLoader([i+'/template' for i in data.LOCATIONS.values()]))
+        self.environment = Environment(lstrip_blocks=True, trim_blocks=True,
+                                       loader=FileSystemLoader([i+'/template' for i in data.LOCATIONS.values()]))
         self.plot_file = plot_file
 
     def generate(self, template, options):
@@ -47,35 +49,20 @@ class Report:
         def is_hung(fixture):
             return True if 'pos' in fixture else False
 
-        def is_dimmer(fixture):
-            if 'is_dimmer' in fixture.data:
-                if fixture.data['is_dimmer'] == 'True':
-                    return True
-                else:
-                    return False
-            else:
-                return False
-
         template = self.environment.get_template(template)
-        # Create cues list
+
         cues = document.get_by_type(self.plot_file, 'cue')
-        # Create fixtures list
         fixtures = document.get_by_type(self.plot_file, 'fixture')
         for fixture in fixtures:
             tagger.tag_fixture_all(self.plot_file, fixture)
-        fixture_list = sorted(fixtures, key=lambda fix: int(fix['ref']))
-        # Create hung fixtures list
-        hung_fixtures = []
-        for fixture in fixture_list:
-            if is_hung(fixture):
-                hung_fixtures.append(fixture)
-        hung_fixtures.sort(key=lambda fix: int(fix['ref']))
-        # Create metadata list
+        fixtures = clihelper.refsort(fixtures)
+        hung_fixtures = [i for i in fixtures if is_hung(i)]
         metadata = {i['metadata-key']: i['metadata-value'] for i in document.get_by_type(self.plot_file, 'metadata')}
         # Render template
-        self.content = template.render(cues=cues, fixtures=fixture_list,
+        self.content = template.render(cues=cues, fixtures=fixtures,
                                        metadata=metadata, hung=hung_fixtures,
                                        options=options)
+
 
 class ReporterContext(Context):
 
@@ -96,14 +83,6 @@ class ReporterContext(Context):
 
     def post_init(self):
         pass
-
-####
-#template list
-#report generate
-#report dump
-#report write (to file)
-#report list
-####
 
     def template_list(self, parsed_input):
         '''List the templates installed on this system.'''
