@@ -89,6 +89,18 @@ class EditorContext(Context):
         self.register(Command('xct', self.fixture_complete_from_template, [
             ('FIX', True, 'The fixture to update values of.'),
             ('template', True, 'Path to the file to load data from.')]))
+        self.register(Command('gn', self.group_new, [
+            ('ref', True, 'The reference to give the new group.'),
+            ('fixtures', False, 'A list of references of the fixtures to add to this group.')]))
+        self.register(Command('gl', self.group_list, []))
+        self.register(Command('gr', self.group_remove, [
+            ('grp', True, 'The reference of the group to remove')]))
+        self.register(Command('gL', self.group_list_with_fixtures, []))
+        self.register(Command('gg', self.group_get, [
+            ('grp', True, 'The group to display the fixtures of.')]))
+        self.register(Command('gS', self.group_set_label, [
+            ('grp', True, 'The group to set the label of.'),
+            ('label', True, 'The label to give to this group.')]))
         self.register(Command('rl', self.registry_list, []))
         self.register(Command('rq', self.registry_query, [
             ('REG', True, 'The registry to list used channels of.')]))
@@ -357,6 +369,83 @@ class EditorContext(Context):
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', int(ref))
             function_map[target](self.plot_file, f)
+
+    # Group commands
+
+    def group_new(self, parsed_input):
+        """Create a new fixture group from a range of fixtures."""
+        grp_refs = clihelper.resolve_dec_references(parsed_input[0])
+        for grp_ref in grp_refs:
+            self.plot_file.append({
+                'type': 'group',
+                'uuid': str(uuid.uuid4()),
+                'ref': grp_ref,
+                'fixtures': []
+            })
+        if len(parsed_input) > 1:
+            self.group_set_fixtures(parsed_input)
+
+    def group_list(self, parsed_input):
+        """List all groups with their labels."""
+        for grp in clihelper.refsort(document.get_by_type(self.plot_file, 'group')):
+            clihelper.print_object(grp)
+
+    def group_remove(self, parsed_input):
+        """Remove a group."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        for ref in refs:
+            document.remove_by_ref(self.plot_file, 'group', ref)
+
+    def group_list_with_fixtures(self, parsed_input):
+        """List all groups with labels and also their constituent fixtures."""
+        for grp in clihelper.refsort(document.get_by_type(self.plot_file, 'group')):
+            clihelper.print_object(grp)
+            fixtures = ''
+            for fix in grp['fixtures']:
+                if grp['fixtures'].index(fix) != 0:
+                    fixtures += ', '
+                fixtures += str(document.get_by_uuid(self.plot_file, fix)['ref'])
+            print(fixtures)
+
+    def group_get(self, parsed_input):
+        """Print the fixture list of a specified group."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        for ref in refs:
+            grp = document.get_by_ref(self.plot_file, 'group', ref)
+            clihelper.print_object(grp)
+            fixtures = ''
+            for fix in grp['fixtures']:
+                if grp['fixtures'].index(fix) != 0:
+                    fixtures += ', '
+                fixtures += str(document.get_by_uuid(self.plot_file, fix)['ref'])
+            print(fixtures)
+
+    def group_set_label(self, parsed_input):
+        """Set the label of a group."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        for ref in refs:
+            grp = document.get_by_ref(self.plot_file, 'group', ref)
+            grp['label'] = parsed_input[1]
+
+    def group_set_fixtures(self, parsed_input):
+        """Set the contained fixtures in a group. Any existing fixture list is overwritten. Use other commands for
+        inserting, moving and removing individual fixtures from a group."""
+        grp_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
+        fix_uuids = [document.get_by_ref(self.plot_file, 'fixture', i)['uuid'] for i in fix_refs]
+        for grp_ref in grp_refs:
+            grp = document.get_by_ref(self.plot_file, 'group', grp_ref)
+            grp['fixtures'] = fix_uuids
+
+    def group_append_fixture(self, parsed_input):
+        """Append a fixture or range of fixtures to a group's fixture list."""
+        grp_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
+        fix_uuids = [document.get_by_ref(self.plot_file, 'fixture', i)['uuid'] for i in fix_refs]
+        for grp_ref in grp_refs:
+            grp = document.get_by_ref(self.plot_file, 'group', grp_ref)
+            for fix_uuid in fix_uuids:
+                grp['fixtures'].append(fix_uuid)
 
     # Registry commands
 
@@ -671,6 +760,15 @@ class EditorContext(Context):
                                 'param': parameters[res[1].split()[0]]+' (16b)',
                                 'offset': int(res[1].split()[3])
                             })
+                # If the fixture personality does not contain an Intens parameter, add a virtual Intens parameter
+                # with offset zero, so the fixture can be used for commands such as get_fixture_intens
+                if 'Intens' not in [i['param'] for i in pers]:
+                    pers.append({
+                        'type': 'function',
+                        'param': 'Intens',
+                        'offset': 0,
+                        'virtual': True
+                    })
                 template['personality'] = pers
                 templates[pers_ref.strip()] = template
 
@@ -734,6 +832,19 @@ class EditorContext(Context):
                                 func = document.get_by_value(fixture['personality'], 'param', param_type)[0]
                                 self._cue_set_function_level(document.get_by_ref(self.plot_file, 'cue', cue_ref),
                                                              func, param_value)
+
+        elif target == 'groups':
+            group_blocks = extract_blocks('\$Group')
+            for group in group_blocks:
+                group_ref = group[0].split()[1]
+                self.group_new([group_ref])
+                for l in group:
+                    res = resolve_line(l)
+                    if res[0] == 'Text':
+                        self.group_set_label([group_ref, res[1]])
+                    elif res[0] == '$$ChanList':
+                        for chan in res[1].split():
+                            self.group_append_fixture([group_ref, chan])
 
         else:
             print('Unsupported target. See the help page for this command for a list of supported targets.')

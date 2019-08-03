@@ -57,7 +57,7 @@ def safe_resolve_dec_references(doc, type, user_input):
     return normalised_list
 
 
-def resolve_references(user_input):
+def resolve_references(user_input, precision=1):
     """Parse the reference input.
     
     From a user input string of references, generate a list of 
@@ -78,32 +78,19 @@ def resolve_references(user_input):
         for input_item in all_input:
             if ':' in input_item:
                 limits = input_item.split(':')
-                i = int(limits[0])
-                while i <= int(limits[1]):
-                    reference_list.append(i)
-                    i = i+1
-            else:
-                reference_list.append(int(input_item))
-        reference_list.sort()
-    return reference_list
-
-
-def resolve_dec_references(user_input):
-    """Decimal version of the above."""
-    reference_list = []
-    if len(user_input) > 0:
-        all_input = user_input.split(',')
-        for input_item in all_input:
-            if ':' in input_item:
-                limits = input_item.split(':')
                 i = decimal.Decimal(limits[0])
                 while i <= decimal.Decimal(limits[1]):
                     reference_list.append(i)
-                    i += DECIMAL_PRECISION
+                    i += precision
             else:
                 reference_list.append(decimal.Decimal(input_item))
         reference_list.sort()
     return [str(i) for i in reference_list]
+
+
+def resolve_dec_references(user_input):
+    """Decimal version of the above."""
+    return resolve_references(user_input, precision=DECIMAL_PRECISION)
 
 
 def resolve_input(inputs_list, number_args):
