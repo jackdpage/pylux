@@ -40,6 +40,7 @@ class LightingPlot():
         self.fixtures = self.get_hung_fixtures()
         self.meta = document.get_by_type(plot_file, 'metadata')
         self.options = options
+        self.plot_file = plot_file
 
     def get_hung_fixtures(self):
         """Return a list of the fixtures that are used.
@@ -249,6 +250,8 @@ class LightingPlot():
                 weight = 'line-weight-medium'
             path.set('stroke-width', 
                      str(float(self.options[weight])*scale))
+            path.set('stroke','#000000')
+            path.set('fill-opacity', '0')
             
         return image_group
 
@@ -393,7 +396,8 @@ class LightingPlot():
         else:
             self.lighting_plot = self.get_empty_plot()
             root = self.lighting_plot.getroot()
-            root.append(self.get_page_border())
+            if self.options['page-border'] == 'True':
+                root.append(self.get_page_border())
             try:
                 root.append(self.get_background_image())
             except FileNotFoundError:
@@ -403,7 +407,7 @@ class LightingPlot():
             root.append(self.get_plaster_line())
             print('Plotted plaster line')
             for fixture in tqdm(self.fixtures, desc='Plotting fixtures: '):
-                tagger.tag_fixture_all(fixture)
+                tagger.tag_fixture_all(self.plot_file, fixture)
                 if self.options['show-beams'] == 'True':
                     root.append(self.get_fixture_beam(fixture))
                 if self.options['show-focus-point'] == 'True':
@@ -411,7 +415,7 @@ class LightingPlot():
                 root.append(self.get_fixture_icon(fixture))
             if self.options['title-block'] != 'None':
                 root.append(self.get_title_block())
-            print('Added title block')
+                print('Added title block')
 
 
 class PlotOptions():
