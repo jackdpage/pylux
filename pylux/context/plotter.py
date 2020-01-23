@@ -94,9 +94,7 @@ class LightingPlot():
         for fixture in self.fixtures:
             get_mm = lambda field: float(field)*1000
             x_values.append(get_mm(fixture['posX']))
-            x_values.append(get_mm(fixture['focusX']))
             y_values.append(get_mm(fixture['posY']))
-            y_values.append(get_mm(fixture['focusY']))
         x_range = max(x_values) - min(x_values)
         y_range = max(y_values) - min(y_values)
         return (x_range, y_range)
@@ -403,7 +401,7 @@ class LightingPlot():
             root.append(self.get_plaster_line())
             print('Plotted plaster line')
             for fixture in tqdm(self.fixtures, desc='Plotting fixtures: '):
-                tagger.tag_fixture_all(fixture)
+                tagger.tag_fixture_all_doc_independent(fixture)
                 if self.options['show-beams'] == 'True':
                     root.append(self.get_fixture_beam(fixture))
                 if self.options['show-focus-point'] == 'True':
