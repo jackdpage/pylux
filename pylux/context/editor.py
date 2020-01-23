@@ -795,6 +795,13 @@ class EditorContext(Context):
                         self.fixture_set([fix_ref, 'gel', res[1]])
                     if res[0] == 'Text':
                         self.fixture_set([fix_ref, 'label', res[1]])
+                    if res[0] == '$$Position':
+                        pos_array = res[1].split(maxsplit=3)
+                        self.fixture_set([fix_ref, 'posX', pos_array[0]])
+                        self.fixture_set([fix_ref, 'posY', pos_array[1]])
+                        self.fixture_set([fix_ref, 'posZ', pos_array[2]])
+                    if res[0] == '$$Orientation':
+                        self.fixture_set([fix_ref, 'rotation', res[1].split()[1]])
 
         elif target == 'cues':
             cue_blocks = extract_blocks('Cue.*')

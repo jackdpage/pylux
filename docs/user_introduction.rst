@@ -15,39 +15,31 @@ in plaintext format of any style using simple templating tools.
 Interface
 ---------
 
-Currently, Pylux's only interface is the command-line interface (CLI). 
-Pylux uses an interactive prompt to accept commands from the user. A graphical 
-user interface is not currently in development, although the infrastructure 
-for one exists.
+Pylux's interface exists purely on the command line using a system of 
+mnemonic commands that allow data to be acted on efficiently.
 
 Basic Concepts
 --------------
 
-Pylux is centered around a file called an 'effects plot'. This file contains 
-all the information necessary to produce additional documentation and run 
-any queries. The effects plots rely on some fundamental data types which 
-describe physical or abstract objects which Pylux interprets when it 
-generates documentation. The fundamental data types are:
+Pylux is centered around a JSON file which contains all the information about 
+your show. The JSON file is fundamentally unstructured and consists of an 
+unordered list of fundamental objects, which will take one of the types below.
 
 Fixture
-    A single physical lighting fixture, such as a PAR can.
+    A single physical lighting fixture, such as a PAR can. A fixture will 
+    further contain a list of DMX functions, which act in the same way as 
+    the other fundamental objects, but will never appear outside of a fixture 
+    object in the show file itself.
 
 Registry
-    A mapping of the functions of a single DMX512 universe.
+    A mapping of functions to addresses within a single DMX universe.
 
 Metadata
     Key/value strings that contain miscellaneous data, such as the director 
     of a production.
 
 Cues
-    A mapping between a location and an action. A location may be a point in 
-    time or in a script. An action may be a lighting state or audio cue.
-
-Scenes
-    A snapshot of the state of the lighting output.
-
-Chases
-    Sequential scenes with additional data such as fade and dwell times.
+    A snapshot of the levels of some functions.
 
 These data types are referred to often in the remainder of this guide.
 
@@ -63,8 +55,9 @@ uuid
 
 ref
     A human-readable identifier unique to this object within others of its
-    type.
+    type. This will be the number which is used to call and pass this object 
+    to commands.
 
-name
+label
     A non-required field which acts as the fallback when no other information
     about the object is available.

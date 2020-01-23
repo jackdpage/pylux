@@ -11,8 +11,6 @@ metadata_list
 ^^^^^^^^^^^^^
 Usage
     ``ml``
-Affects Buffers
-    *MET*
 Synopsis
     List all the metadata objects in the effects plot file.
 
@@ -20,8 +18,6 @@ metadata_get
 ^^^^^^^^^^^^
 Usage
     ``mg name``
-Affects Buffers
-    *MET*
 Parameters
     *name* - the name to match against existing metadata.
 Synopsis
@@ -31,8 +27,9 @@ Synopsis
 metadata_new
 ^^^^^^^^^^^^
 Usage
-    ``mn name``
+    ``mn ref name``
 Parameters
+    *ref* - the reference number to assign to the new metadata, or ``auto``.
     *name* - the name to assign to the newly created metadata.
 Synopsis
     Create a new piece of metadata in the effects plot and give it the name 
@@ -52,9 +49,9 @@ Synopsis
 metadata_remove
 ^^^^^^^^^^^^^^^
 Usage
-    ``mr MET``
+    ``mr ref``
 Parameters
-    *MET* - the item of metadata to remove from the effects plot.
+    *ref* - the item of metadata to remove from the effects plot.
 Synopsis
     Completely remove an existing piece of metadata from the effects plot.
 
@@ -65,18 +62,14 @@ fixture_list
 ^^^^^^^^^^^^
 Usage
     ``xl``
-Affects Buffers
-    *FIX*
 Synopsis
-    List all the existing fixtures in the effects plot. This command will 
-    display the fixture's name and type.
+    List all existing fixtures in the file, printing their type and label 
+    if present.
 
 fixture_filter
 ^^^^^^^^^^^^^^
 Usage
     ``xf tag value``
-Affects Buffers
-    *FIX*
 Parameters
     *tag* - the data tag of the fixtures to test.
 
@@ -88,9 +81,9 @@ Synopsis
 fixture_get
 ^^^^^^^^^^^
 Usage
-     ``xg FIX``
+     ``xg ref``
 Parameters
-     *FIX* - the fixture to print the data tags of.
+     *ref* - the fixture to print the data tags of.
 Synopsis
      List all the data tags associated with a fixture, including those 
      added automatically by Pylux.
@@ -98,11 +91,9 @@ Synopsis
 fixture_getall
 ^^^^^^^^^^^^^^
 Usage
-     ``xG FIX``
-Affects Buffers
-     *FNC*
+     ``xG ref``
 Parameters
-     *FIX* - the fixture to print the data tags and DMX functions of.
+     *ref* - the fixture to print the data tags and DMX functions of.
 Synopsis
      List all the data tags associated with a fixture as per fixture_get, 
      but also list any DMX functions the fixture has associated with it.
@@ -110,34 +101,32 @@ Synopsis
 fixture_new
 ^^^^^^^^^^^
 Usage
-     ``xn name``
+     ``xn ref``
 Parameters
-     *name* - human-readable name to give to the fixture.
+     *ref* - The reference to give the new fixture, or ``auto``..
 Synopsis
-     Create a new fixture object from scratch. The only attribute of the 
-     created fixture will be its name. Usage of this command is not 
-     recommended as it does not allow for DMX function assignment.
+    Creates a new fixture from scratch. The fixture data tags, including 
+    function list, will be completely empty.
 
 fixture_from_template
 ^^^^^^^^^^^^^^^^^^^^^
 Usage
-     ``xN template``
+     ``xN ref template``
 Parameters
+    *ref* - the refernce to give the new fixture, or ``auto``.
      *template* - the name of the template to load into this new fixture.
 Synopsis
-     Create a new fixture from an existing template file. The root directory, 
-     ``/usr/share/pylux/fixture`` and home directory, ``~/.pylux/fixture`` 
-     are both searched to find a fixture template called *template*.xml. If 
-     a template with the same name is found in both locations, the template 
-     in the home directory is preferred. See the creator documentation for 
-     more information on creating fixture templates.
+    Create a new fixture from an existing template file. All locations 
+    specified in the data helper are searched. ``template`` will be of the 
+    form Manufacturer/Model, and directories will be searched as such.
 
 fixture_clone
 ^^^^^^^^^^^^^
 Usage
-     ``xc FIX``
+     ``xc src dest``
 Parameters
-     *FIX* - the existing fixture to make a copy of.
+     *src* - the existing fixture to make a copy of.
+     *dest* - the reference(s) of the new clone(s).
 Synopsis
      Create a new fixture and populate its data dictionary and DMX functions 
      list with the contents of an existing fixture. New UUIDs are created so 
@@ -146,9 +135,9 @@ Synopsis
 fixture_set
 ^^^^^^^^^^^
 Usage
-     ``xs FIX tag value``
+     ``xs ref tag value``
 Parameters
-     *FIX* - the fixture of which the data dictionary is to be changed.
+     *ref* - the fixture of which the data dictionary is to be changed.
 
      *tag* - the name of the tag to set the value of.
 
@@ -156,19 +145,19 @@ Parameters
 Synopsis
      Set the value of a new or existing data tag in the fixture's data 
      dictionary. Tags must be one word, it is recommended to use 
-     lowerCamelCase where more than one word is required, to maintain 
+     hyphenated-tags where more than one word is required, to maintain 
      consistency with standard Pylux tags.
 
 fixture_address
 ^^^^^^^^^^^^^^^
 Usage
-     ``xa FIX REG start``
+     ``xa ref reg addr``
 Parameters
-     *FIX* - the fixture who's functions are to be assigned addreses.
+     *ref* - the fixture who's functions are to be assigned addreses.
 
-     *REG* - the registry to assign addresses in.
+     *reg* - the registry to assign addresses in.
 
-     *start* - the address to begin registration at. Set to auto to allow 
+     *addr* - the address to begin registration at. Set to auto to allow 
                Pylux to choose the best start address.
 Synopsis
      Assign DMX addresses to all the DMX functions contained in a fixture. 
@@ -178,9 +167,9 @@ Synopsis
 fixture_unaddress
 ^^^^^^^^^^^^^^^^^
 Usage
-     ``xA FIX``
+     ``xA ref``
 Parameters
-     *FIX* - the fixture to remove from all registries.
+     *ref* - the fixture to remove from all registries.
 Synopsis
      Search through all registries and remove any links to DMX functions 
      that are children of a fixture.
@@ -188,10 +177,36 @@ Synopsis
 fixture_remove
 ^^^^^^^^^^^^^^
 Usage
-     ``xr FIX``
+     ``xr ref``
 Parameters
-     *FIX* - the fixture to remove.
+     *ref* - the fixture to remove.
 Synopsis
      Remove a fixture entirely from the effects plot. This does not remove 
      the fixture's functions from any DMX registries, so to purge the fixture 
      entirely, run fixture_unaddress first.
+
+fixture_generate_autotags
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Usage
+    ``xS ref target``
+Parameters
+    *ref* - the fixture to generate tags for.
+    *target* - (Optional) the type of tags to generate. Options are colour, 
+        rotation and patch. Omit for all.
+Synopsis
+    Generates tags for a fixture based on existing tags and relationships.
+
+
+fixture_complete_from_template
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Usage 
+    ``xct ref template``
+Parameters
+    *ref* - the fixture to update.
+    *template* - the template to compare the fixture against.
+Synopsis
+    Compare a fixture with a specified template. If any tags exist in the 
+    template and not the fixture, add them from the template. Do not 
+    overwrite any existing tags in the fixture. Also does the same for 
+    the fixture's function list.
+
