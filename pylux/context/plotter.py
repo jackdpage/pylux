@@ -40,6 +40,7 @@ class LightingPlot():
         self.fixtures = self.get_hung_fixtures()
         self.meta = document.get_by_type(plot_file, 'metadata')
         self.options = options
+        self.plot_file = plot_file
 
     def get_hung_fixtures(self):
         """Return a list of the fixtures that are used.
@@ -247,6 +248,8 @@ class LightingPlot():
                 weight = 'line-weight-medium'
             path.set('stroke-width', 
                      str(float(self.options[weight])*scale))
+            path.set('stroke','#000000')
+            path.set('fill-opacity', '0')
             
         return image_group
 
@@ -345,6 +348,22 @@ class LightingPlot():
                 path.set('fill', colour)
                 path.set('stroke-width', 
                          str(float(self.options['line-weight-heavy'])*scale))
+                path.set('stroke', 'black')
+            if path.get('class') == 'weight-override-light':
+                path.set('fill', colour)
+                path.set('stroke', 'black')
+                path.set('stroke-width',
+                         str(float(self.options['line-weight-light'])*scale))
+            if path.get('class') == 'weight-override-medium':
+                path.set('stroke', 'black')
+                path.set('fill', colour)
+                path.set('stroke-width',
+                         str(float(self.options['line-weight-medium'])*scale))
+            if path.get('class') == 'weight-override-heavy':
+                path.set('stroke', 'black')
+                path.set('fill', colour)
+                path.set('stroke-width',
+                         str(float(self.options['line-weight-heavy'])*scale))
         return symbol
 
     def get_fixture_beam(self, fixture):
@@ -391,7 +410,8 @@ class LightingPlot():
         else:
             self.lighting_plot = self.get_empty_plot()
             root = self.lighting_plot.getroot()
-            root.append(self.get_page_border())
+            if self.options['page-border'] == 'True':
+                root.append(self.get_page_border())
             try:
                 root.append(self.get_background_image())
             except FileNotFoundError:
@@ -409,7 +429,7 @@ class LightingPlot():
                 root.append(self.get_fixture_icon(fixture))
             if self.options['title-block'] != 'None':
                 root.append(self.get_title_block())
-            print('Added title block')
+                print('Added title block')
 
 
 class PlotOptions():

@@ -1,3 +1,6 @@
+UNLABELLED_STRING = '\033[31mUnnamed\033[0m'
+
+
 def get_metadata_value(meta):
     s = meta['metadata-key']+': '
     if 'metadata-value' in meta:
@@ -28,18 +31,27 @@ def get_registry_string(registry):
 
 
 def get_function_string(function):
-    name = function['name']
+    name = function['param']
+    offset = ''.join(['\033[1m\033[95m', str(function['offset']), '\033[0m '])
 
-    return name
+    return offset+name
 
 
 def get_cue_string(cue):
     if 'label' in cue:
         label = cue['label']
     else:
-        label = '\033[31mUnnamed\033[0m'
+        label = UNLABELLED_STRING
     levels = str(len(cue['levels']))
     return 'Cue - '+label+' ('+levels+' levels)'
+
+
+def get_group_string(group):
+    if 'label' in group:
+        label = group['label']
+    else:
+        label = UNLABELLED_STRING
+    return 'Group - '+label+' ('+str(len(group['fixtures']))+' fixtures)'
 
 
 def get_generic_ref(obj):
@@ -64,12 +76,12 @@ def get_generic_string(obj, pre=''):
         s = pre + ref_print + PRINTER_INDEX[obj['type']][0](obj)
         return s
     else:
-        if 'name' in obj:
-            name = obj['name']
+        if 'label' in obj:
+            label = obj['label']
         else:
-            name = '\033[31mUnnamed\033[0m'
+            label = UNLABELLED_STRING
         type = obj['type']
-        return name+' ('+type+')'
+        return label+' ('+type+')'
 
 
 PRINTER_INDEX = {
@@ -77,7 +89,8 @@ PRINTER_INDEX = {
     'fixture': (get_fixture_string, 92),
     'registry': (get_registry_string, 93),
     'function': (get_function_string, 95),
-    'cue': (get_cue_string, 96)
+    'cue': (get_cue_string, 96),
+    'group': (get_group_string, 95)
 }
 
 

@@ -45,8 +45,8 @@ class EditorContext(Context):
 
         self.register(Command('ml', self.metadata_list, []))
         self.register(Command('mn', self.metadata_new, [
-            ('ref', True, 'Reference to assign to the metadata.'),
-            ('name', True, 'The name of the metadata to add.')]))
+            ('ref', True, 'Reference to assign to the metadata or auto.'),
+            ('key', True, 'The key to give the new metadata.')]))
         self.register(Command('ms', self.metadata_set, [
             ('ref', True, 'The metadata to set the value of.'),
             ('value', True, 'Value for the metadata to take.')]))
@@ -72,7 +72,7 @@ class EditorContext(Context):
             ('ref', True, 'The fixture to get a tag from.'),
             ('tag', True, 'The name of the tag to print the value of.')]))
         self.register(Command('xG', self.fixture_getall, [
-            ('FIX', True, 'The fixture to print the tags of.')]))
+            ('fix', True, 'The fixture to print the tags of.')]))
         self.register(Command('xs', self.fixture_set, [
             ('FIX', True, 'The fixture to set a tag of.'),
             ('tag', True, 'The name of the tag to set.'),
@@ -89,6 +89,18 @@ class EditorContext(Context):
         self.register(Command('xct', self.fixture_complete_from_template, [
             ('FIX', True, 'The fixture to update values of.'),
             ('template', True, 'Path to the file to load data from.')]))
+        self.register(Command('gn', self.group_new, [
+            ('ref', True, 'The reference to give the new group.'),
+            ('fixtures', False, 'A list of references of the fixtures to add to this group.')]))
+        self.register(Command('gl', self.group_list, []))
+        self.register(Command('gr', self.group_remove, [
+            ('grp', True, 'The reference of the group to remove')]))
+        self.register(Command('gL', self.group_list_with_fixtures, []))
+        self.register(Command('gg', self.group_get, [
+            ('grp', True, 'The group to display the fixtures of.')]))
+        self.register(Command('gS', self.group_set_label, [
+            ('grp', True, 'The group to set the label of.'),
+            ('label', True, 'The label to give to this group.')]))
         self.register(Command('rl', self.registry_list, []))
         self.register(Command('rq', self.registry_query, [
             ('REG', True, 'The registry to list used channels of.')]))
@@ -102,6 +114,8 @@ class EditorContext(Context):
             ('FNC', True, 'The range of functions within the fixture to patch.'),
             ('REG', True, 'Registry id to patch within.'),
             ('addr', True, 'The address to begin patching at.')]))
+        self.register(Command('rS', self.registry_summarise, [
+            ('REG', True, 'The registry to give an overview of.')]))
         self.register(Command('qn', self.cue_new_notrack, [
             ('ref', True, 'The reference to give this new cue.'),
             ('moves', False, 'The fixture movement data to initialise.')]))
@@ -111,16 +125,15 @@ class EditorContext(Context):
         self.register(Command('qr', self.cue_remove, [
             ('cue', True, 'The cue to remove.')]))
         self.register(Command('ql', self.cue_list, []))
-        self.register(Command('qg', self.cue_getall, [
+        self.register(Command('qg', self.cue_get_intens, [
             ('cue', True, 'The cue to probe.')]))
-        # self.register(Command('sl', self.scene_list, []))
-        # self.register(Command('sn', self.scene_new, [
-        #     ('outputs', True, 'In the form FNC@###;FNC@###.'),
-        #     ('name', True, 'The name of the scene.')]))
-        # self.register(Command('sg', self.scene_getall, [
-        #     ('SCN', True, 'The scene to display the outputs of.')]))
-        # self.register(Command('sG', self.scene_getall_dmx, [
-        #     ('SCN', True, 'The scene to display the outputs of.')]))
+        self.register(Command('qgx', self.cue_get_fixture_levels, [
+            ('cue', True, 'The cue to probe.'),
+            ('fix', True, 'The fixture(s) to match for.')]))
+        self.register(Command('qs', self.cue_set, [
+            ('cue', True, 'The cue to set the value of.'),
+            ('tag', True, 'The key to assign this new value.'),
+            ('value', True, 'The value to assign to this key.')]))
         self.register(Command('ia', self.import_ascii, [
             ('file', True, 'Patch of the ASCII file to import.'),
             ('target', True, 'The type of target to import from the file')]))
@@ -131,12 +144,12 @@ class EditorContext(Context):
     # Metadata commands
 
     def metadata_list(self, parsed_input):
-        """List the values of all metadata in the plot file."""
+        """List the values of all metadata key/value pairs."""
         for meta in clihelper.refsort(document.get_metadata(self.plot_file)):
             clihelper.print_object(meta)
 
     def metadata_set(self, parsed_input):
-        """Sets the value of a piece of metadata."""
+        """Set the value of metadata entry."""
         refs = clihelper.resolve_references(parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'metadata', ref) for ref in refs]
         for obj in objs:
@@ -144,18 +157,18 @@ class EditorContext(Context):
             obj['name'] = parsed_input[1]
 
     def metadata_remove(self, parsed_input):
-        '''Remove a piece of metadata from the file.'''
+        """Remove a metadata entry."""
         refs = clihelper.resolve_references(parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'metadata', ref)
 
     def metadata_get(self, parsed_input):
-        '''Print the values of metadata matching a name.'''
+        """Print the value of all metadata entries that match a given key."""
         for match in document.get_by_value(self.plot_file, 'metadata-key', parsed_input[0]):
             clihelper.print_object(match)
 
     def metadata_new(self, parsed_input):
-        '''Create a new metadata item.'''
+        """Create a new metadata entry with a given key."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'metadata')]
         else:
@@ -172,7 +185,7 @@ class EditorContext(Context):
     # Fixture commands
 
     def fixture_new(self, parsed_input):
-        '''Create a new fixture from scratch.'''
+        """Create a new fixture with no data, other than reference and UUID."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'fixture')]
         else:
@@ -185,7 +198,8 @@ class EditorContext(Context):
             })
 
     def fixture_from_template(self, parsed_input):
-        '''Create a new fixture from a template file.'''
+        """Load an existing file containing a fixture template and create one or more new fixtures from this. UUIDs
+        will be assigned to all fixtures and functions if they contain them."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'fixture')]
         else:
@@ -205,9 +219,10 @@ class EditorContext(Context):
             self.plot_file.append(fixture)
 
     def fixture_clone(self, parsed_input):
-        '''Create a new fixture by copying an existing fixture.'''
+        """Copy an existing fixture an arbitrary number of times, keeping all data the same except references and
+        UUIDs of the fixture itself and functions."""
         src = document.get_by_ref(self.plot_file, 'fixture', int(parsed_input[0]))
-        dest = clihelper.resolve_references(parsed_input[1])
+        dest = clihelper.resolve_dec_references(parsed_input[1])
         for loc in dest:
             new = dict.copy(src)
             new['uuid'] = str(uuid.uuid4())
@@ -215,12 +230,12 @@ class EditorContext(Context):
             self.plot_file.append(new)
 
     def fixture_list(self, parsed_input):
-        '''List all fixtures in the plot file.'''
+        """List all fixtures by reference with their fixture type and label if applicable."""
         for fix in clihelper.refsort(document.get_by_type(self.plot_file, 'fixture')):
             clihelper.print_object(fix)
 
     def fixture_filter(self, parsed_input):
-        '''List all fixtures that meet a certain criterion.'''
+        """List all fixtures which have a data tag with a specified key/value combination."""
         k = parsed_input[0]
         v = parsed_input[1]
         fixtures = document.get_by_type(self.plot_file, 'fixture')
@@ -228,14 +243,14 @@ class EditorContext(Context):
             clihelper.print_object(match)
 
     def fixture_remove(self, parsed_input):
-        '''Remove a fixture from the plot file.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        """Remove a fixture."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'fixture', ref)
 
     def fixture_get(self, parsed_input):
-        '''Print the values of a fixture's tags.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        """Print the contents of a fixture's data dictionary, showing all key/value data tag pairs it cointains."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
             clihelper.print_object(f)
@@ -244,8 +259,9 @@ class EditorContext(Context):
                 print('    '+str(k)+': '+str(v))
 
     def fixture_getall(self, parsed_input):
-        '''Print the tags and functions of a fixture..'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        """Print the contents of a fixture's data dictionary as for fixture_get. Also print a list of functions the
+        fixture has and their offset values."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
             clihelper.print_object(f)
@@ -258,20 +274,25 @@ class EditorContext(Context):
                     print('   ', printer.get_generic_string(func))
 
     def fixture_set(self, parsed_input):
-        '''Set the value of one of a fixture's tags.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        """Set the value of a fixture's data tag with a specified key."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'fixture', ref) for ref in refs]
         for obj in objs:
             obj[parsed_input[1]] = parsed_input[2]
 
     def fixture_address(self, parsed_input):
-        '''Assign DMX addresses to a fixture.'''
+        """Register the functions of a fixture in a specified registry, beginning from a specified address. Register
+        the functions in the order of their offset value. Alternatively, provide auto in place of the address to
+        pick an automatic starting address. Note that by default functions will overflow into the next registry if a
+        registry is filled before all functions are registered. If registries with the specified references do not
+        exist, new ones will be created. Registries are assumed to start at zero, in ArtNet style."""
         refs = clihelper.resolve_references(parsed_input[0])
-        reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[1]))
+        univ = int(parsed_input[1])
+        reg = document.get_by_ref(self.plot_file, 'registry', univ)
         while not reg:
-            print('No registry with id {0}, creating a new one'.format(parsed_input[1]))
-            self.registry_new([str(parsed_input[1])])
-            reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[1]))
+            print('No registry with id {0}, creating a new one'.format(univ))
+            self.registry_new([str(univ)])
+            reg = document.get_by_ref(self.plot_file, 'registry', univ)
         for ref in refs:
             f = document.get_by_ref(self.plot_file, 'fixture', ref)
             n = len(f['personality'])
@@ -281,6 +302,14 @@ class EditorContext(Context):
                 else:
                     addr = int(parsed_input[2])
                 for func in f['personality']:
+                    if addr > 512:
+                        univ += 1
+                        reg = document.get_by_ref(self.plot_file, 'registry', univ)
+                        while not reg:
+                            print('No registry with id {0}, creating a new one'.format(univ))
+                            self.registry_new([str(univ)])
+                            reg = document.get_by_ref(self.plot_file, 'registry', univ)
+                        addr = addr % 512
                     reg['table'][addr] = func['uuid']
                     addr += 1
 
@@ -324,7 +353,10 @@ class EditorContext(Context):
                                 dest['personality'].append(func)
 
     def fixture_generate_autotags(self, parsed_input):
-        """Uses the tagger class to automatically populate tags in fixtures."""
+        """Automatically populate data tags in a fixture, which can be inferred from other pre-existing data tags.
+        Options are colour (from gel), rotation (from pos and focus) and patch (by cross-referencing against
+        registries). This command is also occasionally run automatically, for example when generating a report or
+        plot."""
         refs = clihelper.resolve_references(parsed_input[0])
         if len(parsed_input) < 2:
             target = 'all'
@@ -338,10 +370,87 @@ class EditorContext(Context):
             f = document.get_by_ref(self.plot_file, 'fixture', int(ref))
             function_map[target](self.plot_file, f)
 
+    # Group commands
+
+    def group_new(self, parsed_input):
+        """Create a new fixture group from a range of fixtures."""
+        grp_refs = clihelper.resolve_dec_references(parsed_input[0])
+        for grp_ref in grp_refs:
+            self.plot_file.append({
+                'type': 'group',
+                'uuid': str(uuid.uuid4()),
+                'ref': grp_ref,
+                'fixtures': []
+            })
+        if len(parsed_input) > 1:
+            self.group_set_fixtures(parsed_input)
+
+    def group_list(self, parsed_input):
+        """List all groups with their labels."""
+        for grp in clihelper.refsort(document.get_by_type(self.plot_file, 'group')):
+            clihelper.print_object(grp)
+
+    def group_remove(self, parsed_input):
+        """Remove a group."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        for ref in refs:
+            document.remove_by_ref(self.plot_file, 'group', ref)
+
+    def group_list_with_fixtures(self, parsed_input):
+        """List all groups with labels and also their constituent fixtures."""
+        for grp in clihelper.refsort(document.get_by_type(self.plot_file, 'group')):
+            clihelper.print_object(grp)
+            fixtures = ''
+            for fix in grp['fixtures']:
+                if grp['fixtures'].index(fix) != 0:
+                    fixtures += ', '
+                fixtures += str(document.get_by_uuid(self.plot_file, fix)['ref'])
+            print(fixtures)
+
+    def group_get(self, parsed_input):
+        """Print the fixture list of a specified group."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        for ref in refs:
+            grp = document.get_by_ref(self.plot_file, 'group', ref)
+            clihelper.print_object(grp)
+            fixtures = ''
+            for fix in grp['fixtures']:
+                if grp['fixtures'].index(fix) != 0:
+                    fixtures += ', '
+                fixtures += str(document.get_by_uuid(self.plot_file, fix)['ref'])
+            print(fixtures)
+
+    def group_set_label(self, parsed_input):
+        """Set the label of a group."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        for ref in refs:
+            grp = document.get_by_ref(self.plot_file, 'group', ref)
+            grp['label'] = parsed_input[1]
+
+    def group_set_fixtures(self, parsed_input):
+        """Set the contained fixtures in a group. Any existing fixture list is overwritten. Use other commands for
+        inserting, moving and removing individual fixtures from a group."""
+        grp_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
+        fix_uuids = [document.get_by_ref(self.plot_file, 'fixture', i)['uuid'] for i in fix_refs]
+        for grp_ref in grp_refs:
+            grp = document.get_by_ref(self.plot_file, 'group', grp_ref)
+            grp['fixtures'] = fix_uuids
+
+    def group_append_fixture(self, parsed_input):
+        """Append a fixture or range of fixtures to a group's fixture list."""
+        grp_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'group', parsed_input[0])
+        fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
+        fix_uuids = [document.get_by_ref(self.plot_file, 'fixture', i)['uuid'] for i in fix_refs]
+        for grp_ref in grp_refs:
+            grp = document.get_by_ref(self.plot_file, 'group', grp_ref)
+            for fix_uuid in fix_uuids:
+                grp['fixtures'].append(fix_uuid)
+
     # Registry commands
 
     def registry_new(self, parsed_input):
-        '''Create a new registry.'''
+        """Create a new, empty registry."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'registry')]
         else:
@@ -355,18 +464,18 @@ class EditorContext(Context):
             })
 
     def registry_remove(self, parsed_input):
-        '''Delete one or more registries.'''
+        """Remove a registry."""
         refs = clihelper.resolve_references(parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'registry', ref)
 
     def registry_list(self, parsed_input):
-        '''List all registries.'''
+        """List all registries and their patch, if applicable."""
         for reg in clihelper.refsort(document.get_by_type(self.plot_file, 'registry')):
             clihelper.print_object(reg)
 
     def registry_query(self, parsed_input):
-        '''List the functions of all used channels in a registry.'''
+        """Print all used addresses in a registry, and the fixtures and functions they are occupied by."""
         refs = clihelper.resolve_references(parsed_input[0])
         for ref in refs:
             r = document.get_by_ref(self.plot_file, 'registry', ref)
@@ -381,7 +490,8 @@ class EditorContext(Context):
                                printer.get_generic_string(func),')']))
 
     def registry_add(self, parsed_input):
-        """Manually assign one function in a registry table."""
+        """Manually assign one function by its offset value from a specified fixture in a registry table. Or specify
+        a range of functions to assign incrementally from the given starting address."""
         fix = document.get_by_ref(self.plot_file, 'fixture', clihelper.resolve_references(parsed_input[0])[0])
         func_refs = clihelper.resolve_references(parsed_input[1])
         reg = document.get_by_ref(self.plot_file, 'registry', parsed_input[2])
@@ -391,24 +501,47 @@ class EditorContext(Context):
             reg = document.get_by_ref(self.plot_file, 'registry', int(parsed_input[2]))
         addr = int(parsed_input[3])
         for func in func_refs:
-            uuid = document.get_by_ref(fix['personality'], 'function', func)['uuid']
+            uuid = document.get_by_value(fix['personality'], 'offset', func)['uuid']
             reg['table'][addr] = uuid
             addr += 1
+
+    def registry_summarise(self, parsed_input):
+        """Show a table of  addresses of a registry to see at a glance which addresses are occupied. No further
+        information is given on what occupies each individual address. Use registry_query for more detailed
+        information."""
+        refs = clihelper.resolve_references(parsed_input[0])
+        for ref in refs:
+            r = document.get_by_ref(self.plot_file, 'registry', ref)
+            clihelper.print_object(r)
+            current_row = '   '
+            width = int(self.config['cli']['registry-summary-width'])
+            for i in range(0, width):
+                current_row += ' '+str(format(i, '02d'))
+            for i in range(1, 514):
+                if i % width == 1 or i == 513:
+                    print(current_row)
+                    current_row = str(format(i, '03d')) + '  '
+                if str(i) in r['table'] or i in r['table']:
+                    current_row += '\033[31m#\033[0m  '
+                else:
+                    current_row += '\033[92m-\033[0m  '
 
     # Cue commands
 
     def cue_new_notrack(self, parsed_input):
-        """Create a new cue."""
+        """Create a new cue. Optionally provide a semi-colon separated list of fixtures @ levels. For example
+        1@100;2@50;10@80. The intensity will be assumed to be the first found function with the Intens parameter and
+        this will be added to the cue at this level."""
         if parsed_input[0] == 'auto':
             refs = [document.autoref(self.plot_file, 'cue')]
         else:
-            refs = clihelper.resolve_references(parsed_input[0])
+            refs = clihelper.resolve_dec_references(parsed_input[0])
 
         levels = []
         if len(parsed_input) == 2:
             raw = parsed_input[1]
             for level in raw.split(';'):
-                frefs = clihelper.resolve_references(level.split('@')[0])
+                frefs = clihelper.resolve_dec_references(level.split('@')[0])
                 for ref in frefs:
                     f = document.get_by_ref(self.plot_file, 'fixture', ref)
                     # Search through fixture functions for first function which 
@@ -428,51 +561,75 @@ class EditorContext(Context):
             })
 
     def cue_new_track(self, parsed_input):
-        """Create a new cue, tracking forward values from the previous cue."""
+        """Not yet implemented."""
         pass
 
     def cue_remove(self, parsed_input):
-        '''Remove a cue.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+        """Remove a cue."""
+        refs = clihelper.safe_resolve_dec_references(parsed_input[0])
         for ref in refs:
             document.remove_by_ref(self.plot_file, 'cue', ref)
 
     def cue_list(self, parsed_input):
-        '''List all cues'''
+        """Print a list of all cues in reference order, showing the number of levels they contain and labels if
+        applicable."""
         for cue in clihelper.refsort(document.get_by_type(self.plot_file, 'cue')):
             clihelper.print_object(cue)
 
-    def cue_getall(self, parsed_input):
-        '''Display the outputs of a scene.'''
-        refs = clihelper.resolve_references(parsed_input[0])
+    def cue_get_intens(self, parsed_input):
+        """Display the fixture intensity levels in a cue. Filters the cue levels and displays only those which
+        correspond to intensity parameters, as determined by those with the Intens param tag."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         for ref in refs:
             q = document.get_by_ref(self.plot_file, 'cue', ref)
             clihelper.print_object(q)
             for level in q['levels']:
                 func = document.get_function_by_uuid(self.plot_file, level['func'])
-                f = document.get_function_parent(self.plot_file, func)
-                if level['level'][0] == 'H':
-                    intens_level = int(level['level'][1:], 16)
-                else:
-                    intens_level = int(level['level'])
-                bar = printer.ProgressBar()
-                bar += intens_level
-                print(''.join([
-                    printer.get_generic_ref(f),
-                    str(bar)]))
+                if func['param'] == 'Intens':
+                    f = document.get_function_parent(self.plot_file, func)
+                    bar = printer.ProgressBar()
+                    bar += level['level']
+                    print(''.join([
+                        printer.get_generic_ref(f),
+                        str(bar)]))
+
+    def cue_get_fixture_levels(self, parsed_input):
+        """As for cue_get_intens, except only for a specified range of fixtures. In addition to the determined
+        fixture intensity level, also display the raw values of all other parameters in the cue."""
+        cue_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
+        for cue_ref in cue_refs:
+            cue = document.get_by_ref(self.plot_file, 'cue', cue_ref)
+            clihelper.print_object(cue)
+            fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
+            for fix_ref in fix_refs:
+                fix = document.get_by_ref(self.plot_file, 'fixture', fix_ref)
+                intens_uuid = document.find_fixture_intens(fix)['uuid']
+                for level in cue['levels']:
+                    func = document.get_function_by_uuid(self.plot_file, level['func'])
+                    if func['uuid'] == intens_uuid:
+                        bar = printer.ProgressBar()
+                        bar += level['level']
+                        print(''.join([printer.get_generic_ref(fix), str(bar)]))
+                    if document.get_function_parent(self.plot_file, func) == fix:
+                        print('    '+printer.get_generic_string(func)+' @ '+str(level['level']))
 
     def cue_set(self, parsed_input):
-        """Set the value of a tag in a cue."""
-        refs = clihelper.resolve_references(parsed_input[0])
+        """Set the value of a data tag with a given key in a cue."""
+        refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
         objs = [document.get_by_ref(self.plot_file, 'cue', ref) for ref in refs]
         for obj in objs:
             obj[parsed_input[1]] = parsed_input[2]
 
     def cue_set_fixture_level(self, parsed_input):
-        """Set the level of a fixture's intensity for a cue."""
-        cue_refs = clihelper.resolve_references(parsed_input[0])
-        fix_refs = clihelper.resolve_references(parsed_input[1])
+        """Set the level of a fixture's intensity for a cue. The function for this is determined by the first
+        function with the Intens param tag. Therefore this will not work correctly for fixtures with multiple
+        intensity parameters. For fixtures with 16bit intensity parameters, this will only change the major byte."""
+        cue_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'cue', parsed_input[0])
+        fix_refs = clihelper.safe_resolve_dec_references(self.plot_file, 'fixture', parsed_input[1])
         level = parsed_input[2]
+        if level[0] == 'H':
+            # Convert hexadecimal strings to integers
+            level = int(level[1:3], 16)
         for cue_ref in cue_refs:
             cue = document.get_by_ref(self.plot_file, 'cue', cue_ref)
             for fix_ref in fix_refs:
@@ -480,76 +637,21 @@ class EditorContext(Context):
                 intens_func = document.find_fixture_intens(fix)
                 cue['levels'].append({'func': intens_func['uuid'], 'level': level})
 
-    # Scene commands
-
-    # def scene_list(self, parsed_input):
-    #     '''List all scenes.'''
-    #     self.interface.open('SCN')
-    #     for scene in self.plot_file.scenes:
-    #         s = scene.name+' (Affects '+str(len(scene.outputs))+' functions)'
-    #         self.interface.add(s, scene, 'SCN')
-    #
-    # def scene_new(self, parsed_input):
-    #     '''Create a new scene.'''
-    #     outputs = []
-    #     for output in parsed_input[0].split(';'):
-    #         functions = self.interface.get('FNC', output.split('@')[0])
-    #         for function in functions:
-    #             outputs.append(xpx.OutputState(
-    #                 function=xpx.XPXReference(function.uuid),
-    #                 value=output.split('@')[1]))
-    #     self.plot_file.scenes.append(xpx.Scene(outputs=outputs,
-    #                                            name=parsed_input[1]))
-    #
-    # def scene_getall(self, parsed_input):
-    #     '''Display the outputs of a scene.'''
-    #     self.interface.open('FNC')
-    #     scenes = self.interface.get('SCN', parsed_input[0])
-    #     for scene in scenes:
-    #         print('\033[1mScene: '+scene.name+'\033[0m')
-    #         for output in scene.outputs:
-    #             function = self.plot_file.get_object_by_uuid(
-    #                 output.function.uuid)
-    #             value = clihelper.ProgressBar()
-    #             value = value+output.value
-    #             fixture = self.plot_file.get_fixture_for_function(function)
-    #             s = str(value)+' '+function.name+' ('+fixture.name+')'
-    #             self.interface.add(s, function, 'FNC')
-    #
-    # def scene_getall_dmx(self, parsed_input):
-    #     '''Display the outputs of a scene in terms of DMX channels.'''
-    #     self.interface.open('FNC')
-    #     scenes = self.interface.get('SCN', parsed_input[0])
-    #     for scene in scenes:
-    #         printlines = []
-    #         registries = []
-    #         print('\033[1mScene: '+scene.name+'\033[0m')
-    #         for output in scene.outputs:
-    #             function = self.plot_file.get_object_by_uuid(
-    #                 output.function.uuid)
-    #             channels = self.plot_file.get_channels_for_function(function)
-    #             for channel in channels:
-    #                 registry = self.plot_file.get_registry_for_channel(channel)
-    #                 if registry not in registries:
-    #                     registries.append(registry)
-    #                 printlines.append((registry, channel, output.value))
-    #         for registry in registries:
-    #             print('\033[3mRegistry: '+registry.name+'\033[0m')
-    #             for printline in printlines:
-    #                 if printline[0] == registry:
-    #                     value = clihelper.ProgressBar()
-    #                     value = value+printline[2]
-    #                     s = ('DMX'+str(format(printline[1].address, '03d'))+
-    #                          ' '+str(value))
-    #                     self.interface.add(s, printline[1].function, 'FNC')
-    #
-    # def scene_remove(self, parsed_input):
-    #     '''Remove a scene.'''
-    #     scenes = self.interface.get('SCN', parsed_input[0])
-    #     for scene in scenes:
-    #         self.plot_file.remove(scene)
-    #
-    # # Chase commands
+    def _cue_set_function_level(self, cue, func, level):
+        """Set the level of a function, in a cue. For internal usage only: accepts cue and function objects, rather
+        than references."""
+        fix = document.get_function_parent(self.plot_file, func)
+        # Check to see if the function is a 16 bit function by checking for
+        # functions with the (16b) suffix with the same name
+        fine_func = document.get_by_value(fix['personality'], 'param', func['param']+' (16b)')
+        if fine_func:
+            # Logic to determine 16bit values
+            upper_bit = math.floor(int(level)/256)
+            lower_bit = int(level) % 256
+            cue['levels'].append({'func': func['uuid'], 'level': upper_bit})
+            cue['levels'].append({'func': fine_func[0]['uuid'], 'level': lower_bit})
+        else:
+            cue['levels'].append({'func': func['uuid'], 'level': level})
 
     # Import commands
 
@@ -563,6 +665,8 @@ class EditorContext(Context):
             config.
             eos_patch: Reads special $Patch lines added by Eos, which support
             database values and personalities.
+            cues: Reads both conventional USITT cues, which will show intensity levels only, then reads special Eos
+            parameter level cues, which contain cue data for all other parameters.
         """
         target = parsed_input[1]
         with open(parsed_input[0]) as f:
@@ -596,6 +700,15 @@ class EditorContext(Context):
             line = line.strip()
             return line.split(' ', maxsplit=1)
 
+        # Look through parameters saved in this ASCII file and make our
+        # own list to we can refer to them later.
+        parameters = {}
+        r = re.compile('\$ParamType +([0-9]*) ([0-9]*) (.*)')
+        for l in raw:
+            match = re.match(r, l)
+            if match:
+                parameters[match.group(1)] = match.group(3).strip()
+
         if target == 'conventional_patch':
             entries = []
             r = re.compile('Patch.*')
@@ -622,15 +735,6 @@ class EditorContext(Context):
             personality_blocks = extract_blocks('\$Personality.*')
             patch_blocks = extract_blocks('\$Patch.*')
             templates = {}
-            parameters = {}
-
-            # Look through parameters saved in this ASCII file and make our
-            # own list to we can refer to them later.
-            r = re.compile('\$ParamType +([0-9]*) ([0-9]*) (.*)')
-            for l in raw:
-                match = re.match(r, l)
-                if match:
-                    parameters[match.group(1)] = match.group(3).strip()
 
             # Look through personalities saved in this ASCII file and make our
             # own list of them so we can refer to them later.
@@ -647,9 +751,24 @@ class EditorContext(Context):
                     elif res[0] == '$$PersChan':
                         pers.append({
                             'type': 'function',
-                            'name': parameters[res[1].split()[0]],
-                            'ref': int(res[1].split()[2])
+                            'param': parameters[res[1].split()[0]],
+                            'offset': int(res[1].split()[2]),
                         })
+                        if int(res[1].split()[1]) == 2:
+                            pers.append({
+                                'type': 'function',
+                                'param': parameters[res[1].split()[0]]+' (16b)',
+                                'offset': int(res[1].split()[3])
+                            })
+                # If the fixture personality does not contain an Intens parameter, add a virtual Intens parameter
+                # with offset zero, so the fixture can be used for commands such as get_fixture_intens
+                if 'Intens' not in [i['param'] for i in pers]:
+                    pers.append({
+                        'type': 'function',
+                        'param': 'Intens',
+                        'offset': 0,
+                        'virtual': True
+                    })
                 template['personality'] = pers
                 templates[pers_ref.strip()] = template
 
@@ -702,6 +821,37 @@ class EditorContext(Context):
                             self.cue_set_fixture_level([cue_ref,
                                                         level.split('@')[0],
                                                         level.split('@')[1]])
+                    elif res[0] == '$$Param':
+                        fixture = document.get_by_ref(self.plot_file, 'fixture', res[1].split()[0])
+                        for param_level in res[1].split():
+                            if '@' in param_level:
+                                param_type = parameters[param_level.split('@')[0]]
+                                # If this parameter is Intens, it will be referring to a 16 bit value, which we have
+                                # probably already added as an 8 bit from the generic levels lines. Therefore, we will
+                                # remove the 8 bit entry and replace with this 16 bit entry.
+                                if param_type == 'Intens':
+                                    intens_uuid = document.find_fixture_intens(fixture)['uuid']
+                                    cue_levels = document.get_by_ref(self.plot_file, 'cue', cue_ref)['levels']
+                                    for level in cue_levels:
+                                        if level['func'] == intens_uuid:
+                                            cue_levels.remove(level)
+                                param_value = param_level.split('@')[1]
+                                func = document.get_by_value(fixture['personality'], 'param', param_type)[0]
+                                self._cue_set_function_level(document.get_by_ref(self.plot_file, 'cue', cue_ref),
+                                                             func, param_value)
+
+        elif target == 'groups':
+            group_blocks = extract_blocks('\$Group')
+            for group in group_blocks:
+                group_ref = group[0].split()[1]
+                self.group_new([group_ref])
+                for l in group:
+                    res = resolve_line(l)
+                    if res[0] == 'Text':
+                        self.group_set_label([group_ref, res[1]])
+                    elif res[0] == '$$ChanList':
+                        for chan in res[1].split():
+                            self.group_append_fixture([group_ref, chan])
 
         else:
             print('Unsupported target. See the help page for this command for a list of supported targets.')
