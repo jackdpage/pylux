@@ -1,50 +1,100 @@
-# cli.py is part of Pylux
-#
-# Pylux is a program for the management of lighting documentation
-# Copyright 2015 Jack Page
-#
-# Pylux is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Pylux is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from importlib import import_module
+import urwid
+import cli_bridge
 
 
-def get_context(context_name):
-    module_name = 'context.'+context_name
-    context_module = import_module(module_name)
-    context_class = context_module.get_context()
-    return context_class
+COMMAND_OBJECTS = {
+    'f': 'File',
+    'q': 'Cue',
+    'x': 'Fixture'
+}
+COMMAND_ACTIONS = {
+    'c': 'Create',
+    'g': 'Get',
+    'G': 'GetAll',
+    'r': 'Remove',
+    's': 'Set'
+}
+NUMERIC_KEYS = [str(i) for i in range(0, 10)]
+
+
+class CommandLine(urwid.Edit):
+    def __init__(self, command_handler):
+        super(CommandLine, self).__init__()
+        self.context = ''
+        self.autocomplete = True
+        self.command_handler = command_handler
+
+    def post_command(self, command):
+        self.command_handler(command)
+
+    def set_context(self, context):
+        self.context = context
+        self.update_caption()
+
+    def enable_autocomplete(self):
+        self.autocomplete = True
+        self.update_caption()
+
+    def disable_autocomplete(self):
+        self.autocomplete = False
+        self.update_caption()
+
+    def update_caption(self):
+        if self.autocomplete:
+            self.set_caption('A ('+self.context+') ')
+        else:
+            self.set_caption('X ('+self.context+') ')
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            self.post_command(self.edit_text)
+            self.set_edit_text('')
+            self.enable_autocomplete()
+        elif key == 'B':
+            self.disable_autocomplete()
+            self.insert_text('BRIDGE_DIRECT_MODE ')
+        elif self.autocomplete:
+            self.keypress_autocomplete(size, key)
+        else:
+            return super(CommandLine, self).keypress(size, key)
+
+    def keypress_autocomplete(self, size, key):
+        if key in NUMERIC_KEYS and self.edit_text == '':
+            return super(CommandLine, self).insert_text(self.context + ' ' + key)
+        elif key in COMMAND_OBJECTS:
+            if self.edit_text == '':
+                self.set_context(COMMAND_OBJECTS[key])
+            elif self.edit_text[-1] in NUMERIC_KEYS:
+                self.insert_text(' ')
+            return super(CommandLine, self).insert_text(COMMAND_OBJECTS[key] + ' ')
+        elif key in COMMAND_ACTIONS:
+            if self.edit_text != '':
+                if self.edit_text[-1] in NUMERIC_KEYS:
+                    self.insert_text(' ')
+            self.disable_autocomplete()
+            return super(CommandLine, self).insert_text(COMMAND_ACTIONS[key] + ' ')
+        else:
+            return super(CommandLine, self).keypress(size, key)
+
+
+class CommandHistory(urwid.Text):
+    pass
 
 
 def main(init_globals):
-    globals = init_globals
-    context = get_context(globals['CONFIG']['cli']['default-context'])
-    context.set_globals(globals)
-    print('Welcome to Pylux! Type \'h\' to view a list of commands.')
-    while True:
-        user_input = input('(pylux:'+context.name+') ')
-        inputs = user_input.split(' ')
 
-        if len(user_input) > 0:
-            if inputs[0] == '::':
-                globals_dict = context.get_globals()
-                context = get_context(globals['CONFIG']['cli']['default-context'])
-                context.set_globals(globals_dict)
-            elif inputs[0][0] == ':':
-                globals_dict = context.get_globals()
-                context = get_context(inputs[0].split(':')[1])
-                context.set_globals(globals_dict)
-            elif inputs[0] in context.commands:
-                context.process(inputs)
-            else:
-                print('Command does not exist')
+    def post_command(command):
+        if 'BRIDGE_DIRECT_MODE' in command:
+            command_history.set_text('Sending command to Pylux via Bridge Direct Mode')
+            bridge.process_direct_command(command)
+        else:
+            command_history.set_text(command)
+
+    bridge = cli_bridge.CliBridge(init_globals)
+
+    command_line = CommandLine(post_command)
+    command_line.set_context('Fixture')
+    command_history = CommandHistory('Launch Program')
+    command_pile = urwid.Pile([command_history, command_line])
+    loop = urwid.MainLoop(urwid.Frame(urwid.SolidFill(' '), footer=command_pile))
+    loop.run()
