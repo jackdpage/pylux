@@ -1,16 +1,25 @@
 import urwid
 import cli_bridge
+import document
+from lib import printer
 
 
 COMMAND_OBJECTS = {
+    'a': 'All',
     'f': 'File',
+    'g': 'Group',
+    'm': 'Metadata',
     'q': 'Cue',
     'x': 'Fixture'
 }
 COMMAND_ACTIONS = {
-    'c': 'Create',
+    'c': 'CloneTo',
+    'C': 'CompleteFrom',
+    'd': 'Display',
     'g': 'Get',
     'G': 'GetAll',
+    'n': 'Create',
+    'N': 'CreateFrom',
     'r': 'Remove',
     's': 'Set'
 }
@@ -62,10 +71,9 @@ class CommandLine(urwid.Edit):
         if key in NUMERIC_KEYS and self.edit_text == '':
             return super(CommandLine, self).insert_text(self.context + ' ' + key)
         elif key in COMMAND_OBJECTS:
-            if self.edit_text == '':
-                self.set_context(COMMAND_OBJECTS[key])
-            elif self.edit_text[-1] in NUMERIC_KEYS:
-                self.insert_text(' ')
+            if self.edit_text:
+                if self.edit_text[-1] in NUMERIC_KEYS:
+                    self.insert_text(' ')
             return super(CommandLine, self).insert_text(COMMAND_OBJECTS[key] + ' ')
         elif key in COMMAND_ACTIONS:
             if self.edit_text != '':
@@ -81,20 +89,66 @@ class CommandHistory(urwid.Text):
     pass
 
 
-def main(init_globals):
+class ApplicationView:
+
+    def __init__(self, cmd):
+        self.history = CommandHistory('Initialise')
+        self.footer = urwid.Pile([self.history, cmd])
+        self.list_walker = urwid.SimpleFocusListWalker([])
+        self.sheet = urwid.ListBox(self.list_walker)
+
+    def update_sheet(self, sheet_list):
+        self.list_walker.clear()
+        self.list_walker.extend(sheet_list)
+
+
+class Application:
+
+    def __init__(self, f, conf, post_function):
+        self.file = self.initialise_file(f)
+        self.config = conf['CONFIG']
+        self.cmd = CommandLine(post_function)
+        self.view = ApplicationView(self.cmd)
+        self.update_context(self.config['curses']['default-context'])
+
+    def initialise_file(self, f):
+        s = document.get_string_from_file(f)
+        d = document.get_deserialised_document_from_string(s)
+        return d
+
+    def _generate_sheet_list(self, context):
+        text_widgets = []
+        if context == 'All':
+            context_objects = self.file
+        else:
+            context_objects = document.get_by_type(self.file, context.lower())
+        for i in context_objects:
+            string = printer.get_generic_text_widget(i)
+            text_widgets.append(urwid.Text(string))
+        return text_widgets
+
+    def update_context(self, context):
+        self.cmd.set_context(context)
+        sheet_list = self._generate_sheet_list(context)
+        self.view.update_sheet(sheet_list)
+
+
+def main(config):
 
     def post_command(command):
-        if 'BRIDGE_DIRECT_MODE' in command:
-            command_history.set_text('Sending command to Pylux via Bridge Direct Mode')
+        app.view.history.set_text(command)
+        split_command = command.split()
+        if not split_command:
+            app.view.history.set_text('Empty command')
+        elif split_command[0] == 'BRIDGE_DIRECT_MODE':
+            app.view.history.set_text('Sending command to Pylux via Bridge Direct Mode')
             bridge.process_direct_command(command)
+        elif split_command[0] == split_command[1] and split_command[0] in COMMAND_OBJECTS.values():
+            app.update_context(split_command[0])
         else:
-            command_history.set_text(command)
+            bridge.process_new_syntax_command(command)
 
-    bridge = cli_bridge.CliBridge(init_globals)
-
-    command_line = CommandLine(post_command)
-    command_line.set_context('Fixture')
-    command_history = CommandHistory('Launch Program')
-    command_pile = urwid.Pile([command_history, command_line])
-    loop = urwid.MainLoop(urwid.Frame(urwid.SolidFill(' '), footer=command_pile))
+    bridge = cli_bridge.CliBridge(config)
+    app = Application('f', config, post_command)
+    loop = urwid.MainLoop(urwid.Frame(app.view.sheet, footer=app.view.footer))
     loop.run()

@@ -4,6 +4,11 @@
 import context.editor
 
 
+MAPPINGS = {
+    'Fixture All Display ': ['xl']
+}
+
+
 class CliBridge:
 
     def __init__(self, global_params):
@@ -13,4 +18,11 @@ class CliBridge:
     def process_direct_command(self, command):
         inputs = command.split()
         del inputs[0]
+        self.context.process(inputs)
+
+    def process_new_syntax_command(self, command):
+        if command in MAPPINGS:
+            self.context.process(MAPPINGS[command])
+
+    def send_inputs(self, inputs):
         self.context.process(inputs)
