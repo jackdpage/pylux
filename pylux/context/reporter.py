@@ -26,10 +26,9 @@ just as easily be used for other formats.
 from jinja2 import Environment, FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError
 import os
-from lib import data, tagger
-from context.context import Context, Command
-import document
-import clihelper
+from pylux.lib import data, tagger
+from pylux.context.context import Context, Command
+from pylux import document, clihelper
 
 
 class Report:

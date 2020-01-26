@@ -1,7 +1,7 @@
 # This file essentially runs a non-interactive version of the old cli.py file to act as a bridge between the new
 # CLI command structure and the old functions
 
-import context.editor
+from pylux.context import editor
 
 
 MAPPINGS = {
@@ -12,7 +12,7 @@ MAPPINGS = {
 class CliBridge:
 
     def __init__(self, global_params):
-        self.context = context.editor.get_context()
+        self.context = editor.get_context()
         self.context.set_globals(global_params)
 
     def process_direct_command(self, command):

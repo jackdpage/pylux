@@ -15,10 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import clihelper
-from clihelper import resolve_input
-import document
-from importlib import import_module
+from pylux import clihelper, document
+from pylux.clihelper import resolve_input
 from tabulate import tabulate
 import sys
 import os

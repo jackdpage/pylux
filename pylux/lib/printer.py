@@ -84,6 +84,11 @@ def get_generic_string(obj, pre=''):
         return label+' ('+type+')'
 
 
+def get_generic_text_widget(obj, pre=''):
+    old_string = get_generic_string(obj, pre=pre)
+    return old_string
+
+
 PRINTER_INDEX = {
     'metadata': (get_metadata_value, 94),
     'fixture': (get_fixture_string, 92),

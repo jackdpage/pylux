@@ -22,16 +22,15 @@ Context that provides commands to create lighting plot images in
 SVG format.
 """
 
-from context.context import Context, Command
-import clihelper
+from pylux.context.context import Context, Command
+from pylux import clihelper, document, reference
 import os.path
 import logging
 import math
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
-import reference
-from lib import data, tagger
-import document
+from pylux.lib import data, tagger
+
 
 class LightingPlot():
 

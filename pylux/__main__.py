@@ -18,7 +18,7 @@
 
 import configparser
 
-import cli
+from pylux import cli
 
 
 def main():

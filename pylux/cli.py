@@ -1,7 +1,6 @@
 import urwid
-import cli_bridge
-import document
-from lib import printer
+from pylux import cli_bridge, document
+from pylux.lib import printer
 
 
 COMMAND_OBJECTS = {

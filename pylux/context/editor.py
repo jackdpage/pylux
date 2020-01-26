@@ -28,10 +28,9 @@ import re
 import uuid
 from copy import deepcopy
 
-import clihelper
-from context.context import Context, Command
-import document
-from lib import data, printer, tagger
+from pylux import clihelper, document
+from pylux.context.context import Context, Command
+from pylux.lib import data, printer, tagger
 
 
 class EditorContext(Context):
