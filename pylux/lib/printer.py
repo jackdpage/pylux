@@ -61,7 +61,8 @@ def get_generic_ref(obj):
                 '\033[1m\033[',
                 str(PRINTER_INDEX[obj['type']][1]), 'm',
                 str(obj['ref']), '\033[0m '])
-        else: ref_print = ''
+        else:
+            ref_print = ''
 
     return ref_print
 
@@ -72,7 +73,8 @@ def get_generic_string(obj, pre=''):
             ref_print = ''.join(['\033[1m\033[',
                                  str(PRINTER_INDEX[obj['type']][1]), 'm',
                                  str(obj['ref']), '\033[0m '])
-        else: ref_print = ''
+        else:
+            ref_print = ''
         s = pre + ref_print + PRINTER_INDEX[obj['type']][0](obj)
         return s
     else:
@@ -80,14 +82,41 @@ def get_generic_string(obj, pre=''):
             label = obj['label']
         else:
             label = UNLABELLED_STRING
-        type = obj['type']
-        return label+' ('+type+')'
+        obj_type = obj['type']
+        return label+' ('+obj_type+')'
+
+
+def get_fixture_extra_text(obj):
+    if 'fixture-type' in obj:
+        fixture_type = obj['fixture-type']
+    else:
+        fixture_type = 'n/a'
+
+    return '', fixture_type+' - ', ''
 
 
 def get_generic_text_widget(obj, pre=''):
-    old_string = get_generic_string(obj, pre=pre)
-    return old_string
+    if 'ref' in obj:
+        ref_print = (obj['type'], obj['ref']+' ')
+    else:
+        ref_print = ''
+    if 'label' in obj:
+        label = obj['label']
+    else:
+        label = ('unlabelled', 'Unlabelled')
+    if obj['type'] in EXTRA_TEXT:
+        extra = EXTRA_TEXT[obj['type']](obj)
+    else:
+        extra = ('', '', '')
 
+    s = [pre, extra[0], ref_print, extra[1], label, extra[2]]
+
+    return s
+
+
+EXTRA_TEXT = {
+    'fixture': get_fixture_extra_text
+}
 
 PRINTER_INDEX = {
     'metadata': (get_metadata_value, 94),

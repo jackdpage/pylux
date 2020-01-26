@@ -103,7 +103,7 @@ class Context:
             globals_dict: a dictionary containing the values of the 
                 predefined globals.
         """
-        self.plot_file = globals_dict['PLOT_FILE']
+        self.plot_file = globals_dict['FILE']
         self.config = globals_dict['CONFIG']
         self.load_location = globals_dict['LOAD_LOC']
         self.post_init()

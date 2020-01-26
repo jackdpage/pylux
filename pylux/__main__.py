@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import argparse
 import configparser
 
 from pylux import cli
@@ -27,8 +27,11 @@ def main():
     
     config = configparser.ConfigParser()
     config.read(['pylux.conf'])
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('-f', '--file')
+    args = arg_parser.parse_args()
 
-    init_globals = {'PLOT_FILE': [], 'CONFIG': config, 'LOAD_LOC': ''}
+    init_globals = {'FILE': args.file, 'CONFIG': config, 'LOAD_LOC': ''}
 
     print('Launching command line interface')
     cli.main(init_globals)

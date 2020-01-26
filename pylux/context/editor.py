@@ -773,6 +773,8 @@ class EditorContext(Context):
 
             for patch in patch_blocks:
                 fix_ref = patch[0].split(' ')[1]
+                if int(fix_ref) > 5000:
+                    break
                 # We have to make a deep copy of the template, to ensure that
                 # we aren't adjusting the personality and functions in place
                 # when we add UUIDs

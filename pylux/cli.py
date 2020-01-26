@@ -1,5 +1,5 @@
 import urwid
-from pylux import cli_bridge, document
+from pylux import cli_bridge, document, interpreter
 from pylux.lib import printer
 
 
@@ -9,6 +9,7 @@ COMMAND_OBJECTS = {
     'g': 'Group',
     'm': 'Metadata',
     'q': 'Cue',
+    'r': 'Registry',
     'x': 'Fixture'
 }
 COMMAND_ACTIONS = {
@@ -23,6 +24,14 @@ COMMAND_ACTIONS = {
     's': 'Set'
 }
 NUMERIC_KEYS = [str(i) for i in range(0, 10)]
+PALETTE = [
+    ('cue', 'light cyan', 'black', 'bold'),
+    ('fixture', 'light green', 'black', 'bold'),
+    ('group', 'light magenta', 'black', 'bold'),
+    ('metadata', 'light blue', 'black', 'bold'),
+    ('registry', 'yellow', 'black', 'bold'),
+    ('unlabelled', 'dark red', 'black')
+]
 
 
 class CommandLine(urwid.Edit):
@@ -91,21 +100,28 @@ class CommandHistory(urwid.Text):
 class ApplicationView:
 
     def __init__(self, cmd):
-        self.history = CommandHistory('Initialise')
+        self.history = CommandHistory('Application Initialise')
         self.footer = urwid.Pile([self.history, cmd])
-        self.list_walker = urwid.SimpleFocusListWalker([])
-        self.sheet = urwid.ListBox(self.list_walker)
+        self.fixed_walker = urwid.SimpleFocusListWalker([])
+        self.dynamic_walker = urwid.SimpleFocusListWalker([])
+        dynamic_sheet = urwid.ListBox(self.dynamic_walker)
+        fixed_sheet = urwid.ListBox(self.fixed_walker)
+        self.main_content = urwid.Columns([fixed_sheet, dynamic_sheet])
 
     def update_sheet(self, sheet_list):
-        self.list_walker.clear()
-        self.list_walker.extend(sheet_list)
+        self.fixed_walker.clear()
+        self.fixed_walker.extend(sheet_list)
+
+    def update_dynamic_content(self, widget_list):
+        self.dynamic_walker.clear()
+        self.dynamic_walker.extend(widget_list)
 
 
 class Application:
 
-    def __init__(self, f, conf, post_function):
-        self.file = self.initialise_file(f)
-        self.config = conf['CONFIG']
+    def __init__(self, init_globals, post_function):
+        self.file = self.initialise_file(init_globals['FILE'])
+        self.config = init_globals['CONFIG']
         self.cmd = CommandLine(post_function)
         self.view = ApplicationView(self.cmd)
         self.update_context(self.config['curses']['default-context'])
@@ -132,7 +148,7 @@ class Application:
         self.view.update_sheet(sheet_list)
 
 
-def main(config):
+def main(init_globals):
 
     def post_command(command):
         app.view.history.set_text(command)
@@ -145,9 +161,11 @@ def main(config):
         elif split_command[0] == split_command[1] and split_command[0] in COMMAND_OBJECTS.values():
             app.update_context(split_command[0])
         else:
-            bridge.process_new_syntax_command(command)
+            dynamic_output = command_interpreter.process_command(command)
+            app.view.update_dynamic_content(dynamic_output)
 
-    bridge = cli_bridge.CliBridge(config)
-    app = Application('f', config, post_command)
-    loop = urwid.MainLoop(urwid.Frame(app.view.sheet, footer=app.view.footer))
+    bridge = cli_bridge.CliBridge(init_globals)
+    app = Application(init_globals, post_command)
+    command_interpreter = interpreter.Interpreter(app.file)
+    loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), PALETTE)
     loop.run()
