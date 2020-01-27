@@ -1,13 +1,14 @@
 from pylux import document
 from pylux.lib import printer
-import urwid
 
 
 class Interpreter:
-    def __init__(self, file):
+    def __init__(self, file, message_bus):
         self.file = file
+        self.msg = message_bus
 
     def process_command(self, command):
+        self.msg.post_feedback(command)
         keywords = command.split()
         obj = keywords[0]
         refs = keywords[1]
@@ -18,7 +19,7 @@ class Interpreter:
             parameters = []
 
         if action == 'Display' and refs == 'All':
-            return self.display_all(obj)
+            self.display_all(obj)
 
     def display_all(self, obj):
         lines = []
@@ -28,5 +29,5 @@ class Interpreter:
             objects = document.get_by_type(self.file, obj.lower())
         for i in objects:
             s = printer.get_generic_text_widget(i)
-            lines.append(urwid.Text(s))
-        return lines
+            lines.append(s)
+        self.msg.post_output(lines)

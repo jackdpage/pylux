@@ -1,28 +1,8 @@
 import urwid
 from pylux import cli_bridge, document, interpreter
-from pylux.lib import printer
+from pylux.lib import autocomplete, printer
 
 
-COMMAND_OBJECTS = {
-    'a': 'All',
-    'f': 'File',
-    'g': 'Group',
-    'm': 'Metadata',
-    'q': 'Cue',
-    'r': 'Registry',
-    'x': 'Fixture'
-}
-COMMAND_ACTIONS = {
-    'c': 'CloneTo',
-    'C': 'CompleteFrom',
-    'd': 'Display',
-    'g': 'Get',
-    'G': 'GetAll',
-    'n': 'Create',
-    'N': 'CreateFrom',
-    'r': 'Remove',
-    's': 'Set'
-}
 NUMERIC_KEYS = [str(i) for i in range(0, 10)]
 PALETTE = [
     ('cue', 'light cyan', 'black', 'bold'),
@@ -40,6 +20,7 @@ class CommandLine(urwid.Edit):
         self.context = ''
         self.autocomplete = True
         self.command_handler = command_handler
+        self.keymap = autocomplete.get_keymap(self.edit_text)
 
     def post_command(self, command):
         self.command_handler(command)
@@ -76,25 +57,36 @@ class CommandLine(urwid.Edit):
             return super(CommandLine, self).keypress(size, key)
 
     def keypress_autocomplete(self, size, key):
-        if key in NUMERIC_KEYS and self.edit_text == '':
-            return super(CommandLine, self).insert_text(self.context + ' ' + key)
-        elif key in COMMAND_OBJECTS:
-            if self.edit_text:
-                if self.edit_text[-1] in NUMERIC_KEYS:
-                    self.insert_text(' ')
-            return super(CommandLine, self).insert_text(COMMAND_OBJECTS[key] + ' ')
-        elif key in COMMAND_ACTIONS:
-            if self.edit_text != '':
-                if self.edit_text[-1] in NUMERIC_KEYS:
-                    self.insert_text(' ')
-            self.disable_autocomplete()
-            return super(CommandLine, self).insert_text(COMMAND_ACTIONS[key] + ' ')
+        if not self.edit_text.split():
+            if key in [str(i) for i in range(0, 10)]:
+                self.insert_text(self.context+' ')
+        keymap = autocomplete.get_keymap(self.edit_text)
+        if keymap:
+            if key in keymap:
+                return super(CommandLine, self).insert_text(keymap[key])
+            else:
+                return super(CommandLine, self).keypress(size, key)
         else:
             return super(CommandLine, self).keypress(size, key)
 
 
 class CommandHistory(urwid.Text):
     pass
+
+
+class MessageBus:
+
+    def __init__(self, history, output_pane):
+        self.history = history
+        self.output = output_pane
+
+    def post_feedback(self, lines):
+        self.history.set_text(lines)
+
+    def post_output(self, lines):
+        self.output.clear()
+        for l in lines:
+            self.output.append(urwid.Text(l))
 
 
 class ApplicationView:
@@ -112,10 +104,6 @@ class ApplicationView:
         self.fixed_walker.clear()
         self.fixed_walker.extend(sheet_list)
 
-    def update_dynamic_content(self, widget_list):
-        self.dynamic_walker.clear()
-        self.dynamic_walker.extend(widget_list)
-
 
 class Application:
 
@@ -125,6 +113,7 @@ class Application:
         self.cmd = CommandLine(post_function)
         self.view = ApplicationView(self.cmd)
         self.update_context(self.config['curses']['default-context'])
+        self.message_bus = MessageBus(self.view.history, self.view.dynamic_walker)
 
     def initialise_file(self, f):
         s = document.get_string_from_file(f)
@@ -151,21 +140,21 @@ class Application:
 def main(init_globals):
 
     def post_command(command):
-        app.view.history.set_text(command)
         split_command = command.split()
         if not split_command:
             app.view.history.set_text('Empty command')
         elif split_command[0] == 'BRIDGE_DIRECT_MODE':
             app.view.history.set_text('Sending command to Pylux via Bridge Direct Mode')
             bridge.process_direct_command(command)
-        elif split_command[0] == split_command[1] and split_command[0] in COMMAND_OBJECTS.values():
+        elif (split_command[0] == split_command[1]
+              and split_command[0] in [i[0] for i in autocomplete.DEFAULT_KEYMAP]
+              and len(split_command) == 2):
             app.update_context(split_command[0])
         else:
-            dynamic_output = command_interpreter.process_command(command)
-            app.view.update_dynamic_content(dynamic_output)
+            command_interpreter.process_command(command)
 
     bridge = cli_bridge.CliBridge(init_globals)
     app = Application(init_globals, post_command)
-    command_interpreter = interpreter.Interpreter(app.file)
+    command_interpreter = interpreter.Interpreter(app.file, app.message_bus)
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), PALETTE)
     loop.run()
