@@ -19,6 +19,7 @@ import decimal
 import itertools
 import json
 import uuid
+import math
 
 
 # File operations. These functions load JSON documents from files and
@@ -154,6 +155,35 @@ def get_start_address(reg, n):
             return addr
 
 
+def safe_address_fixture_by_ref(doc, fix_ref, univ, addr):
+    """Register the functions of a fixture in a specified registry, beginning from a specified address. Register
+        the functions in the order of their offset value. Alternatively, provide with address zero to
+        pick an automatic starting address. Note that by default functions will overflow into the next registry if a
+        registry is filled before all functions are registered. If registries with the specified references do not
+        exist, new ones will be created. Registries are assumed to start at zero, in ArtNet style.
+        Alternatively to providing a universe/address pair, give universe zero and any address to
+        calculate the appropriate universe."""
+    reg = get_by_ref(doc, 'registry', univ)
+    while not reg:
+        insert_blank_registry(doc, str(univ))
+        reg = get_by_ref(doc, 'registry', univ)
+    fixture = get_by_ref(doc, 'fixture', fix_ref)
+    n = len(fixture['personality'])
+    if n > 0:
+        if addr == 0:
+            addr = get_start_address(reg, n)
+        for func in fixture['personality']:
+            if addr > 512:
+                univ += 1
+                reg = get_by_ref(doc, 'registry', univ)
+                while not reg:
+                    insert_blank_registry(univ)
+                    reg = get_by_ref(doc, 'registry', univ)
+                addr = addr % 512
+            reg['table'][addr] = func['uuid']
+            addr += 1
+
+
 def fill_missing_function_uuids(fix):
     """Add new UUIDs to the functions of a fixture where they are missing."""
     if 'personality' in fix:
@@ -167,6 +197,95 @@ def find_fixture_intens(fix):
         for func in fix['personality']:
             if func['param'] == 'Intens':
                 return func
+
+
+def insert_blank_fixture(doc, ref):
+    if ref == 0:
+        ref = autoref(doc, 'fixture')
+    fixture = {
+        'type': 'fixture',
+        'ref': str(ref),
+        'uuid': str(uuid.uuid4())
+    }
+    doc.append(fixture)
+    return fixture
+
+
+def insert_blank_group(doc, ref):
+    if ref == 0:
+        ref = autoref(doc, 'group')
+    group = {
+        'type': 'group',
+        'ref': str(ref),
+        'uuid': str(uuid.uuid4()),
+        'fixtures': []
+    }
+    doc.append(group)
+    return group
+
+
+def group_append_fixture_by_ref(doc, group, fix_ref):
+    fix = get_by_ref(doc, 'fixture', fix_ref)
+    if fix:
+        group['fixtures'].append(fix['uuid'])
+
+
+def insert_blank_registry(doc, ref):
+    registry = {
+        'type': 'registry',
+        'ref': str(ref),
+        'uuid': str(uuid.uuid4()),
+        'table': {}
+    }
+    doc.append(registry)
+    return registry
+
+
+def insert_blank_cue(doc, ref):
+    if ref == 0:
+        ref = autoref(doc, 'cue')
+    cue = {
+        'type': 'cue',
+        'uuid': str(uuid.uuid4()),
+        'ref': ref,
+        'levels': {}
+    }
+    doc.append(cue)
+    return cue
+
+
+def set_cue_fixture_level(cue, fix, level):
+    """Set the level of a fixture in a cue. Automatically decides on the function by finding the
+    Intens function."""
+    intens = find_fixture_intens(fix)
+    cue['levels'][intens['uuid']] = level
+
+
+def set_cue_fixture_level_by_fixture_ref(doc, cue, fix_ref, level):
+    """Set cue fixture level as in set_cue_fixture_level, except accept a fixture reference rather than
+    fixture object."""
+    fix = get_by_ref(doc, 'fixture', fix_ref)
+    set_cue_fixture_level(cue, fix, level)
+
+
+def set_cue_function_level(doc, cue, func, level):
+    """Set the level of a function, in a cue."""
+    fix = get_function_parent(doc, func)
+    # Check to see if the function is a 16 bit function by checking for
+    # functions with the (16b) suffix with the same name
+    fine_func = get_by_value(fix['personality'], 'param', func['param'] + ' (16b)')
+    if fine_func:
+        # Logic to determine 16bit values
+        try:
+            upper_bit = math.floor(int(level) / 256)
+            lower_bit = int(level) % 256
+        except ValueError:
+            upper_bit = level
+            lower_bit = level
+        cue['levels'][func['uuid']] = str(upper_bit)
+        cue['levels'][fine_func[0]['uuid']] = str(lower_bit)
+    else:
+        cue['levels'][func['uuid']] = level
 
 
 def get_function_patch_location(doc, func):

@@ -13,6 +13,8 @@ KEYMAPS = [
     ('Group', 'g', 'object', 'any', True),
     ('ImportAscii', 'i', 'action', 'File', False),
     ('Metadata', 'm', 'object', 'any', True),
+    ('Open', 'o', 'action', 'File', False),
+    ('Patch', 'p', 'action', 'Fixture', False),
     ('Registry', 'r', 'object', 'any', True),
     ('Remove', 'r', 'action', 'any', False),
     ('Set', 's', 'action', 'any', False)

@@ -95,6 +95,10 @@ def get_fixture_extra_text(obj):
     return '', fixture_type+' - ', ''
 
 
+def get_cue_extra_text(obj):
+    return '', '', ' ('+str(len(obj['levels']))+' levels)'
+
+
 def get_generic_text_widget(obj, pre=''):
     if 'ref' in obj:
         ref_print = (obj['type'], obj['ref']+' ')
@@ -115,7 +119,8 @@ def get_generic_text_widget(obj, pre=''):
 
 
 EXTRA_TEXT = {
-    'fixture': get_fixture_extra_text
+    'fixture': get_fixture_extra_text,
+    'cue': get_cue_extra_text
 }
 
 PRINTER_INDEX = {

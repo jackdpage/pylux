@@ -136,6 +136,9 @@ class Application:
         sheet_list = self._generate_sheet_list(context)
         self.view.update_sheet(sheet_list)
 
+    def update_view(self):
+        self.view.update_sheet(self._generate_sheet_list(self.cmd.context))
+
 
 def main(init_globals):
 
@@ -152,9 +155,12 @@ def main(init_globals):
             app.update_context(split_command[0])
         else:
             command_interpreter.process_command(command)
+            app.update_view()
 
     bridge = cli_bridge.CliBridge(init_globals)
     app = Application(init_globals, post_command)
-    command_interpreter = interpreter.Interpreter(app.file, app.message_bus)
+    command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
+    command_interpreter.register_extension('base')
+    command_interpreter.register_extension('eos')
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), PALETTE)
     loop.run()

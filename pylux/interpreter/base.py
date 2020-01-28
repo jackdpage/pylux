@@ -1,0 +1,46 @@
+from pylux.interpreter import RegularCommand, InterpreterExtension
+from pylux import document
+
+
+class BaseExtension(InterpreterExtension):
+
+    def register_commands(self):
+        self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create))
+        self.commands.append(RegularCommand(('Cue', 'Set'), self.cue_set))
+        self.commands.append(RegularCommand(('File', 'Write'), self.file_write))
+        self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create))
+        self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
+        self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
+
+    def cue_create(self, refs):
+        """Create a blank cue."""
+        for ref in refs:
+            document.insert_blank_cue(self.interpreter.file, ref)
+
+    def cue_set(self, refs, k, v):
+        """Set the value of a cue's tag."""
+        for ref in refs:
+            document.get_by_ref(self.interpreter.file, 'cue', ref)[k] = v
+
+    def file_write(self, refs, location):
+        """Write file to location."""
+        document.write_to_file(self.interpreter.file, location)
+
+    def fixture_create(self, refs):
+        """Create a blank fixture."""
+        for ref in refs:
+            document.insert_blank_fixture(self.interpreter.file, ref)
+
+    def fixture_set(self, refs, k, v):
+        """Set the value of a fixture's tag."""
+        for ref in refs:
+            document.get_by_ref(self.interpreter.file, 'fixture', ref)[k] = v
+
+    def fixture_patch(self, refs, univ, addr):
+        """Patch the functions of a fixture in a registry."""
+        for ref in refs:
+            document.safe_address_fixture_by_ref(self.interpreter.file, ref, int(univ), int(addr))
+
+
+def register_extension(interpreter):
+    BaseExtension(interpreter).register_extension()

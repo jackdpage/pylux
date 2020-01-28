@@ -17,8 +17,9 @@
 
 import argparse
 import configparser
+import os.path
 
-from pylux import cli
+from pylux import cli, document
 
 
 def main():
@@ -28,10 +29,14 @@ def main():
     config = configparser.ConfigParser()
     config.read(['pylux.conf'])
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('-f', '--file')
+    arg_parser.add_argument('-f', '--file', default='autosave.json')
     args = arg_parser.parse_args()
 
-    init_globals = {'FILE': args.file, 'CONFIG': config, 'LOAD_LOC': ''}
+    # If the specified file or autosave file doesn't exist, create a blank json document there
+    if not os.path.isfile(args.file):
+        document.write_to_file([], args.file)
+
+    init_globals = {'FILE': args.file, 'CONFIG': config, 'LOAD_LOC': args.file}
 
     print('Launching command line interface')
     cli.main(init_globals)
