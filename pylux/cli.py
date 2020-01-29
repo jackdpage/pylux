@@ -164,5 +164,6 @@ def main(init_globals):
     command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
     command_interpreter.register_extension('base')
     command_interpreter.register_extension('eos')
+    command_interpreter.register_extension('report')
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), PALETTE)
     loop.run()

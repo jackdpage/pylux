@@ -24,7 +24,12 @@ def tag_fixture_rotation(fixture):
 
 def tag_fixture_patch(doc, fixture):
     if 'personality' in fixture:
-        start_func = document.get_by_value(fixture['personality'], 'offset', 1)[0]
+        start_func = None
+        for func in fixture['personality']:
+            if not start_func:
+                start_func = func
+            elif func['offset'] < start_func['offset']:
+                start_func = func
         if start_func:
             location = document.get_function_patch_location(doc, start_func)
             fixture['patch-start'] = location
