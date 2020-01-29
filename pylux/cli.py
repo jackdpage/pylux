@@ -149,6 +149,8 @@ def main(init_globals):
         elif split_command[0] == 'BRIDGE_DIRECT_MODE':
             app.view.history.set_text('Sending command to Pylux via Bridge Direct Mode')
             bridge.process_direct_command(command)
+        elif len(split_command) == 1:
+            command_interpreter.process_command(command)
         elif (split_command[0] == split_command[1]
               and split_command[0] in [i[0] for i in autocomplete.DEFAULT_KEYMAP]
               and len(split_command) == 2):

@@ -14,6 +14,17 @@ class RegularCommand:
             self.parameters = []
 
 
+class NoRefsCommand:
+    def __init__(self, syntax, function):
+        self.trigger = syntax
+        self.function = function
+        # This is the same as the RegularCommand, except we are expecting one fewer arguments due to the lack of refs
+        if function.__code__.co_argcount > 1:
+            self.parameters = [i for i in function.__code__.co_varnames[1:function.__code__.co_argcount] if i]
+        else:
+            self.parameters = []
+
+
 class InterpreterExtension:
     def __init__(self, interpreter):
         self.interpreter = interpreter
@@ -35,53 +46,74 @@ class Interpreter:
         self.config = config
         self.commands = []
         self.triggers = {}
+        self.noref_triggers = {}
 
-    def process_command(self, command):
-        self.msg.post_feedback(command)
-        keywords = command.split()
-        obj = keywords[0]
-        refs = keywords[1]
-        if refs != 'All':
-            refs = clihelper.resolve_references(keywords[1])
-        action = keywords[2]
-        trigger = (obj, action)
-        if len(keywords) > 3:
-            parameters = keywords[3:]
-        else:
-            parameters = []
+    def command_failed(self, posted_command):
+        self.msg.post_feedback(['Error: Invalid command '+posted_command])
 
-        if trigger in self.triggers:
-            command = self.triggers[trigger]
-            # Find out how many parameters the command is expecting, if we have a different number to that, assume
-            # that all over that amount are combined to one multi-word parameter
-            n = len(command.parameters)
+    def process_command(self, posted_command):
+
+        def calculate_params(n, params):
+            """Based on the command given, determine how many parameters are expected. Then shrink the number of
+            parameters we were given on the command line to this number. This is done by combining all end
+            parameters into one multi-word parameter with spaces."""
             if n != 0:
                 args = []
-                for i in range(0, n-1):
-                    args.append(parameters[i])
-                args.append(' '.join(parameters[(n-1):]))
+                for i in range(0, n - 1):
+                    args.append(params[i])
+                args.append(' '.join(params[(n - 1):]))
             else:
                 args = []
-            self.triggers[trigger].function(refs, *args)
+            return args
 
-        if action == 'Display' and refs == 'All':
-            self.display_all(obj)
+        self.msg.post_feedback(posted_command)
+        keywords = posted_command.split()
+        if len(keywords) < 2:
+            self.command_failed(posted_command)
+        else:
+            obj = keywords[0]
+
+            # If the first two keywords are in noref_triggers then this is a command with no references
+            if (obj, keywords[1]) in self.noref_triggers:
+                action = keywords[1]
+                trigger = (obj, action)
+                if len(keywords) > 2:
+                    parameters = keywords[2:]
+                else:
+                    parameters = []
+                command = self.noref_triggers[trigger]
+                args = calculate_params(len(command.parameters), parameters)
+                command.function(*args)
+
+            # If the first and third keywords are in triggers, then the second keyword will be the references
+            elif len(keywords) > 2:
+                if (obj, keywords[2]) in self.triggers:
+                    refs = keywords[1]
+                    action = keywords[2]
+                    trigger = (obj, action)
+                    if refs != 'All':
+                        refs = clihelper.resolve_references(keywords[1])
+                    if len(keywords) > 3:
+                        parameters = keywords[3:]
+                    else:
+                        parameters = []
+                    command = self.triggers[trigger]
+                    args = calculate_params(len(command.parameters), parameters)
+                    command.function(refs, *args)
+                else:
+                    self.command_failed(posted_command)
+
+            # Otherwise, the command doesn't exist
+            else:
+                self.command_failed(posted_command)
 
     def register_command(self, command):
         self.commands.append(command)
-        self.triggers[command.trigger] = command
+        if command.__class__ == RegularCommand:
+            self.triggers[command.trigger] = command
+        elif command.__class__ == NoRefsCommand:
+            self.noref_triggers[command.trigger] = command
 
     def register_extension(self, name, pkg='pylux.interpreter'):
         module = import_module('.'+name, pkg)
         module.register_extension(self)
-
-    def display_all(self, obj):
-        lines = []
-        if obj == 'All':
-            objects = self.file
-        else:
-            objects = document.get_by_type(self.file, obj.lower())
-        for i in objects:
-            s = printer.get_generic_text_widget(i)
-            lines.append(s)
-        self.msg.post_output(lines)
