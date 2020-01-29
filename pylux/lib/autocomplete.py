@@ -18,7 +18,8 @@ KEYMAPS = [
     ('Patch', 'p', 'action', 'Fixture', False),
     ('Registry', 'r', 'object', 'any', True),
     ('Remove', 'r', 'action', 'any', False),
-    ('Set', 's', 'action', 'any', False)
+    ('Set', 's', 'action', 'any', False),
+    ('Write', 'w', 'action', 'File', False)
 ]
 DEFAULT_KEYMAP = [i for i in KEYMAPS if i[4]]
 NO_KEYMAP = []
@@ -36,12 +37,18 @@ def get_keymap(fragment):
         return _generate_keymap(DEFAULT_KEYMAP)
     if len(keywords) == 1:
         # Return any special characters which can be used in place of numbers
-        if keywords[0] in [i[0] for i in ALL_OBJECTS]:
+        if keywords[0] == 'File':
+            legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]] or keywords[0] in i[3]]
+            return _generate_keymap(legal_actions)
+        elif keywords[0] in [i[0] for i in ALL_OBJECTS]:
             return {**_generate_keymap(DEFAULT_KEYMAP), **NUMERIC_MAP}
     if len(keywords) == 2:
         # Return a list of actions which are suitable for the object type in this command fragment
-        legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]] or keywords[0] in i[3]]
-        return _generate_keymap(legal_actions, pre=' ')
+        if keywords[0] == 'File':
+            return {}
+        else:
+            legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]] or keywords[0] in i[3]]
+            return _generate_keymap(legal_actions, pre=' ')
 
 
 def _generate_keymap(tuple_list, pre='', post=' '):

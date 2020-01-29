@@ -1,4 +1,4 @@
-from pylux.interpreter import RegularCommand, InterpreterExtension
+from pylux.interpreter import RegularCommand, InterpreterExtension, NoRefsCommand
 from pylux import document, clihelper
 from pylux.lib import printer
 
@@ -8,7 +8,7 @@ class BaseExtension(InterpreterExtension):
     def register_commands(self):
         self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create))
         self.commands.append(RegularCommand(('Cue', 'Set'), self.cue_set))
-        self.commands.append(RegularCommand(('File', 'Write'), self.file_write))
+        self.commands.append(NoRefsCommand(('File', 'Write'), self.file_write))
         self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create))
         self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
         self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
@@ -26,7 +26,7 @@ class BaseExtension(InterpreterExtension):
         for ref in refs:
             document.get_by_ref(self.interpreter.file, 'cue', ref)[k] = v
 
-    def file_write(self, refs, location):
+    def file_write(self, location):
         """Write file to location."""
         document.write_to_file(self.interpreter.file, location)
 

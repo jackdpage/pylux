@@ -1,15 +1,15 @@
 from copy import deepcopy
 import math, re
-from pylux.interpreter import RegularCommand, InterpreterExtension
+from pylux.interpreter import RegularCommand, InterpreterExtension, NoRefsCommand
 from pylux import document
 
 
 class EosExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(RegularCommand(('File', 'ImportAscii'), self.file_importascii))
+        self.commands.append(NoRefsCommand(('File', 'ImportAscii'), self.file_importascii))
 
-    def file_importascii(self, refs, file, target):
+    def file_importascii(self, file, target):
         with open(file) as f:
             raw = f.readlines()
 
