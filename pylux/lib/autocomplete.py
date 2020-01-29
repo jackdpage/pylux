@@ -1,7 +1,8 @@
 # command/shortcut/type(object/action)/expected_after/in_init
 KEYMAPS = [
-    ('About', 'a', 'action', 'Fixture', False),
+    ('About', 'a', 'action', ['Fixture', 'Group'], False),
     ('All', 'a', 'object', 'any', True),
+    ('Append', 'A', 'action', 'Group', False),
     ('CompleteFrom', 'C', 'action', 'Fixture', False),
     ('CopyTo', 'c', 'action', 'any', False),
     ('Create', 'n', 'action', 'any', False),
@@ -39,7 +40,7 @@ def get_keymap(fragment):
             return {**_generate_keymap(DEFAULT_KEYMAP), **NUMERIC_MAP}
     if len(keywords) == 2:
         # Return a list of actions which are suitable for the object type in this command fragment
-        legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]]]
+        legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]] or keywords[0] in i[3]]
         return _generate_keymap(legal_actions, pre=' ')
 
 
