@@ -14,12 +14,16 @@ def tag_fixture_colour(fixture):
 
 
 def tag_fixture_rotation(fixture):
-    if 'posX' or 'posY' or 'focusX' or 'focusY' not in fixture:
-        fixture['rotation'] = 0
-    else:
+    # If we can't calculate the rotation (e.g. a moving head would not have any focus values) then set the rotation
+    # to zero to have the fixture point in its default orientation. Unless the rotation tag already exists, in which
+    # case leave it as-is in case it was added manually.
+    if 'posX' in fixture and 'posY' in fixture and 'focusX' in fixture and 'focusY' in fixture:
         pos = [float(fixture['posX']), float(fixture['posY'])]
         focus = [float(fixture['focusX']), float(fixture['focusY'])]
-        fixture['rotation'] = math.degrees(math.atan2(focus[1] - pos[1], focus[0] - pos[0]))
+        fixture['rotation'] = 90 - math.degrees(math.atan2(focus[1] - pos[1], focus[0] - pos[0]))
+    elif 'rotation' not in fixture:
+        fixture['rotation'] = 0
+
 
 
 def tag_fixture_patch(doc, fixture):

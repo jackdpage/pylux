@@ -1,6 +1,6 @@
 # command/shortcut/type(object/action)/expected_after/in_init
 KEYMAPS = [
-    ('About', 'a', 'action', ['Fixture', 'Group'], False),
+    ('About', 'a', 'action', ['Fixture', 'Group', 'Plot'], False),
     ('All', 'a', 'object', 'any', True),
     ('Append', 'A', 'action', 'Group', False),
     ('CompleteFrom', 'C', 'action', 'Fixture', False),
@@ -21,7 +21,7 @@ KEYMAPS = [
     ('Report', 'R', 'object', 'any', True),
     ('Remove', 'r', 'action', 'any', False),
     ('Set', 's', 'action', 'any', False),
-    ('Write', 'w', 'action', ['File', 'Report'], False)
+    ('Write', 'w', 'action', ['File', 'Plot', 'Report'], False)
 ]
 DEFAULT_KEYMAP = [i for i in KEYMAPS if i[4]]
 NO_KEYMAP = []
@@ -39,7 +39,7 @@ def get_keymap(fragment):
         return _generate_keymap(DEFAULT_KEYMAP)
     if len(keywords) == 1:
         # Return any special characters which can be used in place of numbers
-        if keywords[0] in ['File', 'Report', 'Path']:
+        if keywords[0] in ['File', 'Report', 'Plot']:
             legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]] or keywords[0] in i[3]]
             return _generate_keymap(legal_actions)
         elif keywords[0] in [i[0] for i in ALL_OBJECTS]:

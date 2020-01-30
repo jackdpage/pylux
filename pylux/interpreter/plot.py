@@ -5,7 +5,6 @@ from pylux.lib.data import get_data
 import xml.etree.ElementTree as ET
 import os
 import math
-from tqdm import tqdm
 
 
 class LightingPlot:
@@ -384,9 +383,7 @@ class LightingPlot:
         return point
 
     def generate_plot(self):
-        if not self.can_fit_page():
-            print('PlotterError: Plot does not fit page with this scaling')
-        else:
+        if self.can_fit_page():
             self.lighting_plot = self.get_empty_plot()
             root = self.lighting_plot.getroot()
             if self.options['page-border'] == 'True':
@@ -394,12 +391,10 @@ class LightingPlot:
             try:
                 root.append(self.get_background_image())
             except FileNotFoundError:
-                print('Yeah it kind of didn\'t work. Just going to ignore this')
+                pass
             root.append(self.get_centre_line())
-            print('Plotted centre line')
             root.append(self.get_plaster_line())
-            print('Plotted plaster line')
-            for fixture in tqdm(self.fixtures, desc='Plotting fixtures: '):
+            for fixture in self.fixtures:
                 tagger.tag_fixture_all_doc_independent(fixture)
                 if self.options['show-beams'] == 'True':
                     root.append(self.get_fixture_beam(fixture))
@@ -408,23 +403,6 @@ class LightingPlot:
                 root.append(self.get_fixture_icon(fixture))
             if self.options['title-block'] != 'None':
                 root.append(self.get_title_block())
-                print('Added title block')
-
-
-class PlotOptions():
-
-    def __init__(self, config):
-
-        self.options = config['plotter']
-
-    def set(self, option, value):
-        self.options[option] = value
-
-    def get(self, option):
-        if option in self.options:
-            return self.options[option]
-        else:
-            return None
 
 
 class FixtureSymbol:
@@ -497,19 +475,27 @@ class PlotExtension(InterpreterExtension):
 
     def __init__(self, interpreter):
         super().__init__(interpreter)
-        self.options = PlotOptions(self.interpreter.config)
+        self.options = self.interpreter.config['plotter']
         self.plot = None
 
     def register_commands(self):
+        self.commands.append(NoRefsCommand(('Plot', 'About'), self.plot_about))
         self.commands.append(NoRefsCommand(('Plot', 'Create'), self.plot_create))
+        self.commands.append(NoRefsCommand(('Plot', 'Set'), self.plot_set))
         self.commands.append(NoRefsCommand(('Plot', 'Write'), self.plot_write))
 
     def plot_create(self):
-        self.plot = LightingPlot(self.interpreter.file, self.options.options)
+        self.plot = LightingPlot(self.interpreter.file, self.options)
         self.plot.generate_plot()
 
     def plot_write(self, path):
         self.plot.lighting_plot.write(os.path.expanduser(path))
+
+    def plot_set(self, k, v):
+        self.options[k] = v
+
+    def plot_about(self):
+        self.interpreter.msg.post_output([k + ': ' + self.options[k] for k in self.options])
 
 
 def register_extension(interpreter):
