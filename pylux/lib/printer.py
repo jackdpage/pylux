@@ -103,6 +103,10 @@ def get_group_extra_text(obj):
     return '', '', ' ('+str(len(obj['fixtures']))+' fixtures)'
 
 
+def get_registry_extra_text(obj):
+    return 'Universe ', '', str(len(obj['table']))+' occupied'
+
+
 def get_generic_text_widget(obj, pre=''):
     if 'ref' in obj:
         ref_print = (obj['type'], obj['ref']+' ')
@@ -114,6 +118,8 @@ def get_generic_text_widget(obj, pre=''):
         label = obj['label']
     elif obj['type'] == 'function':
         label = obj['param']
+    elif obj['type'] == 'registry':
+        label = '- '
     else:
         label = ('unlabelled', 'Unlabelled')
     if obj['type'] in EXTRA_TEXT:
@@ -129,7 +135,8 @@ def get_generic_text_widget(obj, pre=''):
 EXTRA_TEXT = {
     'fixture': get_fixture_extra_text,
     'cue': get_cue_extra_text,
-    'group': get_group_extra_text
+    'group': get_group_extra_text,
+    'registry': get_registry_extra_text
 }
 
 PRINTER_INDEX = {
