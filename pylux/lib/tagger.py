@@ -15,7 +15,7 @@ def tag_fixture_colour(fixture):
 
 def tag_fixture_rotation(fixture):
     if 'posX' or 'posY' or 'focusX' or 'focusY' not in fixture:
-        pass
+        fixture['rotation'] = 0
     else:
         pos = [float(fixture['posX']), float(fixture['posY'])]
         focus = [float(fixture['focusX']), float(fixture['focusY'])]
@@ -38,6 +38,7 @@ def tag_fixture_patch(doc, fixture):
 def tag_fixture_all(doc, fixture):
     tag_fixture_all_doc_independent(fixture)
     tag_fixture_patch(doc, fixture)
+
 
 def tag_fixture_all_doc_independent(fixture):
     tag_fixture_colour(fixture)

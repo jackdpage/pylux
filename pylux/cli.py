@@ -147,7 +147,7 @@ def main(init_globals):
         if not split_command:
             app.view.history.set_text('Empty command')
         elif split_command[0] == 'BRIDGE_DIRECT_MODE':
-            app.view.history.set_text('Sending command to Pylux via Bridge Direct Mode')
+            app.view.history.set_text('Sending command via Bridge Direct Mode')
             bridge.process_direct_command(command)
         elif len(split_command) == 1:
             command_interpreter.process_command(command)
@@ -165,5 +165,6 @@ def main(init_globals):
     command_interpreter.register_extension('base')
     command_interpreter.register_extension('eos')
     command_interpreter.register_extension('report')
+    command_interpreter.register_extension('plot')
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), PALETTE)
     loop.run()
