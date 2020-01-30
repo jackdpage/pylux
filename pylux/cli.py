@@ -7,6 +7,7 @@ NUMERIC_KEYS = [str(i) for i in range(0, 10)]
 PALETTE = [
     ('cue', 'light cyan', 'black', 'bold'),
     ('fixture', 'light green', 'black', 'bold'),
+    ('function', 'light magenta', 'black', 'bold'),
     ('group', 'light magenta', 'black', 'bold'),
     ('metadata', 'light blue', 'black', 'bold'),
     ('registry', 'yellow', 'black', 'bold'),
@@ -83,8 +84,10 @@ class MessageBus:
     def post_feedback(self, lines):
         self.history.set_text(lines)
 
-    def post_output(self, lines):
+    def clear_output(self):
         self.output.clear()
+
+    def post_output(self, lines):
         for l in lines:
             self.output.append(urwid.Text(l))
 
@@ -156,6 +159,7 @@ def main(init_globals):
               and len(split_command) == 2):
             app.update_context(split_command[0])
         else:
+            app.message_bus.clear_output()
             command_interpreter.process_command(command)
             app.update_view()
 

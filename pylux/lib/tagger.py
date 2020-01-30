@@ -25,7 +25,6 @@ def tag_fixture_rotation(fixture):
         fixture['rotation'] = 0
 
 
-
 def tag_fixture_patch(doc, fixture):
     if 'personality' in fixture:
         start_func = None

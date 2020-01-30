@@ -9,6 +9,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create))
         self.commands.append(RegularCommand(('Cue', 'Set'), self.cue_set))
         self.commands.append(NoRefsCommand(('File', 'Write'), self.file_write))
+        self.commands.append(RegularCommand(('Fixture', 'About'), self.fixture_about))
         self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create))
         self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
         self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
@@ -29,6 +30,20 @@ class BaseExtension(InterpreterExtension):
     def file_write(self, location):
         """Write file to location."""
         document.write_to_file(self.interpreter.file, location)
+
+    def fixture_about(self, refs):
+        """Display data tags and DMX functions of a fixture."""
+        for ref in refs:
+            f = document.get_by_ref(self.interpreter.file, 'fixture', ref)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(f)])
+            self.interpreter.msg.post_output([str(len(f))+' Data Tags:'])
+            self.interpreter.msg.post_output(['    '+str(k)+': '+str(f[k])
+                                              for k in sorted(f)
+                                              if k not in self.interpreter.config['cli']['ignore-about-tags']])
+            if len(f['personality']):
+                self.interpreter.msg.post_output([str(len(f['personality']))+' DMX Functions:'])
+                for func in f['personality']:
+                    self.interpreter.msg.post_output([['    ']+printer.get_generic_text_widget(func)])
 
     def fixture_create(self, refs):
         """Create a blank fixture."""

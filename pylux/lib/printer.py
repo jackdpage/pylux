@@ -106,10 +106,14 @@ def get_group_extra_text(obj):
 def get_generic_text_widget(obj, pre=''):
     if 'ref' in obj:
         ref_print = (obj['type'], obj['ref']+' ')
+    elif obj['type'] == 'function':
+        ref_print = ('function', str(obj['offset'])+' ')
     else:
         ref_print = ''
     if 'label' in obj:
         label = obj['label']
+    elif obj['type'] == 'function':
+        label = obj['param']
     else:
         label = ('unlabelled', 'Unlabelled')
     if obj['type'] in EXTRA_TEXT:
