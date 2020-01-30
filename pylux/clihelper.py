@@ -37,10 +37,23 @@ def safe_resolve_dec_references(doc, type, user_input):
     string representations of decimals. Checks that each of these references
     actually represents an object in the show file, and returns the resulting
     list."""
-    # Start with the complete possible range of reference numbers
-    reference_list = resolve_dec_references(user_input)
-    # Only return those who have an existing object
-    return [i for i in reference_list if document.get_by_ref(doc, type, i)]
+    calculated_refs = []
+    split_input = user_input.split(',')
+    ranges = [(decimal.Decimal(i.split('>')[0]), decimal.Decimal(i.split('>')[1])) for i in split_input if '>' in i]
+    points = [decimal.Decimal(i) for i in split_input if i.isdigit()]
+    obj_list = document.get_by_type(doc, type)
+    for obj in obj_list:
+        ref = decimal.Decimal(obj['ref'])
+        for r in ranges:
+            if r[0] <= ref <= r[1]:
+                calculated_refs.append(ref)
+                break
+        for p in points:
+            if p == ref:
+                calculated_refs.append(ref)
+                break
+
+    return calculated_refs
 
 
 def resolve_references(user_input, precision=1):
