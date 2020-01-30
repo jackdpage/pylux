@@ -93,6 +93,8 @@ class Interpreter:
                     trigger = (obj, action)
                     if refs != 'All':
                         refs = clihelper.safe_resolve_dec_references(self.file, obj.lower(), keywords[1])
+                    else:
+                        refs = [i['ref'] for i in document.get_by_type(self.file, obj.lower())]
                     if len(keywords) > 3:
                         parameters = keywords[3:]
                     else:
