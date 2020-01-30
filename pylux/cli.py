@@ -38,6 +38,10 @@ class CommandLine(urwid.Edit):
         self.autocomplete = False
         self.update_caption()
 
+    def toggle_autocomplete(self):
+        self.autocomplete = not self.autocomplete
+        self.update_caption()
+
     def update_caption(self):
         if self.autocomplete:
             self.set_caption('A ('+self.context+') ')
@@ -52,6 +56,8 @@ class CommandLine(urwid.Edit):
         elif key == 'B':
             self.disable_autocomplete()
             self.insert_text('BRIDGE_DIRECT_MODE ')
+        elif key == 'ctrl a':
+            self.toggle_autocomplete()
         elif self.autocomplete:
             self.keypress_autocomplete(size, key)
         else:
