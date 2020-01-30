@@ -6,7 +6,7 @@
     <path
         stroke-width='1'
         stroke='black'
-        d='M 0 75 A 75 75 0 0 1 0 -75 L 262.5 -75 L 262.5 75 L 0 75'
+        d='M -75 0 A 75 75 0 0 0 75 0 L 75 -262.5 L -75 -262.5 L -75 0'
         class='outer' />
 </g>
 </svg>

@@ -169,17 +169,18 @@ class LightingPlot:
             An ElementTree element - an SVG path.
         """
         scale = float(self.options['scale'])
+        centre = self.get_page_dimensions()[1] / 2
         padding = float(self.options['plaster-line-padding']) * 1000 / scale
         margin = float(self.options['margin'])
         width = self.get_page_dimensions()[0]
         plaster_line = ET.Element('path')
         if self.options['plaster-line-extend'] == 'True':
-            plaster_line.set('d', 'M 0 ' + str(margin + padding) + ' '
-                                                                   'L ' + str(width) + ' ' + str(margin + padding))
+            plaster_line.set('d', 'M 0 ' + str(centre + padding) + ' '
+                                                                   'L ' + str(width) + ' ' + str(centre + padding))
         else:
-            plaster_line.set('d', 'M ' + str(margin) + ' ' + str(margin + padding) + ' '
+            plaster_line.set('d', 'M ' + str(margin) + ' ' + str(centre + padding) + ' '
                                                                                      'L ' + str(width - margin) + ' ' +
-                             str(margin + padding))
+                             str(centre + padding))
         plaster_line.set('stroke', 'black')
         plaster_line.set('stroke-width',
                          str(self.options['line-weight-medium']))
@@ -196,10 +197,10 @@ class LightingPlot:
         Returns:
             A float representing the y coordinate in mm.
         """
+        centre = self.get_page_dimensions()[1] / 2
         scale = float(self.options['scale'])
-        margin = float(self.options['margin'])
         padding = float(self.options['plaster-line-padding']) * 1000 / scale
-        return margin + padding
+        return centre + padding
 
     def get_background_image(self):
         """Get the background image from file.
