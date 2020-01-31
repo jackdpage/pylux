@@ -4,9 +4,10 @@ from importlib import import_module
 
 
 class RegularCommand:
-    def __init__(self, syntax, function):
+    def __init__(self, syntax, function, check_refs=True):
         self.trigger = syntax
         self.function = function
+        self.check_refs = check_refs
         # Parmeters are any function vars after the first one (refs) up to the number of arguments
         if function.__code__.co_argcount > 2:
             self.parameters = [i for i in function.__code__.co_varnames[2:function.__code__.co_argcount] if i]
@@ -91,13 +92,17 @@ class Interpreter:
                     refs = keywords[1]
                     action = keywords[2]
                     trigger = (obj, action)
-                    if refs != 'All':
+                    command = self.triggers[trigger]
+                    # All actions should use the safe resolve method by default, unless the check_refs flag has
+                    # purposefully been changed
+                    if refs != 'All' and command.check_refs:
                         refs = clihelper.safe_resolve_dec_references(self.file, obj.lower(), keywords[1])
+                    elif refs != 'All':
+                        refs = clihelper.resolve_references(keywords[1])
                     if len(keywords) > 3:
                         parameters = keywords[3:]
                     else:
                         parameters = []
-                    command = self.triggers[trigger]
                     args = calculate_params(len(command.parameters), parameters)
                     command.function(refs, *args)
                 else:

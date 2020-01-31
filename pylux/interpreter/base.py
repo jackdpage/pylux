@@ -6,16 +6,16 @@ from pylux.lib import printer
 class BaseExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create))
+        self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create, check_refs=False))
         self.commands.append(RegularCommand(('Cue', 'Set'), self.cue_set))
         self.commands.append(NoRefsCommand(('File', 'Write'), self.file_write))
         self.commands.append(RegularCommand(('Fixture', 'About'), self.fixture_about))
-        self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create))
+        self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create, check_refs=False))
         self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
         self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
         self.commands.append(RegularCommand(('Group', 'About'), self.group_about))
         self.commands.append(RegularCommand(('Group', 'Append'), self.group_append_fixture))
-        self.commands.append(RegularCommand(('Group', 'Create'), self.group_create))
+        self.commands.append(RegularCommand(('Group', 'Create'), self.group_create, check_refs=False))
 
     def cue_create(self, refs):
         """Create a blank cue."""
@@ -40,10 +40,13 @@ class BaseExtension(InterpreterExtension):
             self.interpreter.msg.post_output(['    '+str(k)+': '+str(f[k])
                                               for k in sorted(f)
                                               if k not in self.interpreter.config['cli']['ignore-about-tags']])
-            if len(f['personality']):
-                self.interpreter.msg.post_output([str(len(f['personality']))+' DMX Functions:'])
-                for func in f['personality']:
-                    self.interpreter.msg.post_output([['    ']+printer.get_generic_text_widget(func)])
+            try:
+                if len(f['personality']):
+                    self.interpreter.msg.post_output([str(len(f['personality']))+' DMX Functions:'])
+                    for func in f['personality']:
+                        self.interpreter.msg.post_output([['    ']+printer.get_generic_text_widget(func)])
+            except KeyError:
+                pass
 
     def fixture_create(self, refs):
         """Create a blank fixture."""
