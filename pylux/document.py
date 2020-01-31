@@ -20,6 +20,7 @@ import itertools
 import json
 import uuid
 import math
+from copy import deepcopy
 
 
 # File operations. These functions load JSON documents from files and
@@ -182,6 +183,16 @@ def safe_address_fixture_by_ref(doc, fix_ref, univ, addr):
                 addr = addr % 512
             reg['table'][addr] = func['uuid']
             addr += 1
+
+
+def insert_duplicate_fixture_by_ref(doc, src_ref, dest_ref):
+    dest = deepcopy(get_by_ref(doc, 'fixture', src_ref))
+    dest['uuid'] = str(uuid.uuid4())
+    dest['ref'] = dest_ref
+    if 'personality' in dest:
+        for func in dest['personality']:
+            func['uuid'] = str(uuid.uuid4())
+    doc.append(dest)
 
 
 def fill_missing_function_uuids(fix):

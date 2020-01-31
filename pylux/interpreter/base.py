@@ -10,7 +10,9 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Cue', 'Set'), self.cue_set))
         self.commands.append(NoRefsCommand(('File', 'Write'), self.file_write))
         self.commands.append(RegularCommand(('Fixture', 'About'), self.fixture_about))
+        self.commands.append(RegularCommand(('Fixture', 'CopyTo'), self.fixture_clone))
         self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create))
+        self.commands.append(RegularCommand(('Fixture', 'Filter'), self.fixture_filter))
         self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
         self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
         self.commands.append(RegularCommand(('Group', 'About'), self.group_about))
@@ -45,10 +47,28 @@ class BaseExtension(InterpreterExtension):
                 for func in f['personality']:
                     self.interpreter.msg.post_output([['    ']+printer.get_generic_text_widget(func)])
 
+    def fixture_clone(self, refs, dest):
+        """Clone a fixture to a destination(s)"""
+        dests = clihelper.resolve_references(dest)
+        for dest in dests:
+            document.insert_duplicate_fixture_by_ref(self.interpreter.file, refs[0], dest)
+
     def fixture_create(self, refs):
         """Create a blank fixture."""
         for ref in refs:
             document.insert_blank_fixture(self.interpreter.file, ref)
+
+    def fixture_filter(self, refs, k, v):
+        """Display fixtures in the given reference range which satisfy a key/value condition"""
+        output = []
+        for r in refs:
+            fix = document.get_by_ref(self.interpreter.file, 'fixture', r)
+            try:
+                if fix[k] == v:
+                    output.append(printer.get_generic_text_widget(fix))
+            except KeyError:
+                continue
+        self.interpreter.msg.post_output(output)
 
     def fixture_set(self, refs, k, v):
         """Set the value of a fixture's tag."""
