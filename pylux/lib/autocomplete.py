@@ -32,7 +32,7 @@ DEFAULT_KEYMAP = [i for i in KEYMAPS if i[4]]
 NO_KEYMAP = []
 ALL_OBJECTS = [i for i in KEYMAPS if i[2] == 'object']
 ALL_ACTIONS = [i for i in KEYMAPS if i[2] == 'action']
-NUMERIC_MAP = {'a': 'All'}
+NUMERIC_MAP = {'a': 'All', 'f': 'filter:'}
 
 
 def get_keymap(fragment):

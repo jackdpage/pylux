@@ -341,6 +341,21 @@ def get_function_patch_location(doc, func):
                 return reg['ref'], d
 
 
+def insert_filter_with_params(doc, ref, scope, k, v):
+    """Create a new filter with the given parameters."""
+    if ref == '0':
+        ref = autoref(doc, 'filter')
+    filter = {
+        'type': 'filter',
+        'ref': ref,
+        'scope': scope,
+        'k': k,
+        'v': v
+    }
+    doc.append(filter)
+    return filter
+
+
 def autoref(doc, type):
     """Return an available reference number for a given type."""
     used_refs = []
@@ -348,5 +363,5 @@ def autoref(doc, type):
         used_refs.append(obj['ref'])
 
     for n in itertools.count(start=1):
-        if n not in used_refs:
-            return n
+        if str(n) not in used_refs:
+            return str(n)
