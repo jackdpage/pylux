@@ -1,5 +1,5 @@
 import urwid
-from pylux import cli_bridge, document, interpreter
+from pylux import document, interpreter
 from pylux.lib import autocomplete, printer
 
 
@@ -11,7 +11,9 @@ PALETTE = [
     ('group', 'light magenta', 'black', 'bold'),
     ('metadata', 'light blue', 'black', 'bold'),
     ('registry', 'yellow', 'black', 'bold'),
-    ('unlabelled', 'dark red', 'black')
+    ('unlabelled', 'dark red', 'black'),
+    ('error', 'dark red', 'black'),
+    ('success', 'light green', 'black')
 ]
 
 
@@ -53,9 +55,6 @@ class CommandLine(urwid.Edit):
             self.post_command(self.edit_text)
             self.set_edit_text('')
             self.enable_autocomplete()
-        elif key == 'B':
-            self.disable_autocomplete()
-            self.insert_text('BRIDGE_DIRECT_MODE ')
         elif key == 'ctrl a':
             self.toggle_autocomplete()
         elif self.autocomplete:
@@ -155,9 +154,6 @@ def main(init_globals):
         split_command = command.split()
         if not split_command:
             app.view.history.set_text('Empty command')
-        elif split_command[0] == 'BRIDGE_DIRECT_MODE':
-            app.view.history.set_text('Sending command via Bridge Direct Mode')
-            bridge.process_direct_command(command)
         elif len(split_command) == 1:
             command_interpreter.process_command(command)
         elif (split_command[0] == split_command[1]
@@ -169,7 +165,6 @@ def main(init_globals):
             command_interpreter.process_command(command)
             app.update_view()
 
-    bridge = cli_bridge.CliBridge(init_globals)
     app = Application(init_globals, post_command)
     command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
     command_interpreter.register_extension('base')

@@ -1,6 +1,6 @@
 # command/shortcut/type(object/action)/expected_after/in_init
 KEYMAPS = [
-    ('About', 'a', 'action', ['Fixture', 'Group', 'Plot'], False),
+    ('About', 'a', 'action', ['Fixture', 'Group', 'Plot', 'Registry'], False),
     ('All', 'a', 'object', 'any', True),
     ('Append', 'A', 'action', 'Group', False),
     ('CloneTo', 'c', 'action', 'Fixture', False),
@@ -11,7 +11,7 @@ KEYMAPS = [
     ('Cue', 'q', 'object', 'any', True),
     ('Display', 'd', 'action', 'any', True),
     ('File', 'f', 'object', 'any', True),
-    ('Filter', 'f', 'action', 'Fixture', False),
+    ('Filter', 'F', 'object', 'any', True),
     ('Fixture', 'x', 'object', 'any', True),
     ('Group', 'g', 'object', 'any', True),
     ('ImportAscii', 'i', 'action', 'File', False),
@@ -19,6 +19,7 @@ KEYMAPS = [
     ('Open', 'o', 'action', 'File', False),
     ('Patch', 'p', 'action', 'Fixture', False),
     ('Plot', 'P', 'object', 'any', True),
+    ('Query', 'q', 'action', ['Group', 'Registry'], False),
     ('Registry', 'r', 'object', 'any', True),
     ('Report', 'R', 'object', 'any', True),
     ('Remove', 'r', 'action', 'any', False),

@@ -222,6 +222,29 @@ def insert_blank_fixture(doc, ref):
     return fixture
 
 
+def insert_fixture_from_json_template(doc, ref, template_file):
+    with open(template_file) as f:
+        fixture = json.load(f)
+        fixture['ref'] = ref
+        fixture['uuid'] = str(uuid.uuid4())
+        if 'personality' in fixture:
+            for function in fixture['personality']:
+                function['uuid'] = str(uuid.uuid4())
+        doc.append(fixture)
+
+
+def complete_fixture_from_json_template(fix, template_file):
+    with open(template_file) as f:
+        template = json.load(f)
+        if 'personality' in template and 'personality' not in fix:
+            fix['personality'] = template['personality']
+            for func in fix['personality']:
+                func['uuid'] = str(uuid.uuid4())
+        for k in template:
+            if k not in fix:
+                fix[k] = template[k]
+
+
 def insert_blank_group(doc, ref):
     if ref == 0:
         ref = autoref(doc, 'group')
