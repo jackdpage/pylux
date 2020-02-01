@@ -150,6 +150,10 @@ class EosExtension(InterpreterExtension):
         elif target == 'cues':
             cue_blocks = extract_blocks('Cue.*')
             for block in cue_blocks:
+                # Ignore anything which isn't in Cue List 1, we can't quite handle that yet
+                cue_list = block[0].split()[2]
+                if str(cue_list) != '1':
+                    break
                 cue_ref = block[0].split()[1]
                 cue = document.insert_blank_cue(self.interpreter.file, cue_ref)
                 for l in block:

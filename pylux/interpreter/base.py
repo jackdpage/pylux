@@ -6,9 +6,13 @@ from pylux.lib import printer, data
 class BaseExtension(InterpreterExtension):
 
     def register_commands(self):
+        self.commands.append(RegularCommand(('Cue', 'About'), self.cue_about))
         self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create, check_refs=False))
+        self.commands.append(RegularCommand(('Cue', 'Display'), self.cue_display))
+        self.commands.append(RegularCommand(('Cue', 'Query'), self.cue_query))
         self.commands.append(RegularCommand(('Cue', 'Remove'), self.cue_remove))
         self.commands.append(RegularCommand(('Cue', 'Set'), self.cue_set))
+        self.commands.append(RegularCommand(('Cue', 'SetIntens'), self.cue_setintens))
         self.commands.append(NoRefsCommand(('File', 'Write'), self.file_write))
         self.commands.append(RegularCommand(('Fixture', 'About'), self.fixture_about))
         self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create, check_refs=False))
@@ -16,9 +20,10 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Fixture', 'CompleteFrom'), self.fixture_completefrom))
         self.commands.append(RegularCommand(('Fixture', 'CopyTo'), self.fixture_clone))
         self.commands.append(RegularCommand(('Fixture', 'Display'), self.fixture_display))
+        self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
         self.commands.append(RegularCommand(('Fixture', 'Remove'), self.fixture_remove))
         self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
-        self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
+        self.commands.append(RegularCommand(('Fixture', 'Unpatch'), self.fixture_unpatch))
         self.commands.append(RegularCommand(('Group', 'About'), self.group_about))
         self.commands.append(RegularCommand(('Group', 'Append'), self.group_append_fixture))
         self.commands.append(RegularCommand(('Group', 'Create'), self.group_create, check_refs=False))
@@ -32,10 +37,39 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Registry', 'Query'), self.registry_query))
         self.commands.append(RegularCommand(('Registry', 'Remove'), self.registry_remove))
 
+    def cue_about(self, refs):
+        """Show the intensities of fixtures in a cue."""
+        for r in refs:
+            cue = document.get_by_ref(self.interpreter.file, 'cue', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(cue)])
+            for l in cue['levels']:
+                func = document.get_function_by_uuid(self.interpreter.file, l)
+                if func['param'] == 'Intens':
+                    fix = document.get_function_parent(self.interpreter.file, func)
+                    self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ' ', str(cue['levels'][l])]])
+
     def cue_create(self, refs):
         """Create a blank cue."""
         for ref in refs:
             document.insert_blank_cue(self.interpreter.file, ref)
+
+    def cue_display(self, refs):
+        """Show a single-line summary of a cue."""
+        for r in refs:
+            cue = document.get_by_ref(self.interpreter.file, 'cue', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(cue)])
+
+    def cue_query(self, refs):
+        """As for Cue About, except also show levels of NIPs."""
+        for r in refs:
+            cue = document.get_by_ref(self.interpreter.file, 'cue', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(cue)])
+            for l in cue['levels']:
+                func = document.get_function_by_uuid(self.interpreter.file, l)
+                fix = document.get_function_parent(self.interpreter.file, func)
+                self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':'] +
+                                                  printer.get_generic_text_widget(func) +
+                                                  [': ', str(cue['levels'][l])]])
 
     def cue_remove(self, refs):
         """Remove a cue."""
@@ -46,6 +80,17 @@ class BaseExtension(InterpreterExtension):
         """Set the value of a cue's tag."""
         for ref in refs:
             document.get_by_ref(self.interpreter.file, 'cue', ref)[k] = v
+
+    def cue_setintens(self, refs, fix_refs, level):
+        """Set the level of a fixture's Intens function in a cue."""
+        frefs = clihelper.safe_resolve_dec_references(self.interpreter.file, 'fixture', fix_refs)
+        for r in refs:
+            cue = document.get_by_ref(self.interpreter.file, 'cue', r)
+            for fref in frefs:
+                fix = document.get_by_ref(self.interpreter.file, 'fixture', fref)
+                intens_func = document.find_fixture_intens(fix)
+                if intens_func:
+                    cue['levels'][intens_func['uuid']] = level
 
     def file_write(self, location):
         """Write file to location."""
@@ -88,8 +133,8 @@ class BaseExtension(InterpreterExtension):
 
     def fixture_create(self, refs):
         """Create a blank fixture."""
-        for ref in refs:
-            document.insert_blank_fixture(self.interpreter.file, ref)
+        for r in refs:
+            document.insert_blank_fixture(self.interpreter.file, r)
 
     def fixture_createfrom(self, refs, template):
         template_file = data.get_data('fixture/'+template+'.json')
@@ -105,6 +150,11 @@ class BaseExtension(InterpreterExtension):
             fix = document.get_by_ref(self.interpreter.file, 'fixture', r)
             self.interpreter.msg.post_output([printer.get_generic_text_widget(fix)])
 
+    def fixture_patch(self, refs, univ, addr):
+        """Patch the functions of a fixture in a registry."""
+        for ref in refs:
+            document.safe_address_fixture_by_ref(self.interpreter.file, ref, int(univ), int(addr))
+
     def fixture_remove(self, refs):
         """Remove a fixture."""
         for r in refs:
@@ -112,33 +162,33 @@ class BaseExtension(InterpreterExtension):
 
     def fixture_set(self, refs, k, v):
         """Set the value of a fixture's tag."""
-        for ref in refs:
-            document.get_by_ref(self.interpreter.file, 'fixture', ref)[k] = v
+        for r in refs:
+            document.get_by_ref(self.interpreter.file, 'fixture', r)[k] = v
 
-    def fixture_patch(self, refs, univ, addr):
-        """Patch the functions of a fixture in a registry."""
-        for ref in refs:
-            document.safe_address_fixture_by_ref(self.interpreter.file, ref, int(univ), int(addr))
+    def fixture_unpatch(self, refs):
+        """Remove all of a fixture's functions from all registries."""
+        for r in refs:
+            document.unpatch_fixture_by_ref(self.interpreter.file, r)
 
     def group_about(self, refs):
         """Display the contents of a group."""
-        for ref in refs:
-            grp = document.get_by_ref(self.interpreter.file, 'group', ref)
+        for r in refs:
+            grp = document.get_by_ref(self.interpreter.file, 'group', r)
             self.interpreter.msg.post_output([
                 printer.get_generic_text_widget(grp),
                 ', '.join([document.get_by_uuid(self.interpreter.file, i)['ref'] for i in grp['fixtures']])])
 
     def group_append_fixture(self, refs, frefs):
         """Append a fixture to a group list."""
-        for ref in refs:
-            group = document.get_by_ref(self.interpreter.file, 'group', ref)
+        for r in refs:
+            group = document.get_by_ref(self.interpreter.file, 'group', r)
             for fref in clihelper.safe_resolve_dec_references(self.interpreter.file, 'fixture', frefs):
                 document.group_append_fixture_by_ref(self.interpreter.file, group, fref)
 
     def group_create(self, refs):
         """Create an empty group."""
-        for ref in refs:
-            document.insert_blank_group(self.interpreter.file, ref)
+        for r in refs:
+            document.insert_blank_group(self.interpreter.file, r)
 
     def group_display(self, refs):
         """Print a single-line summary of a group."""

@@ -1,6 +1,6 @@
 # command/shortcut/type(object/action)/expected_after/in_init
 KEYMAPS = [
-    ('About', 'a', 'action', ['Fixture', 'Group', 'Plot', 'Registry'], False),
+    ('About', 'a', 'action', ['Cue', 'Fixture', 'Group', 'Plot', 'Registry'], False),
     ('All', 'a', 'object', 'any', True),
     ('Append', 'A', 'action', 'Group', False),
     ('CloneTo', 'c', 'action', 'Fixture', False),
@@ -19,11 +19,13 @@ KEYMAPS = [
     ('Open', 'o', 'action', 'File', False),
     ('Patch', 'p', 'action', 'Fixture', False),
     ('Plot', 'P', 'object', 'any', True),
-    ('Query', 'q', 'action', ['Group', 'Registry'], False),
+    ('Query', 'q', 'action', ['Cue', 'Group', 'Registry'], False),
     ('Registry', 'r', 'object', 'any', True),
     ('Report', 'R', 'object', 'any', True),
     ('Remove', 'r', 'action', 'any', False),
     ('Set', 's', 'action', 'any', False),
+    ('SetIntens', 'S', 'action', 'Cue', False),
+    ('Unpatch', 'P', 'action', 'Fixture', False),
     ('Write', 'w', 'action', ['File', 'Plot', 'Report'], False)
 ]
 DEFAULT_KEYMAP = [i for i in KEYMAPS if i[4]]

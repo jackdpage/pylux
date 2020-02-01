@@ -185,6 +185,15 @@ def safe_address_fixture_by_ref(doc, fix_ref, univ, addr):
             addr += 1
 
 
+def unpatch_fixture_by_ref(doc, fix_ref):
+    fix = get_by_ref(doc, 'fixture', fix_ref)
+    func_ids = [func['uuid'] for func in fix['personality']]
+    for reg in get_by_type(doc, 'registry'):
+        for d in deepcopy(reg['table']):
+            if reg['table'][d] in func_ids:
+                del reg['table'][d]
+
+
 def insert_duplicate_fixture_by_ref(doc, src_ref, dest_ref):
     dest = deepcopy(get_by_ref(doc, 'fixture', src_ref))
     dest['uuid'] = str(uuid.uuid4())
@@ -208,6 +217,7 @@ def find_fixture_intens(fix):
         for func in fix['personality']:
             if func['param'] == 'Intens':
                 return func
+    return None
 
 
 def insert_blank_fixture(doc, ref):

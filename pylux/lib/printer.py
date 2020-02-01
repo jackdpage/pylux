@@ -55,14 +55,12 @@ def get_group_string(group):
 
 
 def get_generic_ref(obj):
-    if obj['type'] in PRINTER_INDEX:
-        if 'ref' in obj:
-            ref_print = ''.join([
-                '\033[1m\033[',
-                str(PRINTER_INDEX[obj['type']][1]), 'm',
-                str(obj['ref']), '\033[0m '])
-        else:
-            ref_print = ''
+    if 'ref' in obj:
+        ref_print = (obj['type'], obj['ref'])
+    elif obj['type'] == 'function':
+        ref_print = ('function', str(obj['offset']))
+    else:
+        ref_print = ''
 
     return ref_print
 
