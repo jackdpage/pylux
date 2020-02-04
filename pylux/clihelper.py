@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from lib import printer
-import document
+from pylux.lib import printer
+from pylux import document
 import decimal
+import re
 
 
 DECIMAL_PRECISION = decimal.Decimal('0.001')
@@ -26,6 +27,96 @@ DECIMAL_PRECISION = decimal.Decimal('0.001')
 def print_object(obj, pre=''):
     s = printer.get_generic_string(obj, pre)
     print(s)
+
+
+def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
+    """The safest most complete reference parser. Only return references of
+    objects which exist in the document. Support for arbitrary decimal
+    precision due to lookup nature of parsing. Support for filters across
+    any range of inputs. Supports all keywords and symbols.
+    Complete syntax:
+    - comma separation for lists of ranges or single numbers
+    - > symbol for ranges of numbers
+    - future: ! symbol for removing a number or range of number
+    - #[] for applying a filter to a range, single number, or any combination
+      thereof. Where # is the number of the filter to apply.
+    - * symbol for specifying all objects of the appropriate type.
+    - All can also be used in filters e.g. 2[All],!2>4 is all objects of the
+      given type that satisfy filter 2, and excluding objects 2 through 4
+      (including all objects with decimal references in this range)"""
+
+    obj_list = document.get_by_type(doc, obj_type)
+    ranges = []
+    points = []
+    catchalls = []
+    calculated_refs = []
+    # Matches filter ranges of the form #[range] where # is the filter ref
+    # filtered_ranges is a list of tuples in the form (filter_ref, ranges)
+    # for each filter range.
+    filter_re = re.compile(r'(\d*\.?\d*)\[(.*?)\]')
+    for fr in re.findall(filter_re, user_input):
+        for r in fr[1].split(','):
+            if '>' in r:
+                ranges.append((fr[0], decimal.Decimal(r.split('>')[0]), decimal.Decimal(r.split('>')[1])))
+            elif r == '*':
+                catchalls.append(fr[0])
+            else:
+                points.append((fr[0], decimal.Decimal(r)))
+    # Remove all the filtered ranges from the input, and then search through
+    # normally for the remainder
+    for r in re.sub(filter_re, '', user_input).split(','):
+        if '>' in r:
+            ranges.append((0, decimal.Decimal(r.split('>')[0]), decimal.Decimal(r.split('>')[1])))
+        elif r == '*':
+            catchalls.append(0)
+        else:
+            try:
+                points.append((0, decimal.Decimal(r)))
+            except decimal.InvalidOperation:
+                pass
+    # That's all the prep done, now check which of the objects in our all objects
+    # list satisfies the ranges and points we've created.
+    for obj in obj_list:
+        ref = decimal.Decimal(obj['ref'])
+        if 0 in catchalls:
+            calculated_refs.append(ref)
+            continue
+        elif len(catchalls):
+            for i in catchalls:
+                if i:
+                    filt = document.get_by_ref(doc, 'filter', i)
+                    try:
+                        if obj[filt['k']] == filt['v']:
+                            calculated_refs.append(ref)
+                            continue
+                    except KeyError:
+                        pass
+        for r in ranges:
+            if r[0]:
+                filt = document.get_by_ref(doc, 'filter', r[0])
+                try:
+                    if r[1] <= ref <= r[2] and obj[filt['k']] == filt['v']:
+                        calculated_refs.append(ref)
+                        break
+                except KeyError:
+                    pass
+            elif r[1] <= ref <= r[2]:
+                calculated_refs.append(ref)
+                break
+        for p in points:
+            if p[0]:
+                filt = document.get_by_ref(doc, 'filter', p[0])
+                try:
+                    if p[1] == ref and obj[filt['k']] == filt['v']:
+                        calculated_refs.append(ref)
+                        break
+                except KeyError:
+                    pass
+            elif p[1] == ref:
+                calculated_refs.append(ref)
+                break
+
+    return calculated_refs
 
 
 def safe_resolve_dec_references(doc, type, user_input):
@@ -37,10 +128,23 @@ def safe_resolve_dec_references(doc, type, user_input):
     string representations of decimals. Checks that each of these references
     actually represents an object in the show file, and returns the resulting
     list."""
-    # Start with the complete possible range of reference numbers
-    reference_list = resolve_dec_references(user_input)
-    # Only return those who have an existing object
-    return [i for i in reference_list if document.get_by_ref(doc, type, i)]
+    calculated_refs = []
+    split_input = user_input.split(',')
+    ranges = [(decimal.Decimal(i.split('>')[0]), decimal.Decimal(i.split('>')[1])) for i in split_input if '>' in i]
+    points = [decimal.Decimal(i) for i in split_input if i.isdigit()]
+    obj_list = document.get_by_type(doc, type)
+    for obj in obj_list:
+        ref = decimal.Decimal(obj['ref'])
+        for r in ranges:
+            if r[0] <= ref <= r[1]:
+                calculated_refs.append(ref)
+                break
+        for p in points:
+            if p == ref:
+                calculated_refs.append(ref)
+                break
+
+    return calculated_refs
 
 
 def resolve_references(user_input, precision=1):

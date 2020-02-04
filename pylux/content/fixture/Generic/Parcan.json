@@ -2,11 +2,11 @@
   "type": "fixture",
   "manufacturer": "Generic",
   "fixture-type": "Parcan",
-  "fixture-functions": [
+  "symbol": "Generic/Parcan",
+  "personality": [
     {
       "type": "function",
-      "name": "Intens",
-      "parameter": "Intensity",
+      "param": "Intens",
       "offset": 1
     }
   ]

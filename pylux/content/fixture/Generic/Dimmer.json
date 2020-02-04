@@ -2,11 +2,10 @@
   "type": "fixture",
   "manufacturer": "Generic",
   "fixture-type": "Dimmer",
-  "fixture-functions": [
+  "personality": [
     {
       "type": "function",
-      "name": "Intens",
-      "parameter": "Intensity",
+      "param": "Intens",
       "offset": 1
     }
   ]

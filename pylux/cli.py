@@ -1,50 +1,176 @@
-# cli.py is part of Pylux
-#
-# Pylux is a program for the management of lighting documentation
-# Copyright 2015 Jack Page
-#
-# Pylux is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Pylux is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from importlib import import_module
+import urwid
+from pylux import document, interpreter
+from pylux.lib import autocomplete, printer
 
 
-def get_context(context_name):
-    module_name = 'context.'+context_name
-    context_module = import_module(module_name)
-    context_class = context_module.get_context()
-    return context_class
+NUMERIC_KEYS = [str(i) for i in range(0, 10)]
+PALETTE = [
+    ('cue', 'light cyan', 'black', 'bold'),
+    ('fixture', 'light green', 'black', 'bold'),
+    ('function', 'light magenta', 'black', 'bold'),
+    ('group', 'light magenta', 'black', 'bold'),
+    ('filter', 'light blue', 'black', 'bold'),
+    ('metadata', 'light blue', 'black', 'bold'),
+    ('registry', 'yellow', 'black', 'bold'),
+    ('unlabelled', 'dark red', 'black'),
+    ('error', 'dark red', 'black'),
+    ('success', 'light green', 'black')
+]
+
+
+class CommandLine(urwid.Edit):
+    def __init__(self, command_handler):
+        super(CommandLine, self).__init__()
+        self.context = ''
+        self.autocomplete = True
+        self.command_handler = command_handler
+        self.keymap = autocomplete.get_keymap(self.edit_text)
+
+    def post_command(self, command):
+        self.command_handler(command)
+
+    def set_context(self, context):
+        self.context = context
+        self.update_caption()
+
+    def enable_autocomplete(self):
+        self.autocomplete = True
+        self.update_caption()
+
+    def disable_autocomplete(self):
+        self.autocomplete = False
+        self.update_caption()
+
+    def toggle_autocomplete(self):
+        self.autocomplete = not self.autocomplete
+        self.update_caption()
+
+    def update_caption(self):
+        if self.autocomplete:
+            self.set_caption('A ('+self.context+') ')
+        else:
+            self.set_caption('X ('+self.context+') ')
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            self.post_command(self.edit_text)
+            self.set_edit_text('')
+            self.enable_autocomplete()
+        elif key == 'ctrl a':
+            self.toggle_autocomplete()
+        elif self.autocomplete:
+            self.keypress_autocomplete(size, key)
+        else:
+            return super(CommandLine, self).keypress(size, key)
+
+    def keypress_autocomplete(self, size, key):
+        if not self.edit_text.split():
+            if key in [str(i) for i in range(0, 10)]:
+                self.insert_text(self.context+' ')
+        keymap = autocomplete.get_keymap(self.edit_text)
+        if keymap:
+            if key in keymap:
+                return super(CommandLine, self).insert_text(keymap[key])
+            else:
+                return super(CommandLine, self).keypress(size, key)
+        else:
+            return super(CommandLine, self).keypress(size, key)
+
+
+class CommandHistory(urwid.Text):
+    pass
+
+
+class MessageBus:
+
+    def __init__(self, history, output_pane):
+        self.history = history
+        self.output = output_pane
+
+    def post_feedback(self, lines):
+        self.history.set_text(lines)
+
+    def clear_output(self):
+        self.output.clear()
+
+    def post_output(self, lines):
+        for l in lines:
+            self.output.append(urwid.Text(l))
+
+
+class ApplicationView:
+
+    def __init__(self, cmd):
+        self.history = CommandHistory('Application Initialise')
+        self.footer = urwid.Pile([self.history, cmd])
+        self.fixed_walker = urwid.SimpleFocusListWalker([])
+        self.dynamic_walker = urwid.SimpleFocusListWalker([])
+        dynamic_sheet = urwid.ListBox(self.dynamic_walker)
+        fixed_sheet = urwid.ListBox(self.fixed_walker)
+        self.main_content = urwid.Columns([fixed_sheet, dynamic_sheet])
+
+    def update_sheet(self, sheet_list):
+        self.fixed_walker.clear()
+        self.fixed_walker.extend(sheet_list)
+
+
+class Application:
+
+    def __init__(self, init_globals, post_function):
+        self.file = self.initialise_file(init_globals['FILE'])
+        self.config = init_globals['CONFIG']
+        self.cmd = CommandLine(post_function)
+        self.view = ApplicationView(self.cmd)
+        self.update_context(self.config['curses']['default-context'])
+        self.message_bus = MessageBus(self.view.history, self.view.dynamic_walker)
+
+    def initialise_file(self, f):
+        s = document.get_string_from_file(f)
+        d = document.get_deserialised_document_from_string(s)
+        return d
+
+    def _generate_sheet_list(self, context):
+        text_widgets = []
+        if context == 'All':
+            context_objects = self.file
+        else:
+            context_objects = document.get_by_type(self.file, context.lower())
+        for i in context_objects:
+            string = printer.get_generic_text_widget(i)
+            text_widgets.append(urwid.Text(string))
+        return text_widgets
+
+    def update_context(self, context):
+        self.cmd.set_context(context)
+        sheet_list = self._generate_sheet_list(context)
+        self.view.update_sheet(sheet_list)
+
+    def update_view(self):
+        self.view.update_sheet(self._generate_sheet_list(self.cmd.context))
 
 
 def main(init_globals):
-    globals = init_globals
-    context = get_context(globals['CONFIG']['cli']['default-context'])
-    context.set_globals(globals)
-    print('Welcome to Pylux! Type \'h\' to view a list of commands.')
-    while True:
-        user_input = input('(pylux:'+context.name+') ')
-        inputs = user_input.split(' ')
 
-        if len(user_input) > 0:
-            if inputs[0] == '::':
-                globals_dict = context.get_globals()
-                context = get_context(globals['CONFIG']['cli']['default-context'])
-                context.set_globals(globals_dict)
-            elif inputs[0][0] == ':':
-                globals_dict = context.get_globals()
-                context = get_context(inputs[0].split(':')[1])
-                context.set_globals(globals_dict)
-            elif inputs[0] in context.commands:
-                context.process(inputs)
-            else:
-                print('Command does not exist')
+    def post_command(command):
+        split_command = command.split()
+        if not split_command:
+            app.view.history.set_text('Empty command')
+        elif len(split_command) == 1:
+            command_interpreter.process_command(command)
+        elif (split_command[0] == split_command[1]
+              and split_command[0] in [i[0] for i in autocomplete.DEFAULT_KEYMAP]
+              and len(split_command) == 2):
+            app.update_context(split_command[0])
+        else:
+            app.message_bus.clear_output()
+            command_interpreter.process_command(command)
+            app.update_view()
+
+    app = Application(init_globals, post_command)
+    command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
+    command_interpreter.register_extension('base')
+    command_interpreter.register_extension('eos')
+    command_interpreter.register_extension('report')
+    command_interpreter.register_extension('plot')
+    loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), PALETTE)
+    loop.run()

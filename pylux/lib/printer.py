@@ -55,13 +55,12 @@ def get_group_string(group):
 
 
 def get_generic_ref(obj):
-    if obj['type'] in PRINTER_INDEX:
-        if 'ref' in obj:
-            ref_print = ''.join([
-                '\033[1m\033[',
-                str(PRINTER_INDEX[obj['type']][1]), 'm',
-                str(obj['ref']), '\033[0m '])
-        else: ref_print = ''
+    if 'ref' in obj:
+        ref_print = (obj['type'], obj['ref'])
+    elif obj['type'] == 'function':
+        ref_print = ('function', str(obj['offset']))
+    else:
+        ref_print = ''
 
     return ref_print
 
@@ -72,7 +71,8 @@ def get_generic_string(obj, pre=''):
             ref_print = ''.join(['\033[1m\033[',
                                  str(PRINTER_INDEX[obj['type']][1]), 'm',
                                  str(obj['ref']), '\033[0m '])
-        else: ref_print = ''
+        else:
+            ref_print = ''
         s = pre + ref_print + PRINTER_INDEX[obj['type']][0](obj)
         return s
     else:
@@ -80,9 +80,63 @@ def get_generic_string(obj, pre=''):
             label = obj['label']
         else:
             label = UNLABELLED_STRING
-        type = obj['type']
-        return label+' ('+type+')'
+        obj_type = obj['type']
+        return label+' ('+obj_type+')'
 
+
+def get_fixture_extra_text(obj):
+    if 'fixture-type' in obj:
+        fixture_type = obj['fixture-type']
+    else:
+        fixture_type = 'n/a'
+
+    return '', fixture_type+' - ', ''
+
+
+def get_cue_extra_text(obj):
+    return '', '', ' ('+str(len(obj['levels']))+' levels)'
+
+def get_group_extra_text(obj):
+    return '', '', ' ('+str(len(obj['fixtures']))+' fixtures)'
+
+
+def get_registry_extra_text(obj):
+    return 'Universe ', '', str(len(obj['table']))+' occupied'
+
+
+def get_generic_text_widget(obj, pre=''):
+    if 'ref' in obj:
+        ref_print = (obj['type'], obj['ref']+' ')
+    elif obj['type'] == 'function':
+        ref_print = ('function', str(obj['offset'])+' ')
+    else:
+        ref_print = ''
+    if 'label' in obj:
+        label = obj['label']
+    elif obj['type'] == 'function':
+        label = obj['param']
+    elif obj['type'] == 'registry':
+        label = '- '
+    elif obj['type'] == 'filter':
+        label = obj['k']+'='+obj['v']
+    else:
+        label = 'Unlabelled'
+    if obj['type'] in EXTRA_TEXT:
+        extra = EXTRA_TEXT[obj['type']](obj)
+    else:
+        extra = ('', '', '')
+
+    s = [pre, extra[0], ref_print, extra[1], label, extra[2]]
+
+    return s
+
+
+EXTRA_TEXT = {
+    'fixture': get_fixture_extra_text,
+    'cue': get_cue_extra_text,
+    'group': get_group_extra_text,
+    'registry': get_registry_extra_text
+}
 
 PRINTER_INDEX = {
     'metadata': (get_metadata_value, 94),
