@@ -89,24 +89,13 @@ class Interpreter:
             # If the first and third keywords are in triggers, then the second keyword will be the references
             elif len(keywords) > 2:
                 if (obj, keywords[2]) in self.triggers:
-                    refs = keywords[1]
                     action = keywords[2]
                     trigger = (obj, action)
                     command = self.triggers[trigger]
-                    unfiltered_refs = [i['ref'] for i in document.get_by_type(self.file, obj.lower())]
-                    if refs == 'All':
-                        refs = unfiltered_refs
-                    elif 'filter:' in refs:
-                        filter_ref = refs.split(':')[1]
-                        objfilter = document.get_by_ref(self.file, 'filter', filter_ref)
-                        if objfilter:
-                            refs = [i for i in unfiltered_refs if document.get_by_ref(self.file, obj.lower(), i)[objfilter['k']] == objfilter['v']]
-                    if refs != 'All' and command.check_refs:
-                        refs = clihelper.safe_resolve_dec_references(self.file, obj.lower(), keywords[1])
-                    elif refs != 'All':
-                        refs = clihelper.resolve_references(keywords[1])
+                    if command.check_refs:
+                        refs = clihelper.safe_resolve_dec_references_with_filters(self.file, obj.lower(), keywords[1])
                     else:
-                        refs = unfiltered_refs
+                        refs = clihelper.resolve_references(keywords[1])
                     if len(keywords) > 3:
                         parameters = keywords[3:]
                     else:

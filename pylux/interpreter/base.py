@@ -15,6 +15,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Cue', 'SetIntens'), self.cue_setintens))
         self.commands.append(NoRefsCommand(('File', 'Write'), self.file_write))
         self.commands.append(RegularCommand(('Filter', 'Create'), self.filter_create, check_refs=False))
+        self.commands.append(RegularCommand(('Filter', 'Remove'), self.filter_remove))
         self.commands.append(RegularCommand(('Fixture', 'About'), self.fixture_about))
         self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create, check_refs=False))
         self.commands.append(RegularCommand(('Fixture', 'CreateFrom'), self.fixture_createfrom, check_refs=False))
@@ -97,10 +98,15 @@ class BaseExtension(InterpreterExtension):
         """Write file to location."""
         document.write_to_file(self.interpreter.file, location)
 
-    def filter_create(self, refs, scope, k, v=None):
+    def filter_create(self, refs, k, v):
         """Create a new filter with given parameters."""
         for r in refs:
-            document.insert_filter_with_params(self.interpreter.file, r, scope, k, v)
+            document.insert_filter_with_params(self.interpreter.file, r, k, v)
+
+    def filter_remove(self, refs):
+        """Remove a filter."""
+        for r in refs:
+            document.remove_by_ref(self.interpreter.file, 'filter', r)
 
     def fixture_about(self, refs):
         """Display data tags and DMX functions of a fixture."""

@@ -105,15 +105,12 @@ def get_metadata(doc):
 
 def remove_by_uuid(doc, uuid):
     '''Remove an object with a matching UUID.'''
-
     doc.remove(get_by_uuid(doc, uuid))
 
 
 def remove_by_ref(doc, type, ref):
     """Remove an object with a specific ref."""
-
-    objs = get_by_type(doc, type)
-    doc.remove(get_by_value(objs, 'ref', ref)[0])
+    doc.remove(get_by_ref(doc, type, ref))
 
 
 def get_function_by_uuid(doc, uuid):
@@ -341,14 +338,13 @@ def get_function_patch_location(doc, func):
                 return reg['ref'], d
 
 
-def insert_filter_with_params(doc, ref, scope, k, v):
+def insert_filter_with_params(doc, ref, k, v):
     """Create a new filter with the given parameters."""
     if ref == '0':
         ref = autoref(doc, 'filter')
     filter = {
         'type': 'filter',
         'ref': ref,
-        'scope': scope,
         'k': k,
         'v': v
     }

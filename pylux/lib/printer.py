@@ -96,7 +96,6 @@ def get_fixture_extra_text(obj):
 def get_cue_extra_text(obj):
     return '', '', ' ('+str(len(obj['levels']))+' levels)'
 
-
 def get_group_extra_text(obj):
     return '', '', ' ('+str(len(obj['fixtures']))+' fixtures)'
 
@@ -118,8 +117,10 @@ def get_generic_text_widget(obj, pre=''):
         label = obj['param']
     elif obj['type'] == 'registry':
         label = '- '
+    elif obj['type'] == 'filter':
+        label = obj['k']+'='+obj['v']
     else:
-        label = ('unlabelled', 'Unlabelled')
+        label = 'Unlabelled'
     if obj['type'] in EXTRA_TEXT:
         extra = EXTRA_TEXT[obj['type']](obj)
     else:

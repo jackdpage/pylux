@@ -32,7 +32,6 @@ DEFAULT_KEYMAP = [i for i in KEYMAPS if i[4]]
 NO_KEYMAP = []
 ALL_OBJECTS = [i for i in KEYMAPS if i[2] == 'object']
 ALL_ACTIONS = [i for i in KEYMAPS if i[2] == 'action']
-NUMERIC_MAP = {'a': 'All', 'f': 'filter:'}
 
 
 def get_keymap(fragment):
@@ -48,7 +47,7 @@ def get_keymap(fragment):
             legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]] or keywords[0] in i[3]]
             return _generate_keymap(legal_actions)
         elif keywords[0] in [i[0] for i in ALL_OBJECTS]:
-            return {**_generate_keymap(DEFAULT_KEYMAP), **NUMERIC_MAP}
+            return _generate_keymap(DEFAULT_KEYMAP)
     if len(keywords) == 2:
         # Return a list of actions which are suitable for the object type in this command fragment
         if keywords[0] in ['File', 'Report', 'Plot']:

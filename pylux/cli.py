@@ -9,6 +9,7 @@ PALETTE = [
     ('fixture', 'light green', 'black', 'bold'),
     ('function', 'light magenta', 'black', 'bold'),
     ('group', 'light magenta', 'black', 'bold'),
+    ('filter', 'light blue', 'black', 'bold'),
     ('metadata', 'light blue', 'black', 'bold'),
     ('registry', 'yellow', 'black', 'bold'),
     ('unlabelled', 'dark red', 'black'),
