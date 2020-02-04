@@ -9,9 +9,9 @@ Documentation for Pylux
     getting_started
     using_metadata
     using_fixtures
-    using_cues
     importing_data
     generating_reports
+    generating_plots
 
 .. toctree::
     :maxdepth: 2

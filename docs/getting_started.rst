@@ -4,53 +4,97 @@ Getting Started
 Invoking
 --------
 
-When Pylux is installed, it adds the ``pylux`` executable to your path, so 
-you can launch Pylux by simply running ``pylux`` in a shell. Pylux also 
-accepts some additional launch parameters.
+Launch the program by running ``pylux`` as a module. Alternatively, you
+can add an entry point into your system PATH.
 
--h  Print the usage message then exit.
--v  Print the version number then exit.
--g  Launch in GUI mode (non-functional).
--f FILE    Load FILE as the effects plot file.
--V  Set output verbosity. Include more than once for more verbosity.
-
-For everyday use, you will probably only be using the -f parameter.
+-h  Print the usage message then exit
+-v  Print the version number then exit
+-f FILE    Load FILE as the current show file
 
 File Management
 ---------------
 
-In addition to loading a file whlist launching Pylux, you can also load a 
-file by issuing the ``fo path`` command when Pylux is open, which will 
+In addition to loading a file whlist launching, you can also load a
+file by issuing the ``File Open path`` command once open, which will
 discard the current file buffer and load the file at ``path``. When you need 
-to save the file, run ``fw``.
+to save the file, run ``File Write path``.
 
-If you do not have an existing file, you can begin working straight away. In 
-order to save your file, you will have to specify a save location using the 
-``fs path`` command, which sets the default save location for the currently 
-loaded file to ``path``. After that you only need to run ``fw`` to save the 
-file.
+If you do not have an existing file, you can begin working straight away.
+If no file is specified on startup, the program will load ``autosave.json``.
 
-Note: Pylux does not have an autosaving feature so it is imperative that 
-you run the ``fw`` command regularly.
+The CLI
+-------
 
-Getting Help
-------------
+The CLI is the default and only included interface to the command interpreter.
+It is a curses-style interface which will completely take over your terminal window.
+The screen is split into four areas: a large pane on the left called the Fixed Output Pane,
+a large pane on the right called the Dynamic Output Pane, a single line at the bottom
+which is your command-line entry and a line above the command line which displays
+command history and feedback.
 
-Pylux has some limited in-program help. Run the ``h`` command to display a 
-list of commands available to you. You can then run ``h command`` to display 
-specific help information on a certain command.
+The contents of the Dynamic Output Pane will change based on the commands you run and
+will display any output the interpreter sends from commands.
 
-Contexts
---------
+The contents of the Fixed Output Pane are dependent on the context you are in. The
+current context is given by the word preceding the command line. By default this is
+Fixture. In the Fixture context, the Fixed Output Pane will display a list of all
+fixtures in your show file. Similarly for cues, groups, etc. There is a special context,
+All, which will display all items in your show file.
 
-Contexts is a key feature of Pylux's CLI that allows command mnemonics to 
-be kept to only two characters. A context can be thought of as a 'mode', 
-where only a certain set of commands is available to you at any one time. 
-For example, the ``reporter`` allows you to create plaintext documentation, 
-but does not allow you to edit files. To edit files you must be in the 
-``editor`` context.
+You can change the context by typing the name of the new context twice and pressing enter.
+For example to change to the cue context type ``Cue Cue``. This is a function specific to
+the CLI and is not sent to the interpreter so is not considered a 'command' as such.
 
-You can always tell what context you are in by the prompt, which will be 
-in the form ``(pylux:context)``.
+You will notice as you type that many keys do not function as normal. That is because
+there is a substantial autofill provision. For example, pressing the key ``x`` will
+type ``Fixture`` in the command line for you, to save time typing out the entire word.
+You can enable and disable autofill by pressing Ctrl+A. This will change the letter
+preceding the command line from an A (indicating autofill is active) to an X.
 
-In order to switch to a different context, run ``:context``.
+Syntax
+------
+
+Most commands take the form ``object refs action params`` where:
+
+- ``object`` is the type of object you will be acting on, for example Fixture.
+- ``refs`` is a single or list of references to these objects, for example 1.
+- ``action`` is what you are doing to this object, for example CopyTo.
+- ``params`` is any further information the command requires. The number of parameters will vary from command to command. For example, CopyTo takes one parameter: the destination references.
+
+References can be a single number::
+
+    1
+
+A range::
+
+    1>10
+
+A list of numbers::
+
+    1,8,11,15
+
+Any combination of the two::
+
+    1,3>10,13,15
+
+A special character meaning all::
+
+    *
+
+A filtered list of numbers or ranges (this means apply filter 1 to the range in brackets)::
+
+    1[2>8,10]
+
+A combination of filtered and unfiltered ranges::
+
+    1[2>8],11,12,2[22,26,29>40]
+
+You can also apply a filter to the all character::
+
+    1[*]
+
+Or combine a filter of everything with unfiltered references too (this means show everything which
+matches filter 1, and also show 8 and 9, regardless of whether they meet the requirements of filter 1
+or not::
+
+    1[*],8,9

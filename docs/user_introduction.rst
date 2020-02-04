@@ -15,8 +15,10 @@ in plaintext format of any style using simple templating tools.
 Interface
 ---------
 
-Pylux's interface exists purely on the command line using a system of 
-mnemonic commands that allow data to be acted on efficiently.
+Everything you would need to do can be done through submitting commands on
+the command line. In the current implementation, this is done through an
+interactive prompt, although could be extended to incorporate a GUI, non-interactive
+CLI or even a web interface.
 
 Basic Concepts
 --------------
@@ -34,12 +36,11 @@ Fixture
 Registry
     A mapping of functions to addresses within a single DMX universe.
 
-Metadata
-    Key/value strings that contain miscellaneous data, such as the director 
-    of a production.
-
 Cues
     A snapshot of the levels of some functions.
+
+Groups
+    A list of fixtures in a certain order.
 
 These data types are referred to often in the remainder of this guide.
 

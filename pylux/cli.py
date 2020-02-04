@@ -121,7 +121,7 @@ class Application:
         self.config = init_globals['CONFIG']
         self.cmd = CommandLine(post_function)
         self.view = ApplicationView(self.cmd)
-        self.update_context(self.config['curses']['default-context'])
+        self.update_context(self.config['cli']['default-context'])
         self.message_bus = MessageBus(self.view.history, self.view.dynamic_walker)
 
     def initialise_file(self, f):

@@ -1,43 +1,28 @@
 Pylux
 =====
 
-.. image:: https://img.shields.io/pypi/v/pylux.svg
-.. image:: https://img.shields.io/pypi/format/pylux.svg
-.. image:: https://readthedocs.org/projects/pylux/badge/?version=latest
+Pylux is a program for creating and managing documentation for stage lighting.
 
-Pylux is a program for creating and managing documentation for stage lighting. 
-The program uses an XML 'effects plot' file to store information about a lighting 
-project. 
+Pylux currently has the capability to generate plaintext documentation from
+Jinja template files and create 2D plots in SVG although you will need to provide
+your own fixture vector files.
 
-Pylux currently has the capability to, using the aforementioned plot files, 
-generate plaintext documentation using Jinja2 (e.g. LaTeX or HTML documents), 
-generate scale plan views of the lighting arrangement and, by calling 
-mplayer, play sound cues.
+You can also import data from an Eos ASCII export, including the complete patch
+(excluding multicell fixtures), groups, and cues.
 
 Installation and Dependencies
 -----------------------------
 
-Pylux is written in Python 3, so you will need the usual Python dependencies, 
-they will be available via your package manager. The version of Pylux on 
-the PyPI is outdated, instead install from the Git repository::
+Pylux is written in pure Python 3. You will need the Python interpreter in order
+to run it. You will also need a few dependencies, which can be installed using pip::
 
-    git clone https://github.com/jackdpage/pylux.git
-    cd pylux
-    sudo python3 setup.py install
+    pip3 install urwid jinja2
 
-Content for Pylux is available from the `content repository`_.
-
-If you are running an Arch derivative, a PKGBUILD is available for both at 
-https://github.com/jackdpage/PKGBUILDs.
-
-If you want to play sound cues, you will need to install mplayer.
-
-.. _`content repository`: https://github.com/jackdpage/pylux-content
 
 Documentation
 -------------
 
-The documentation for both users and contributers is available on 
+Documentation is available at
 `Read the Docs`_.
 
 .. _`Read the Docs`: http://pylux.readthedocs.org/

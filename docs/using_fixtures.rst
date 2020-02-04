@@ -18,21 +18,23 @@ Because of the complexity of fixtures, especially those that contain DMX
 functions, it is not recommended to create them from scratch. Instead, 
 create one from a template then edit from there::
 
-    xN auto Generic/PAR64 MFL
+    Fixture 1 CreateFrom Generic/Parcan
 
-This creates a new fixture from the ``Generic/PAR64 MFL`` template. This is an
-included fixture template with Pylux.
+This creates a new fixture from the ``Generic/Parcan`` template. This is an
+included fixture template with Pylux. 1 is the reference given to this new fixture.
 
-Listing Fixtures
-----------------
+Displaying Fixtures
+-------------------
 
-Now you can view your new fixture by running::
+You will have seen the fixture appear in the Fixed Output Pane if you are in the
+Fixture context. You can also show the fixture in the Dynamic Output Pane by running::
 
-    xl
+    Fixture 1 Display
 
-The following will be printed to your console::
+If you want a bit more information on the fixture, such as additional data tags and
+DMX functions, you can run::
 
-    1 PAR64 MFL - Unnamed
+    Fixture 1 About
 
 Setting Attributes
 ------------------
@@ -41,25 +43,12 @@ By default fixtures do not have names, but it may be useful to give them a
 label so they are easily identifiable when you have many fixtures of the same
 type::
 
-    xs 1 name SL pipe end
+    Fixture 1 Set label SL pipe end
 
-Now if you re-run ``xl``, you will see::
+Now you will see your fixture has the label SL pipe end, when using both Display and About.
 
-    1 PAR64 MFL - SL pipe end
-
-When using ``xs``, you can actually use any tag you like in place of ``name`` 
-and that tag will be added to the data dictionary with the value you provide.
-
-Reserved Attributes
-~~~~~~~~~~~~~~~~~~~
-
-These attributes are regularly set automatically based on other attributes,
-therefore they should not be used as they will be overwritten:
-
-* ``colour`` overwritten based on the contents of ``gel``
-* ``focusX`` ``focusY`` ``focusZ`` overwritten based on ``focus``
-* ``posX`` ``posY`` ``posZ`` overwritten based on ``pos``
-* ``rotation`` overwritten based on ``focus`` and ``pos``
+In place of ``label``, you may put any arbitrary tag you like, such as ``gel``, ``posX`` etc.
+For a list of suggested and reserved attributes, see the appendicies.
 
 Cloning Fixtures
 ----------------
@@ -67,57 +56,26 @@ Cloning Fixtures
 Say we have five more PAR cans that we wish to add, we can use the cloning
 command to quickly add these between references 2 and 6::
 
-    xc 1 2:6
+    Fixture 1 CopyTo 2>6
 
 Notice that whenever you supply a unique reference, you can usually supply a
 range of references to run the command in bulk.
 
-Now running ``xl`` will display all six fixtures which have been added.
+Get information about all of these by running::
 
-You can now rename fixture *1* using the ``xs`` command again.
-
-Getting Fixture Information
----------------------------
-
-If you would like to know more about one of the fixtures in your effects 
-plot, you can either run ``xg`` to list all the data tags that fixture has 
-or ``xG`` to list data tags and DMX functions. For example:: 
-
-    xg 0
-
-This command prints the following::
-
-    Top Dimmer
-    2 Data Tags:
-        type: Zero88 Betapack 2
-        isDimmer: True
-
-Alternatively run:: 
-
-    xG 0
-
-This then prints the following::
-
-    Top Dimmer
-    2 Data Tags:
-        type: Zero88 Betapack 2
-        isDimmer: True
-    6 DMX Functions:
-        0 Channel 1
-        1 Channel 2
-        2 Channel 3
-        3 Channel 4
-        4 Channel 5
-        5 Channel 6
+    Fixture * About
 
 Assigning DMX Addresses to Fixtures
 -----------------------------------
 
 The data patching a fixture function to a DMX address exists in Registry
 objects, although it is a fixture command which is used to assign these
-addresses.
+addresses::
 
-You will need to create a registry object for each universe you use::
+    Fixture 1 Patch 0 0
 
-    rn 0
+This will patch your fixture in universe 0 at address 0. Of course address 0
+does not exist, 0 in this case means, the next available set of addresses where
+this fixture will fit. This is obviously 1 in this case.
 
+The program will automatically create the required registry object for you.
