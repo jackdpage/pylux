@@ -33,6 +33,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Group', 'Query'), self.group_query))
         self.commands.append(RegularCommand(('Group', 'Remove'), self.group_remove))
         self.commands.append(RegularCommand(('Group', 'Set'), self.group_set))
+        self.commands.append(NoRefsCommand(('Metadata', 'Set'), self.metadata_set))
         self.commands.append(RegularCommand(('Registry', 'About'), self.registry_about))
         self.commands.append(RegularCommand(('Registry', 'Create'), self.registry_create, check_refs=False))
         self.commands.append(RegularCommand(('Registry', 'Display'), self.registry_display))
@@ -229,6 +230,13 @@ class BaseExtension(InterpreterExtension):
         for r in refs:
             grp = document.get_by_ref(self.interpreter.file, 'group', r)
             grp[k] = v
+
+    def metadata_set(self, k, v=None):
+        """Set the value of a metadata tag. If no value is given, delete the tag."""
+        if v:
+            document.set_metadata(self.interpreter.file, k, v)
+        else:
+            document.remove_metadata(self.interpreter.file, k)
 
     def registry_about(self, refs):
         """Show a summary of the used addresses in a registry but don't provide any further information."""

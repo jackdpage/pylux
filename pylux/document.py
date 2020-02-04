@@ -361,3 +361,35 @@ def autoref(doc, type):
     for n in itertools.count(start=1):
         if str(n) not in used_refs:
             return str(n)
+
+
+def create_parent_metadata_object(doc):
+    doc.append(
+        {'type': 'metadata',
+         'tags': {}}
+    )
+
+
+def parent_metadata_object_exists(doc):
+    if len(get_by_type(doc, 'metadata')) > 0:
+        return True
+    else:
+        return False
+
+
+def get_parent_metadata_object(doc):
+    return get_by_type(doc, 'metadata')[0]
+
+
+def remove_metadata(doc, k):
+    if parent_metadata_object_exists(doc):
+        obj = get_parent_metadata_object(doc)
+        if k in obj['tags']:
+            del obj['tags'][k]
+
+
+def set_metadata(doc, k, v):
+    """Set metadata value"""
+    if not parent_metadata_object_exists(doc):
+        create_parent_metadata_object(doc)
+    get_parent_metadata_object(doc)['tags'][k] = v

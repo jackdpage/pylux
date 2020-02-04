@@ -43,14 +43,14 @@ def get_keymap(fragment):
         return _generate_keymap(DEFAULT_KEYMAP)
     if len(keywords) == 1:
         # Return any special characters which can be used in place of numbers
-        if keywords[0] in ['File', 'Report', 'Plot']:
+        if keywords[0] in ['File', 'Report', 'Plot', 'Metadata']:
             legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]] or keywords[0] in i[3]]
             return _generate_keymap(legal_actions)
         elif keywords[0] in [i[0] for i in ALL_OBJECTS]:
             return _generate_keymap(DEFAULT_KEYMAP)
     if len(keywords) == 2:
         # Return a list of actions which are suitable for the object type in this command fragment
-        if keywords[0] in ['File', 'Report', 'Plot']:
+        if keywords[0] in ['File', 'Report', 'Plot', 'Metadata']:
             return {}
         else:
             legal_actions = [i for i in ALL_ACTIONS if i[3] in ['any', keywords[0]] or keywords[0] in i[3]]
