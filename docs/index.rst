@@ -17,12 +17,15 @@ Documentation for Pylux
     :maxdepth: 2
     :caption: Command Reference
 
-    reference_editor
+    reference_base
 
 
 .. toctree::
     :maxdepth: 2
     :caption: Developer Documentation
+
+    developer_introduction
+    interface_spec
 
 
 .. toctree::
