@@ -13,6 +13,25 @@ class EosExtension(InterpreterExtension):
         with open(file) as f:
             raw = f.readlines()
 
+        def convert_fix_ref(eos_ref):
+            # Convert an Eos fixture ref into the standard format of fixture
+            # ref. For most fixtures this does nothing - it serves to convert
+            # those multicell fixture cells
+            if int(eos_ref) > 5000:
+                master_number = int(str(eos_ref)[:-4]) - 10
+                master_fixture = document.get_by_ref(self.interpreter.file, 'fixture', master_number)
+                # We find out the total number of component cells in the master fixture to determine
+                # how many digits should be in the cell number. We do this so that they are numbered
+                # 1.01, 1.02, ..., 1.10 etc. rather than 1.1, 1.2, ..., 1.10 etc. The latter method
+                # would be much easier and wouldn't require any lookup of existing master fixtures,
+                # however it will not work properly with normal sorting tools and is quite ambiguous.
+                total_cells = master_fixture['component-cells']
+                cell_digits = int(math.log10(total_cells)) + 1
+                cell_number = int(str(eos_ref)[-4:]) + 1
+                return str(master_number) + '.' + str(cell_number).zfill(cell_digits)
+            else:
+                return eos_ref
+
         def extract_blocks(start_regex):
             # Utility function to extract blocks of data beginning with given
             # regex pattern and ending with a blank line. Returns as a list
@@ -102,6 +121,12 @@ class EosExtension(InterpreterExtension):
                                 'param': parameters[res[1].split()[0]] + ' (16b)',
                                 'offset': int(res[1].split()[3])
                             })
+                    # Count up the number of $$PersPart, which indicates a cell in a multicell fixture
+                    elif res[0] == '$$PersPart':
+                        if 'component-cells' in template:
+                            template['component-cells'] += 1
+                        else:
+                            template['component-cells'] = 1
                 # If the fixture personality does not contain an Intens parameter, add a virtual Intens parameter
                 # with offset zero, so the fixture can be used for commands such as get_fixture_intens
                 if 'Intens' not in [i['param'] for i in pers]:
@@ -115,9 +140,7 @@ class EosExtension(InterpreterExtension):
                 templates[pers_ref.strip()] = template
 
             for patch in patch_blocks:
-                fix_ref = patch[0].split(' ')[1]
-                if int(fix_ref) > 5000:
-                    break
+                fix_ref = convert_fix_ref(patch[0].split(' ')[1])
                 # We have to make a deep copy of the template, to ensure that
                 # we aren't adjusting the personality and functions in place
                 # when we add UUIDs
@@ -166,10 +189,16 @@ class EosExtension(InterpreterExtension):
                         cue['fade-down'] = res[1]
                     elif res[0] == 'Chan':
                         for level in res[1].split():
-                            document.set_cue_fixture_level_by_fixture_ref(self.interpreter.file, cue,
-                                                                          level.split('@')[0], level.split('@')[1])
+                            fix_ref = convert_fix_ref(level.split('@')[0])
+                            try:
+                                document.set_cue_fixture_level_by_fixture_ref(self.interpreter.file, cue,
+                                                                              fix_ref, level.split('@')[1])
+                            except TypeError as e:
+                                self.interpreter.msg.post_feedback(['Fixture '+fix_ref+' appeared in cue ' + cue_ref +
+                                                                    ' but is not patched. Ignoring...'])
+                                continue
                     elif res[0] == '$$Param':
-                        fix_ref = res[1].split()[0]
+                        fix_ref = convert_fix_ref(res[1].split()[0])
                         fixture = document.get_by_ref(self.interpreter.file, 'fixture', fix_ref)
                         if fixture:
                             for param_level in res[1].split():
@@ -198,6 +227,7 @@ class EosExtension(InterpreterExtension):
                         group['label'] = res[1]
                     elif res[0] == '$$ChanList':
                         for chan in res[1].split():
+                            chan = convert_fix_ref(chan)
                             document.group_append_fixture_by_ref(self.interpreter.file, group, chan)
 
         else:
