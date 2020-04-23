@@ -378,7 +378,13 @@ def parent_metadata_object_exists(doc):
 
 
 def get_parent_metadata_object(doc):
-    return get_by_type(doc, 'metadata')[0]
+    try:
+        metadata = get_by_type(doc, 'metadata')[0]
+    except IndexError:
+        create_parent_metadata_object(doc)
+        metadata = get_by_type(doc, 'metadata')[0]
+    finally:
+        return metadata
 
 
 def remove_metadata(doc, k):
