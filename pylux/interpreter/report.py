@@ -32,7 +32,7 @@ class Report:
             tagger.tag_fixture_all(self.file, fixture)
         fixtures = clihelper.refsort(fixtures)
         hung_fixtures = [i for i in fixtures if is_hung(i)]
-        metadata = {i['metadata-key']: i['metadata-value'] for i in document.get_by_type(self.file, 'metadata')}
+        metadata = document.get_parent_metadata_object(self.file)['tags']
         # Render template
         self.content = template.render(cues=cues, fixtures=fixtures,
                                        metadata=metadata, hung=hung_fixtures,
