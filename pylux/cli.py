@@ -78,7 +78,14 @@ class CommandLine(urwid.Edit):
 
 
 class CommandHistory(urwid.Text):
-    pass
+
+    def __init__(self, markup):
+        super(CommandHistory, self).__init__(markup)
+        self.history = []
+
+    def add_to_history(self, text):
+        self.history.append(text)
+        self.set_text(text)
 
 
 class MessageBus:
@@ -88,7 +95,7 @@ class MessageBus:
         self.output = output_pane
 
     def post_feedback(self, lines):
-        self.history.set_text(lines)
+        self.history.add_to_history(lines)
 
     def clear_output(self):
         self.output.clear()
@@ -140,6 +147,12 @@ class Application:
             text_widgets.append(urwid.Text(string))
         return text_widgets
 
+    def _generate_history_list(self):
+        text_widgets = []
+        for i in self.message_bus.history.history:
+            text_widgets.append(urwid.Text(i))
+        return text_widgets
+
     def update_context(self, context):
         self.cmd.set_context(context)
         sheet_list = self._generate_sheet_list(context)
@@ -148,6 +161,9 @@ class Application:
     def update_view(self):
         self.view.update_sheet(self._generate_sheet_list(self.cmd.context))
 
+    def display_history(self):
+        self.view.update_sheet(self._generate_history_list())
+
 
 def main(init_globals):
 
@@ -155,6 +171,8 @@ def main(init_globals):
         split_command = command.split()
         if not split_command:
             app.view.history.set_text('Empty command')
+        elif split_command == ['CommandHistory']:
+            app.display_history()
         elif len(split_command) == 1:
             command_interpreter.process_command(command)
         elif (split_command[0] == split_command[1]
