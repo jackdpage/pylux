@@ -49,6 +49,44 @@ class Interpreter:
         self.triggers = {}
         self.noref_triggers = {}
 
+    def _get_init_keywords(self):
+        """Get all the keywords which could be the first keyword of a command."""
+        init_keywords = []
+        for t in {**self.triggers, **self.noref_triggers}:
+            if t[0] not in init_keywords:
+                init_keywords.append(t[0])
+        return init_keywords
+
+    def _get_noref_keyword_2(self, keyword_1):
+        """Get all the keywords which could be the second keyword of a norefs command, given
+        the first keyword of the command."""
+        keywords = []
+        for t in self.noref_triggers:
+            if t[0] == keyword_1:
+                keywords.append(t[1])
+        return keywords
+
+    def _get_ref_keyword_2(self, keyword_1):
+        """Get all the keywords which could be the second keyword of a refs command (after
+        the refs field), given the first keyword of the commond."""
+        keywords = []
+        for t in self.triggers:
+            if t[0] == keyword_1:
+                keywords.append(t[1])
+        return keywords
+
+    def get_expected_input(self, partial_command):
+        """Return a list of expected next keywords based on a partial command and the registered commands."""
+        n = len(partial_command.split())
+        if n == 0:
+            return self._get_init_keywords()
+        elif n == 1:
+            return self._get_noref_keyword_2(partial_command.split()[0])
+        elif n == 2:
+            return self._get_ref_keyword_2(partial_command.split()[0])
+        else:
+            return None
+
     def command_failed(self, posted_command):
         self.msg.post_feedback(['Error: Invalid command '+posted_command])
 

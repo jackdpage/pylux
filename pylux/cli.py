@@ -19,12 +19,16 @@ PALETTE = [
 
 
 class CommandLine(urwid.Edit):
-    def __init__(self, command_handler):
+    def __init__(self, config):
         super(CommandLine, self).__init__()
         self.context = ''
-        self.autocomplete = True
+        self.config = config
+        self.command_handler = None
+        self.keymapper = None
+
+    def bind(self, command_interpreter, command_handler):
         self.command_handler = command_handler
-        self.keymap = autocomplete.get_keymap(self.edit_text)
+        self.keymapper = autocomplete.Keymapper(command_interpreter, self.config)
 
     def post_command(self, command):
         self.command_handler(command)
@@ -34,31 +38,34 @@ class CommandLine(urwid.Edit):
         self.update_caption()
 
     def enable_autocomplete(self):
-        self.autocomplete = True
+        self.keymapper.enable()
         self.update_caption()
 
     def disable_autocomplete(self):
-        self.autocomplete = False
+        self.keymapper.disable()
         self.update_caption()
 
     def toggle_autocomplete(self):
-        self.autocomplete = not self.autocomplete
+        self.keymapper.toggle()
         self.update_caption()
 
     def update_caption(self):
-        if self.autocomplete:
-            self.set_caption('A ('+self.context+') ')
+        if self.keymapper:
+            if self.keymapper.enabled:
+                self.set_caption('A ('+self.context+') ')
+            else:
+                self.set_caption('X ('+self.context+') ')
         else:
-            self.set_caption('X ('+self.context+') ')
+            self.set_caption('N (' + self.context + ') ')
 
     def keypress(self, size, key):
         if key == 'enter':
             self.post_command(self.edit_text)
             self.set_edit_text('')
             self.enable_autocomplete()
-        elif key == 'ctrl a':
+        elif key == self.config['cli']['autocomplete-toggle-key']:
             self.toggle_autocomplete()
-        elif self.autocomplete:
+        elif self.keymapper.enabled:
             self.keypress_autocomplete(size, key)
         else:
             return super(CommandLine, self).keypress(size, key)
@@ -67,7 +74,7 @@ class CommandLine(urwid.Edit):
         if not self.edit_text.split():
             if key in [str(i) for i in range(0, 10)]:
                 self.insert_text(self.context+' ')
-        keymap = autocomplete.get_keymap(self.edit_text)
+        keymap = self.keymapper.get_keymap(self.edit_text)
         if keymap:
             if key in keymap:
                 return super(CommandLine, self).insert_text(keymap[key])
@@ -123,18 +130,21 @@ class ApplicationView:
 
 class Application:
 
-    def __init__(self, init_globals, post_function):
+    def __init__(self, init_globals):
         self.file = self.initialise_file(init_globals['FILE'])
         self.config = init_globals['CONFIG']
-        self.cmd = CommandLine(post_function)
+        self.cmd = CommandLine(self.config)
         self.view = ApplicationView(self.cmd)
-        self.update_context(self.config['cli']['default-context'])
         self.message_bus = MessageBus(self.view.history, self.view.dynamic_walker)
 
     def initialise_file(self, f):
         s = document.get_string_from_file(f)
         d = document.get_deserialised_document_from_string(s)
         return d
+
+    def bind(self, command_interpreter, post_function):
+        self.cmd.bind(command_interpreter, post_function)
+        self.update_context(self.config['cli']['default-context'])
 
     def _generate_sheet_list(self, context):
         text_widgets = []
@@ -175,20 +185,19 @@ def main(init_globals):
             app.display_history()
         elif len(split_command) == 1:
             command_interpreter.process_command(command)
-        elif (split_command[0] == split_command[1]
-              and split_command[0] in [i[0] for i in autocomplete.DEFAULT_KEYMAP]
-              and len(split_command) == 2):
+        elif (split_command[0] == split_command[1] and len(split_command) == 2):
             app.update_context(split_command[0])
         else:
             app.message_bus.clear_output()
             command_interpreter.process_command(command)
             app.update_view()
 
-    app = Application(init_globals, post_command)
+    app = Application(init_globals)
     command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
     command_interpreter.register_extension('base')
     command_interpreter.register_extension('eos')
     command_interpreter.register_extension('report')
     command_interpreter.register_extension('plot')
+    app.bind(command_interpreter, post_command)
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), PALETTE)
     loop.run()
