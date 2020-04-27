@@ -1,4 +1,25 @@
-UNLABELLED_STRING = '\033[31mUnnamed\033[0m'
+def get_pretty_level_string(level):
+    """From a level, which could be any decimal, hexadecimal or palette, return
+    something which looks a bit nicer. Add % to decimal numbers, colour the palettes
+    in so they look nice."""
+    if 'BP' in level:
+        return 'beampalette', level
+    elif 'CP' in level:
+        return 'colourpalette', level
+    elif 'FP' in level:
+        return 'focuspalette', level
+    elif 'IP' in level:
+        return 'intensitypalette', level
+    elif 'AP' in level:
+        return 'allpalette', level
+    else:
+        try:
+            if int(level) <= 100:
+                return level+'%'
+            else:
+                return level
+        except ValueError:
+            return level
 
 
 def get_cue_level_string(obj):
@@ -67,25 +88,6 @@ def get_generic_ref(obj):
         ref_print = ''
 
     return ref_print
-
-
-def get_generic_string(obj, pre=''):
-    if obj['type'] in PRINTER_INDEX:
-        if 'ref' in obj:
-            ref_print = ''.join(['\033[1m\033[',
-                                 str(PRINTER_INDEX[obj['type']][1]), 'm',
-                                 str(obj['ref']), '\033[0m '])
-        else:
-            ref_print = ''
-        s = pre + ref_print + PRINTER_INDEX[obj['type']][0](obj)
-        return s
-    else:
-        if 'label' in obj:
-            label = obj['label']
-        else:
-            label = UNLABELLED_STRING
-        obj_type = obj['type']
-        return label+' ('+obj_type+')'
 
 
 def get_fixture_extra_text(obj):
@@ -167,59 +169,3 @@ EXTRA_TEXT = {
     'intensitypalette': get_ip_extra_text,
     'allpalette': get_ap_extra_text
 }
-
-PRINTER_INDEX = {
-    'metadata': (get_metadata_value, 94),
-    'fixture': (get_fixture_string, 92),
-    'registry': (get_registry_string, 93),
-    'function': (get_function_string, 95),
-    'cue': (get_cue_string, 96),
-    'group': (get_group_string, 95)
-}
-
-
-class ProgressBar(object):
-    """ProgressBar class holds the options of the progress bar.
-    The options are:
-        start   State from which start the progress. For example, if start is
-                5 and the end is 10, the progress of this state is 50%
-        end     State in which the progress has terminated.
-        width   --
-        fill    String to use for "filled" used to represent the progress
-        blank   String to use for "filled" used to represent remaining space.
-        format  Format
-        incremental
-    """
-    def __init__(self, start=0, end=255, width=10, fill='=', blank=' ', incremental=True):
-        self.start = start
-        self.end = end
-        self.width = width
-        self.fill = fill
-        self.blank = blank
-        self.incremental = incremental
-        self.step = 100 / float(width) #fix
-        self.reset()
-
-    def __add__(self, increment):
-        increment = self._get_progress(increment)
-        if 100 > self.progress + increment:
-            self.progress += increment
-        else:
-            self.progress = 100
-        return self
-
-    def __str__(self):
-        progressed = int(self.progress / self.step) #fix
-        fill = (progressed-1) * self.fill
-        blank = (self.width - progressed) * self.blank
-        return ''.join(['[',fill,'>',blank,'] ',str(round(self.progress)),'%'])
-
-    __repr__ = __str__
-
-    def _get_progress(self, increment):
-        return float(increment * 100) / self.end
-
-    def reset(self):
-        """Resets the current progress to the start point"""
-        self.progress = self._get_progress(self.start)
-        return self

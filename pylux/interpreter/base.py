@@ -6,11 +6,6 @@ from pylux.lib import printer, data
 class BaseExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(RegularCommand(('AllPalette', 'Display'), self.palette_all_display))
-        self.commands.append(RegularCommand(('BeamPalette', 'Display'), self.palette_beam_display))
-        self.commands.append(RegularCommand(('ColourPalette', 'Display'), self.palette_colour_display))
-        self.commands.append(RegularCommand(('FocusPalette', 'Display'), self.palette_focus_display))
-        self.commands.append(RegularCommand(('IntensityPalette', 'Display'), self.palette_intensity_display))
         self.commands.append(RegularCommand(('Cue', 'About'), self.cue_about))
         self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create, check_refs=False))
         self.commands.append(RegularCommand(('Cue', 'Display'), self.cue_display))
@@ -39,6 +34,12 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Group', 'Remove'), self.group_remove))
         self.commands.append(RegularCommand(('Group', 'Set'), self.group_set))
         self.commands.append(NoRefsCommand(('Metadata', 'Set'), self.metadata_set))
+        self.commands.append(RegularCommand(('AllPalette', 'Display'), self.palette_all_display))
+        self.commands.append(RegularCommand(('BeamPalette', 'Display'), self.palette_beam_display))
+        self.commands.append(RegularCommand(('ColourPalette', 'About'), self.palette_colour_about))
+        self.commands.append(RegularCommand(('ColourPalette', 'Display'), self.palette_colour_display))
+        self.commands.append(RegularCommand(('FocusPalette', 'Display'), self.palette_focus_display))
+        self.commands.append(RegularCommand(('IntensityPalette', 'Display'), self.palette_intensity_display))
         self.commands.append(RegularCommand(('Registry', 'About'), self.registry_about))
         self.commands.append(RegularCommand(('Registry', 'Create'), self.registry_create, check_refs=False))
         self.commands.append(RegularCommand(('Registry', 'Display'), self.registry_display))
@@ -54,7 +55,8 @@ class BaseExtension(InterpreterExtension):
                 func = document.get_function_by_uuid(self.interpreter.file, l)
                 if func['param'] == 'Intens':
                     fix = document.get_function_parent(self.interpreter.file, func)
-                    self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ' ', str(cue['levels'][l])]])
+                    self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ' ',
+                                                       printer.get_pretty_level_string(str(cue['levels'][l]))]])
 
     def cue_create(self, refs):
         """Create a blank cue."""
@@ -77,7 +79,8 @@ class BaseExtension(InterpreterExtension):
                 fix = document.get_function_parent(self.interpreter.file, func)
                 self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':'] +
                                                   printer.get_generic_text_widget(func) +
-                                                  [': ', str(cue['levels'][l])]])
+                                                  [': ',
+                                                   printer.get_pretty_level_string(str(cue['levels'][l]))]])
 
     def cue_remove(self, refs):
         """Remove a cue."""
@@ -284,6 +287,18 @@ class BaseExtension(InterpreterExtension):
         for r in refs:
             palette = document.get_by_ref(self.interpreter.file, 'colourpalette', r)
             self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+
+    def palette_colour_about(self, refs):
+        """See the stored values in a colour palette."""
+        for r in refs:
+            palette = document.get_by_ref(self.interpreter.file, 'colourpalette', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+            for l in palette['levels']:
+                func = document.get_function_by_uuid(self.interpreter.file, l)
+                fix = document.get_function_parent(self.interpreter.file, func)
+                self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':',
+                                                   printer.get_generic_text_widget(func),
+                                                   ': ', palette['levels'][l]]])
 
     def palette_focus_display(self, refs):
         """Print a single line summary of a foucs palette."""
