@@ -24,11 +24,6 @@ import re
 DECIMAL_PRECISION = decimal.Decimal('0.001')
 
 
-def print_object(obj, pre=''):
-    s = printer.get_generic_string(obj, pre)
-    print(s)
-
-
 def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
     """The safest most complete reference parser. Only return references of
     objects which exist in the document. Support for arbitrary decimal
@@ -181,48 +176,6 @@ def resolve_references(user_input, precision=1):
 def resolve_dec_references(user_input):
     """Decimal version of the above."""
     return resolve_references(user_input, precision=DECIMAL_PRECISION)
-
-
-def resolve_input(inputs_list, number_args):
-    """Parse user input that contains a multi-word argument.
-
-    From a list of user arguments which have already been split, 
-    return a new list containing a set number of arguments, where 
-    the last argument is a multi-word argument is a multi-word
-    argument.
-
-    Args:
-        inputs_list: a list containing strings which have been 
-            split from the user input using split(' ').
-        number_args: the number of arguments the input should 
-            contain, excluding the action itself. For example, 
-            the add metadata action takes two arguments: the tag 
-            and value.
-
-    Returns:
-        A list containing a list of the arguments, where the last 
-        argument is a concatenation of any arguments that were 
-        left after processing the rest of the inputs list. For 
-        example, the metadata example above would return 
-        ['ma', 'tag', 'value which can be many words long'].
-    """
-    i = 1
-    args_list = []
-    multiword_input = ""
-    while i < number_args:
-        args_list.append(inputs_list[i])
-        i = i+1
-    while number_args <= i <= len(inputs_list)-1:
-        if multiword_input == "":
-            multiword_input = multiword_input+inputs_list[i]
-        else:
-            multiword_input = multiword_input+' '+inputs_list[i]
-        i = i+1
-    args_list.append(multiword_input)
-    if args_list[-1] == '':
-        args_list.pop(-1)
-    return args_list
-
 
 def refsort(objs):
     """Sort a list of objects by their reference number"""
