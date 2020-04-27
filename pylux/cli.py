@@ -4,18 +4,6 @@ from pylux.lib import autocomplete, printer
 
 
 NUMERIC_KEYS = [str(i) for i in range(0, 10)]
-PALETTE = [
-    ('cue', 'light cyan', 'black', 'bold'),
-    ('fixture', 'light green', 'black', 'bold'),
-    ('function', 'light magenta', 'black', 'bold'),
-    ('group', 'light magenta', 'black', 'bold'),
-    ('filter', 'light blue', 'black', 'bold'),
-    ('metadata', 'light blue', 'black', 'bold'),
-    ('registry', 'yellow', 'black', 'bold'),
-    ('unlabelled', 'dark red', 'black'),
-    ('error', 'dark red', 'black'),
-    ('success', 'light green', 'black')
-]
 
 
 class CommandLine(urwid.Edit):
@@ -192,6 +180,13 @@ def main(init_globals):
             command_interpreter.process_command(command)
             app.update_view()
 
+    def generate_palette():
+        palette = []
+        conf_options = app.config['cli-colours']
+        for c in conf_options:
+            palette.append((c, conf_options[c], 'default', 'bold'))
+        return palette
+
     app = Application(init_globals)
     command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
     command_interpreter.register_extension('base')
@@ -199,5 +194,6 @@ def main(init_globals):
     command_interpreter.register_extension('report')
     command_interpreter.register_extension('plot')
     app.bind(command_interpreter, post_command)
-    loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), PALETTE)
+    palette = generate_palette()
+    loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), palette)
     loop.run()
