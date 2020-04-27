@@ -6,6 +6,11 @@ from pylux.lib import printer, data
 class BaseExtension(InterpreterExtension):
 
     def register_commands(self):
+        self.commands.append(RegularCommand(('AllPalette', 'Display'), self.palette_all_display))
+        self.commands.append(RegularCommand(('BeamPalette', 'Display'), self.palette_beam_display))
+        self.commands.append(RegularCommand(('ColourPalette', 'Display'), self.palette_colour_display))
+        self.commands.append(RegularCommand(('FocusPalette', 'Display'), self.palette_focus_display))
+        self.commands.append(RegularCommand(('IntensityPalette', 'Display'), self.palette_intensity_display))
         self.commands.append(RegularCommand(('Cue', 'About'), self.cue_about))
         self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create, check_refs=False))
         self.commands.append(RegularCommand(('Cue', 'Display'), self.cue_display))
@@ -214,7 +219,6 @@ class BaseExtension(InterpreterExtension):
         for r in refs:
             grp = document.get_by_ref(self.interpreter.file, 'group', r)
             self.interpreter.msg.post_output([printer.get_generic_text_widget(grp)])
-            fixtures = ''
             for fix_uuid in grp['fixtures']:
                 self.interpreter.msg.post_output([['    ', printer.get_generic_text_widget(
                     document.get_by_uuid(self.interpreter.file, fix_uuid)
@@ -237,6 +241,61 @@ class BaseExtension(InterpreterExtension):
             document.set_metadata(self.interpreter.file, k, v)
         else:
             document.remove_metadata(self.interpreter.file, k)
+
+    def palette_intensity_create(self, refs):
+        """Create an empty intensity palette."""
+        for r in refs:
+            document.insert_blank_intensity_palette(self.interpreter.file, r)
+
+    def palette_focus_create(self, refs):
+        """Create an empty focus palette."""
+        for r in refs:
+            document.insert_blank_focus_palette(self.interpreter.file, r)
+
+    def palette_colour_create(self, refs):
+        """Create an empty colour palette."""
+        for r in refs:
+            document.insert_blank_colour_palette(self.interpreter.file, r)
+
+    def palette_beam_create(self, refs):
+        """Create an empty beam palette."""
+        for r in refs:
+            document.insert_blank_beam_palette(self.interpreter.file, r)
+
+    def palette_all_create(self, refs):
+        """Create an empty all palette (preset)."""
+        for r in refs:
+            document.insert_blank_all_palette(self.interpreter.file, r)
+
+    def palette_all_display(self, refs):
+        """Print a single line summary of a all palette."""
+        for r in refs:
+            palette = document.get_by_ref(self.interpreter.file, 'allpalette', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+
+    def palette_beam_display(self, refs):
+        """Print a single line summary of a beam palette."""
+        for r in refs:
+            palette = document.get_by_ref(self.interpreter.file, 'beampalette', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+
+    def palette_colour_display(self, refs):
+        """Print a single line summary of a colour palette."""
+        for r in refs:
+            palette = document.get_by_ref(self.interpreter.file, 'colourpalette', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+
+    def palette_focus_display(self, refs):
+        """Print a single line summary of a foucs palette."""
+        for r in refs:
+            palette = document.get_by_ref(self.interpreter.file, 'focuspalette', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+
+    def palette_intensity_display(self, refs):
+        """Print a single line summary of an intensity palette."""
+        for r in refs:
+            palette = document.get_by_ref(self.interpreter.file, 'intensitypalette', r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
 
     def registry_about(self, refs):
         """Show a summary of the used addresses in a registry but don't provide any further information."""
@@ -279,8 +338,8 @@ class BaseExtension(InterpreterExtension):
                 func = document.get_function_by_uuid(self.interpreter.file, v)
                 f = document.get_function_parent(self.interpreter.file, func)
                 self.interpreter.msg.post_output([['DMX', str(format(k, '03d')), ': '] +
-                               printer.get_generic_text_widget(f) + [' ('] +
-                               printer.get_generic_text_widget(func) + [')']])
+                                                  printer.get_generic_text_widget(f) + [' ('] +
+                                                  printer.get_generic_text_widget(func) + [')']])
 
     def registry_remove(self, refs):
         """Remove a registry. This will break any patching if the registry is not empty."""

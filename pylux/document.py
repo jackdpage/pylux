@@ -76,7 +76,7 @@ def get_by_value(doc, k, v):
     matched = []
 
     for obj in get_by_key(doc, k):
-        if obj[k] == v:
+        if str(obj[k]) == str(v):
             matched.append(obj)
 
     return matched
@@ -327,6 +327,59 @@ def set_cue_function_level(doc, cue, func, level):
         cue['levels'][fine_func[0]['uuid']] = str(lower_bit)
     else:
         cue['levels'][func['uuid']] = level
+
+
+def insert_blank_palette(doc, palette_type, ref):
+    if ref == 0:
+        ref = autoref(doc, palette_type+'palette')
+    palette = {
+        'type': palette_type+'palette',
+        'uuid': str(uuid.uuid4()),
+        'ref': ref,
+        'levels': {}
+    }
+    doc.append(palette)
+    return palette
+
+
+def insert_blank_intensity_palette(doc, ref):
+    return insert_blank_palette(doc, 'intensity', ref)
+
+
+def insert_blank_focus_palette(doc, ref):
+    return insert_blank_palette(doc, 'focus', ref)
+
+
+def insert_blank_colour_palette(doc, ref):
+    return insert_blank_palette(doc, 'colour', ref)
+
+
+def insert_blank_beam_palette(doc, ref):
+    return insert_blank_palette(doc, 'beam', ref)
+
+
+def insert_blank_all_palette(doc, ref):
+    return insert_blank_palette(doc, 'all', ref)
+
+
+def set_palette_function_level(doc, palette, func, level):
+    """Set the level of a function, in a palette."""
+    fix = get_function_parent(doc, func)
+    # Check to see if the function is a 16 bit function by checking for
+    # functions with the (16b) suffix with the same name
+    fine_func = get_by_value(fix['personality'], 'param', func['param'] + ' (16b)')
+    if fine_func:
+        # Logic to determine 16bit values
+        try:
+            upper_bit = math.floor(int(level) / 256)
+            lower_bit = int(level) % 256
+        except ValueError:
+            upper_bit = level
+            lower_bit = level
+        palette['levels'][func['uuid']] = str(upper_bit)
+        palette['levels'][fine_func[0]['uuid']] = str(lower_bit)
+    else:
+        palette['levels'][func['uuid']] = level
 
 
 def get_function_patch_location(doc, func):

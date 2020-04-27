@@ -193,7 +193,7 @@ class EosExtension(InterpreterExtension):
                             try:
                                 document.set_cue_fixture_level_by_fixture_ref(self.interpreter.file, cue,
                                                                               fix_ref, level.split('@')[1])
-                            except TypeError as e:
+                            except TypeError:
                                 self.interpreter.msg.post_feedback(['Fixture '+fix_ref+' appeared in cue ' + cue_ref +
                                                                     ' but is not patched. Ignoring...'])
                                 continue
@@ -212,7 +212,9 @@ class EosExtension(InterpreterExtension):
                                         cue_levels = document.get_by_ref(self.interpreter.file, 'cue', cue_ref)['levels']
                                         if intens_uuid in cue_levels:
                                             del cue_levels[intens_uuid]
-                                    param_value = param_level.split('@')[1]
+                                    # We use the same CP/BP/FP/IP designation of Eos, except they call All Palettes
+                                    # Presets, with the abbreviation PR rather than AP, so we will swap these out
+                                    param_value = param_level.split('@')[1].replace('PR', 'AP')
                                     func = document.get_by_value(fixture['personality'], 'param', param_type)[0]
                                     document.set_cue_function_level(self.interpreter.file, cue, func, param_value)
 
@@ -229,6 +231,45 @@ class EosExtension(InterpreterExtension):
                         for chan in res[1].split():
                             chan = convert_fix_ref(chan)
                             document.group_append_fixture_by_ref(self.interpreter.file, group, chan)
+
+        elif target == 'palettes':
+
+            def _process_palette_block(block, palette):
+                for l in block:
+                    res = resolve_line(l)
+                    if res[0] == 'Text':
+                        palette['label'] = res[1]
+                    elif res[0] == '$$Param':
+                        fix_ref = convert_fix_ref(res[1].split()[0])
+                        fixture = document.get_by_ref(self.interpreter.file, 'fixture', fix_ref)
+                        if fixture:
+                            for param_level in res[1].split():
+                                if '@' in param_level:
+                                    param_type = parameters[param_level.split('@')[0]]
+                                    param_value = param_level.split('@')[1]
+                                    func = document.get_by_value(fixture['personality'], 'param', param_type)[0]
+                                    document.set_palette_function_level(self.interpreter.file, palette, func, param_value)
+
+            intens_palette_blocks = extract_blocks('\$IntensPalette')
+            for block in intens_palette_blocks:
+                ref = block[0].split()[1]
+                palette = document.insert_blank_intensity_palette(self.interpreter.file, ref)
+                _process_palette_block(block, palette)
+            focus_palette_blocks = extract_blocks('\$FocusPalette')
+            for block in focus_palette_blocks:
+                ref = block[0].split()[1]
+                palette = document.insert_blank_focus_palette(self.interpreter.file, ref)
+                _process_palette_block(block, palette)
+            colour_palette_blocks = extract_blocks('\$ColorPalette')
+            for block in colour_palette_blocks:
+                ref = block[0].split()[1]
+                palette = document.insert_blank_colour_palette(self.interpreter.file, ref)
+                _process_palette_block(block, palette)
+            beam_palette_blocks = extract_blocks('\$BeamPalette')
+            for block in beam_palette_blocks:
+                ref = block[0].split()[1]
+                palette = document.insert_blank_beam_palette(self.interpreter.file, ref)
+                _process_palette_block(block, palette)
 
         else:
             print('Unsupported target. See the help page for this command for a list of supported targets.')
