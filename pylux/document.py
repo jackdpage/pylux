@@ -298,7 +298,15 @@ def group_append_fixture_by_ref(doc, group, fix_ref):
 
 
 def insert_blank_registry(doc, ref):
-    return insert_blank_object(doc, constant.REGISTRY_TYPE, ref)
+    registry = {
+        'type': 'registry',
+        'ref': str(ref),
+        'uuid': str(uuid.uuid4()),
+        'table': {}
+
+    }
+    doc.append(registry)
+    return registry
 
 
 def insert_blank_cue(doc, ref):
