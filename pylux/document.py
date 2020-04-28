@@ -21,7 +21,7 @@ import json
 import uuid
 import math
 from copy import deepcopy
-from pylux.lib import constant
+from pylux.lib import constant, exception
 
 
 # File operations. These functions load JSON documents from files and
@@ -121,6 +121,20 @@ def insert_blank_object(doc, obj_type, ref, **kwargs):
                 new_obj[field] = deepcopy(default_val)
         else:
             new_obj[field] = deepcopy(default_val)
+    doc.append(new_obj)
+
+    return new_obj
+
+
+def insert_duplicate_object(doc, obj_type, src_obj, dest):
+    """Copy an object to another, giving it a new UUID on the way."""
+    dest_potential_clash = get_by_ref(doc, src_obj['type'], dest)
+    if dest_potential_clash:
+        raise exception.ObjectAlreadyExistsError(obj_type, dest)
+
+    new_obj = deepcopy(src_obj)
+    new_obj['ref'] = dest
+    new_obj['uuid'] = str(uuid.uuid4())
     doc.append(new_obj)
 
     return new_obj
