@@ -1,7 +1,6 @@
 def get_pretty_level_string(level):
     """From a level, which could be any decimal, hexadecimal or palette, return
-    something which looks a bit nicer. Add % to decimal numbers, colour the palettes
-    in so they look nice."""
+    something which looks a bit nicer."""
     if 'BP' in level:
         return 'beampalette', level
     elif 'CP' in level:
@@ -13,70 +12,11 @@ def get_pretty_level_string(level):
     elif 'AP' in level:
         return 'allpalette', level
     else:
-        try:
-            if int(level) <= 100:
-                return level+'%'
-            else:
-                return level
-        except ValueError:
-            return level
+        return level
 
 
 def get_cue_level_string(obj):
     return ' ('+str(len(obj['levels']))+' levels)'
-
-
-def get_metadata_value(meta):
-    s = meta['metadata-key']+': '
-    if 'metadata-value' in meta:
-        return s+meta['metadata-value']
-    else:
-        return s+'\033[31mEmpty\033[0m'
-
-
-def get_fixture_string(fixture):
-    if 'label' in fixture:
-        label = fixture['label']
-    else:
-        label = '\033[31mUnlabelled\033[0m'
-    if 'fixture-type' in fixture:
-        type = fixture['fixture-type']
-    else:
-        type = 'n/a'
-    ref = fixture['ref']
-    return type+' - '+label
-
-
-def get_registry_string(registry):
-    if 'patch' in registry:
-        patch = registry['patch']
-    else:
-        patch = '\033[31mUnpatched\033[0m'
-    return 'DMX512 Universe - '+patch
-
-
-def get_function_string(function):
-    name = function['param']
-    offset = ''.join(['\033[1m\033[95m', str(function['offset']), '\033[0m '])
-
-    return offset+name
-
-
-def get_cue_string(cue):
-    if 'label' in cue:
-        label = cue['label']
-    else:
-        label = UNLABELLED_STRING
-    levels = str(len(cue['levels']))
-    return 'Cue - '+label+' ('+levels+' levels)'
-
-
-def get_group_string(group):
-    if 'label' in group:
-        label = group['label']
-    else:
-        label = UNLABELLED_STRING
-    return 'Group - '+label+' ('+str(len(group['fixtures']))+' fixtures)'
 
 
 def get_generic_ref(obj):

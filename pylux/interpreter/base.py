@@ -1,6 +1,6 @@
 from pylux.interpreter import RegularCommand, InterpreterExtension, NoRefsCommand
 from pylux import document, clihelper
-from pylux.lib import printer, data
+from pylux.lib import printer, data, constant
 
 
 class BaseExtension(InterpreterExtension):
@@ -34,29 +34,60 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Group', 'Remove'), self.group_remove))
         self.commands.append(RegularCommand(('Group', 'Set'), self.group_set))
         self.commands.append(NoRefsCommand(('Metadata', 'Set'), self.metadata_set))
+        self.commands.append(RegularCommand(('AllPalette', 'About'), self.palette_all_about))
         self.commands.append(RegularCommand(('AllPalette', 'Display'), self.palette_all_display))
+        self.commands.append(RegularCommand(('AllPalette', 'Remove'), self.palette_all_remove))
+        self.commands.append(RegularCommand(('BeamPalette', 'About'), self.palette_beam_about))
         self.commands.append(RegularCommand(('BeamPalette', 'Display'), self.palette_beam_display))
+        self.commands.append(RegularCommand(('BeamPalette', 'Remove'), self.palette_beam_remove))
         self.commands.append(RegularCommand(('ColourPalette', 'About'), self.palette_colour_about))
         self.commands.append(RegularCommand(('ColourPalette', 'Display'), self.palette_colour_display))
+        self.commands.append(RegularCommand(('ColourPalette', 'Remove'), self.palette_colour_remove))
+        self.commands.append(RegularCommand(('FocusPalette', 'About'), self.palette_focus_about))
         self.commands.append(RegularCommand(('FocusPalette', 'Display'), self.palette_focus_display))
+        self.commands.append(RegularCommand(('FocusPalette', 'Remove'), self.palette_focus_remove))
+        self.commands.append(RegularCommand(('IntensityPalette', 'About'), self.palette_intensity_about))
         self.commands.append(RegularCommand(('IntensityPalette', 'Display'), self.palette_intensity_display))
+        self.commands.append(RegularCommand(('IntensityPalette', 'Remove'), self.palette_intensity_remove))
         self.commands.append(RegularCommand(('Registry', 'About'), self.registry_about))
         self.commands.append(RegularCommand(('Registry', 'Create'), self.registry_create, check_refs=False))
         self.commands.append(RegularCommand(('Registry', 'Display'), self.registry_display))
         self.commands.append(RegularCommand(('Registry', 'Query'), self.registry_query))
         self.commands.append(RegularCommand(('Registry', 'Remove'), self.registry_remove))
 
-    def cue_about(self, refs):
-        """Show the intensities of fixtures in a cue."""
+    def _base_display(self, refs, obj_type):
+        """Print a single-line summary of a range of objects."""
         for r in refs:
-            cue = document.get_by_ref(self.interpreter.file, 'cue', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(cue)])
-            for l in cue['levels']:
+            obj = document.get_by_ref(self.interpreter.file, obj_type[0], r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(obj)])
+
+    def _base_levels_query(self, refs, obj_type, nips=True):
+        """See the stored level values of all parameter types. Works with objects that
+        use the levels key. Set nips to False to only show intensity values."""
+        for r in refs:
+            obj = document.get_by_ref(self.interpreter.file, obj_type[0], r)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(obj)])
+            for l in obj['levels']:
                 func = document.get_function_by_uuid(self.interpreter.file, l)
-                if func['param'] == 'Intens':
-                    fix = document.get_function_parent(self.interpreter.file, func)
-                    self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ' ',
-                                                       printer.get_pretty_level_string(str(cue['levels'][l]))]])
+                fix = document.get_function_parent(self.interpreter.file, func)
+                if func['param'] == 'Intens' or nips:
+                    self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':'] +
+                                                      printer.get_generic_text_widget(func) + [': ',
+                                                      printer.get_pretty_level_string(str(obj['levels'][l]))]])
+
+    def _base_remove(self, refs, obj_type):
+        """Remove an object from the document."""
+        for r in refs:
+            document.remove_by_ref(self.interpreter.file, obj_type[0], r)
+
+    def _base_set(self, refs, obj_type, k, v):
+        """Set an arbitrary data tag to a value."""
+        for r in refs:
+            document.get_by_ref(self.interpreter.file, obj_type[0], r)[k] = v
+
+    def cue_about(self, refs):
+        """Show stored intensity data for a cue."""
+        return self._base_levels_query(refs, constant.CUE_TYPE, nips=False)
 
     def cue_create(self, refs):
         """Create a blank cue."""
@@ -64,33 +95,20 @@ class BaseExtension(InterpreterExtension):
             document.insert_blank_cue(self.interpreter.file, ref)
 
     def cue_display(self, refs):
-        """Show a single-line summary of a cue."""
-        for r in refs:
-            cue = document.get_by_ref(self.interpreter.file, 'cue', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(cue)])
+        """Show a single line summary of a cue."""
+        return self._base_display(refs, constant.CUE_TYPE)
 
     def cue_query(self, refs):
-        """As for Cue About, except also show levels of NIPs."""
-        for r in refs:
-            cue = document.get_by_ref(self.interpreter.file, 'cue', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(cue)])
-            for l in cue['levels']:
-                func = document.get_function_by_uuid(self.interpreter.file, l)
-                fix = document.get_function_parent(self.interpreter.file, func)
-                self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':'] +
-                                                  printer.get_generic_text_widget(func) +
-                                                  [': ',
-                                                   printer.get_pretty_level_string(str(cue['levels'][l]))]])
+        """Show stored intensity and non-intensity data for a cue."""
+        return self._base_levels_query(refs, constant.CUE_TYPE)
 
     def cue_remove(self, refs):
         """Remove a cue."""
-        for r in refs:
-            document.remove_by_ref(self.interpreter.file, 'cue', r)
+        return self._base_remove(refs, constant.CUE_TYPE)
 
     def cue_set(self, refs, k, v):
-        """Set the value of a cue's tag."""
-        for ref in refs:
-            document.get_by_ref(self.interpreter.file, 'cue', ref)[k] = v
+        """Set an arbitrary data tag in a cue."""
+        return self._base_set(refs, constant.CUE_TYPE, k, v)
 
     def cue_setintens(self, refs, fix_refs, level):
         """Set the level of a fixture's Intens function in a cue."""
@@ -114,8 +132,7 @@ class BaseExtension(InterpreterExtension):
 
     def filter_remove(self, refs):
         """Remove a filter."""
-        for r in refs:
-            document.remove_by_ref(self.interpreter.file, 'filter', r)
+        return self._base_remove(refs, constant.FILTER_TYPE)
 
     def fixture_about(self, refs):
         """Display data tags and DMX functions of a fixture."""
@@ -158,6 +175,7 @@ class BaseExtension(InterpreterExtension):
             document.insert_blank_fixture(self.interpreter.file, r)
 
     def fixture_createfrom(self, refs, template):
+        """Create a fixture from a template file."""
         template_file = data.get_data('fixture/'+template+'.json')
         if not template_file:
             self.interpreter.msg.post_feedback(['Template {0} does not exist, reverting to fallback.'.format(template)])
@@ -166,10 +184,8 @@ class BaseExtension(InterpreterExtension):
             document.insert_fixture_from_json_template(self.interpreter.file, r, template_file)
 
     def fixture_display(self, refs):
-        """Display a single-line summary of a fixture."""
-        for r in refs:
-            fix = document.get_by_ref(self.interpreter.file, 'fixture', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(fix)])
+        """Show a single line summary of a fixture."""
+        return self._base_display(refs, constant.FIXTURE_TYPE)
 
     def fixture_patch(self, refs, univ, addr):
         """Patch the functions of a fixture in a registry."""
@@ -178,13 +194,12 @@ class BaseExtension(InterpreterExtension):
 
     def fixture_remove(self, refs):
         """Remove a fixture."""
-        for r in refs:
-            document.remove_by_ref(self.interpreter.file, 'fixture', r)
+        self.fixture_unpatch(refs)
+        return self._base_remove(refs, constant.FIXTURE_TYPE)
 
     def fixture_set(self, refs, k, v):
-        """Set the value of a fixture's tag."""
-        for r in refs:
-            document.get_by_ref(self.interpreter.file, 'fixture', r)[k] = v
+        """Set an arbitrary data tag in a fixture."""
+        return self._base_set(refs, constant.FIXTURE_TYPE, k, v)
 
     def fixture_unpatch(self, refs):
         """Remove all of a fixture's functions from all registries."""
@@ -212,10 +227,8 @@ class BaseExtension(InterpreterExtension):
             document.insert_blank_group(self.interpreter.file, r)
 
     def group_display(self, refs):
-        """Print a single-line summary of a group."""
-        for r in refs:
-            grp = document.get_by_ref(self.interpreter.file, 'group', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(grp)])
+        """Show a single line summary of a group."""
+        return self._base_display(refs, constant.GROUP_TYPE)
 
     def group_query(self, refs):
         """Show the used fixtures in a group, and also give a summary of each fixture."""
@@ -229,14 +242,11 @@ class BaseExtension(InterpreterExtension):
 
     def group_remove(self, refs):
         """Remove a group."""
-        for r in refs:
-            document.remove_by_ref(self.interpreter.file, 'group', r)
+        return self._base_remove(refs, constant.GROUP_TYPE)
 
     def group_set(self, refs, k, v):
-        """Set arbitrary data tags for a group."""
-        for r in refs:
-            grp = document.get_by_ref(self.interpreter.file, 'group', r)
-            grp[k] = v
+        """Set an arbitrary data tag in a group."""
+        return self._base_set(refs, constant.GROUP_TYPE, k, v)
 
     def metadata_set(self, k, v=None):
         """Set the value of a metadata tag. If no value is given, delete the tag."""
@@ -271,46 +281,64 @@ class BaseExtension(InterpreterExtension):
             document.insert_blank_all_palette(self.interpreter.file, r)
 
     def palette_all_display(self, refs):
-        """Print a single line summary of a all palette."""
-        for r in refs:
-            palette = document.get_by_ref(self.interpreter.file, 'allpalette', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+        """Show a single line summary of an all palette."""
+        return self._base_display(refs, constant.ALL_PALETTE_TYPE)
 
     def palette_beam_display(self, refs):
-        """Print a single line summary of a beam palette."""
-        for r in refs:
-            palette = document.get_by_ref(self.interpreter.file, 'beampalette', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+        """Show a single line summary of a beam palette."""
+        return self._base_display(refs, constant.BEAM_PALETTE_TYPE)
 
     def palette_colour_display(self, refs):
-        """Print a single line summary of a colour palette."""
-        for r in refs:
-            palette = document.get_by_ref(self.interpreter.file, 'colourpalette', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
-
-    def palette_colour_about(self, refs):
-        """See the stored values in a colour palette."""
-        for r in refs:
-            palette = document.get_by_ref(self.interpreter.file, 'colourpalette', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
-            for l in palette['levels']:
-                func = document.get_function_by_uuid(self.interpreter.file, l)
-                fix = document.get_function_parent(self.interpreter.file, func)
-                self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':',
-                                                   printer.get_generic_text_widget(func),
-                                                   ': ', palette['levels'][l]]])
+        """Show a single line summary of a colour palette."""
+        return self._base_display(refs, constant.COLOUR_PALETTE_TYPE)
 
     def palette_focus_display(self, refs):
-        """Print a single line summary of a foucs palette."""
-        for r in refs:
-            palette = document.get_by_ref(self.interpreter.file, 'focuspalette', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+        """Show a single line summary of a focus palette."""
+        return self._base_display(refs, constant.FOCUS_PALETTE_TYPE)
 
     def palette_intensity_display(self, refs):
-        """Print a single line summary of an intensity palette."""
-        for r in refs:
-            palette = document.get_by_ref(self.interpreter.file, 'intensitypalette', r)
-            self.interpreter.msg.post_output([printer.get_generic_text_widget(palette)])
+        """Show a single line summary of an intensity palette."""
+        return self._base_display(refs, constant.INTENSITY_PALETTE_TYPE)
+
+    def palette_all_about(self, refs):
+        """Show the stored values in an all palette."""
+        return self._base_levels_query(refs, constant.ALL_PALETTE_TYPE)
+
+    def palette_beam_about(self, refs):
+        """Show the stored values in a beam palette."""
+        return self._base_levels_query(refs, constant.BEAM_PALETTE_TYPE)
+
+    def palette_colour_about(self, refs):
+        """Show the stored values in a colour palette."""
+        return self._base_levels_query(refs, constant.COLOUR_PALETTE_TYPE)
+
+    def palette_focus_about(self, refs):
+        """Show the stored values in a focus palette."""
+        return self._base_levels_query(refs, constant.FOCUS_PALETTE_TYPE)
+
+    def palette_intensity_about(self, refs):
+        """Show the stored values in an intensity palette."""
+        return self._base_levels_query(refs, constant.INTENSITY_PALETTE_TYPE)
+
+    def palette_all_remove(self, refs):
+        """Remove an all palette."""
+        return self._base_remove(refs, constant.ALL_PALETTE_TYPE)
+
+    def palette_beam_remove(self, refs):
+        """Remove a beam palette."""
+        return self._base_remove(refs, constant.BEAM_PALETTE_TYPE)
+
+    def palette_colour_remove(self, refs):
+        """Remove a colour palette."""
+        return self._base_remove(refs, constant.COLOUR_PALETTE_TYPE)
+
+    def palette_focus_remove(self, refs):
+        """Remove a focus palette."""
+        return self._base_remove(refs, constant.FOCUS_PALETTE_TYPE)
+
+    def palette_intensity_remove(self, refs):
+        """Remove an intensity palette."""
+        return self._base_remove(refs, constant.INTENSITY_PALETTE_TYPE)
 
     def registry_about(self, refs):
         """Show a summary of the used addresses in a registry but don't provide any further information."""
@@ -357,9 +385,8 @@ class BaseExtension(InterpreterExtension):
                                                   printer.get_generic_text_widget(func) + [')']])
 
     def registry_remove(self, refs):
-        """Remove a registry. This will break any patching if the registry is not empty."""
-        for r in refs:
-            document.remove_by_ref(self.interpreter.file, 'registry', r)
+        """Remove a registry."""
+        return self._base_remove(refs, constant.REGISTRY_TYPE)
 
 
 def register_extension(interpreter):

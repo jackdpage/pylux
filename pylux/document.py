@@ -175,7 +175,7 @@ def safe_address_fixture_by_ref(doc, fix_ref, univ, addr):
                 univ += 1
                 reg = get_by_ref(doc, 'registry', univ)
                 while not reg:
-                    insert_blank_registry(univ)
+                    insert_blank_registry(doc, univ)
                     reg = get_by_ref(doc, 'registry', univ)
                 addr = addr % 512
             reg['table'][addr] = func['uuid']
