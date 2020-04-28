@@ -26,6 +26,7 @@ Documentation for Pylux
 
     developer_introduction
     interface_spec
+    adding_object_types
 
 
 .. toctree::

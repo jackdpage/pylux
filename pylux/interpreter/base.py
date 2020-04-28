@@ -35,18 +35,23 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Group', 'Set'), self.group_set))
         self.commands.append(NoRefsCommand(('Metadata', 'Set'), self.metadata_set))
         self.commands.append(RegularCommand(('AllPalette', 'About'), self.palette_all_about))
+        self.commands.append(RegularCommand(('AllPalette', 'Create'), self.palette_all_create, check_refs=False))
         self.commands.append(RegularCommand(('AllPalette', 'Display'), self.palette_all_display))
         self.commands.append(RegularCommand(('AllPalette', 'Remove'), self.palette_all_remove))
         self.commands.append(RegularCommand(('BeamPalette', 'About'), self.palette_beam_about))
+        self.commands.append(RegularCommand(('BeamPalette', 'Create'), self.palette_beam_create, check_refs=False))
         self.commands.append(RegularCommand(('BeamPalette', 'Display'), self.palette_beam_display))
         self.commands.append(RegularCommand(('BeamPalette', 'Remove'), self.palette_beam_remove))
         self.commands.append(RegularCommand(('ColourPalette', 'About'), self.palette_colour_about))
+        self.commands.append(RegularCommand(('ColourPalette', 'Create'), self.palette_colour_create, check_refs=False))
         self.commands.append(RegularCommand(('ColourPalette', 'Display'), self.palette_colour_display))
         self.commands.append(RegularCommand(('ColourPalette', 'Remove'), self.palette_colour_remove))
         self.commands.append(RegularCommand(('FocusPalette', 'About'), self.palette_focus_about))
+        self.commands.append(RegularCommand(('FocusPalette', 'Create'), self.palette_focus_create, check_refs=False))
         self.commands.append(RegularCommand(('FocusPalette', 'Display'), self.palette_focus_display))
         self.commands.append(RegularCommand(('FocusPalette', 'Remove'), self.palette_focus_remove))
         self.commands.append(RegularCommand(('IntensityPalette', 'About'), self.palette_intensity_about))
+        self.commands.append(RegularCommand(('IntensityPalette', 'Create'), self.palette_intensity_create, check_refs=False))
         self.commands.append(RegularCommand(('IntensityPalette', 'Display'), self.palette_intensity_display))
         self.commands.append(RegularCommand(('IntensityPalette', 'Remove'), self.palette_intensity_remove))
         self.commands.append(RegularCommand(('Registry', 'About'), self.registry_about))
@@ -54,6 +59,11 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Registry', 'Display'), self.registry_display))
         self.commands.append(RegularCommand(('Registry', 'Query'), self.registry_query))
         self.commands.append(RegularCommand(('Registry', 'Remove'), self.registry_remove))
+
+    def _base_create(self, refs, obj_type, **kwargs):
+        """Create new objects."""
+        for r in refs:
+            document.insert_blank_object(self.interpreter.file, obj_type, r, **kwargs)
 
     def _base_display(self, refs, obj_type):
         """Print a single-line summary of a range of objects."""
@@ -91,8 +101,7 @@ class BaseExtension(InterpreterExtension):
 
     def cue_create(self, refs):
         """Create a blank cue."""
-        for ref in refs:
-            document.insert_blank_cue(self.interpreter.file, ref)
+        return self._base_create(refs, constant.CUE_TYPE)
 
     def cue_display(self, refs):
         """Show a single line summary of a cue."""
@@ -127,8 +136,7 @@ class BaseExtension(InterpreterExtension):
 
     def filter_create(self, refs, k, v):
         """Create a new filter with given parameters."""
-        for r in refs:
-            document.insert_filter_with_params(self.interpreter.file, r, k, v)
+        return self._base_create(refs, constant.FILTER_TYPE, k=k, v=v)
 
     def filter_remove(self, refs):
         """Remove a filter."""
@@ -171,8 +179,7 @@ class BaseExtension(InterpreterExtension):
 
     def fixture_create(self, refs):
         """Create a blank fixture."""
-        for r in refs:
-            document.insert_blank_fixture(self.interpreter.file, r)
+        return self._base_create(refs, constant.FIXTURE_TYPE)
 
     def fixture_createfrom(self, refs, template):
         """Create a fixture from a template file."""
@@ -223,8 +230,7 @@ class BaseExtension(InterpreterExtension):
 
     def group_create(self, refs):
         """Create an empty group."""
-        for r in refs:
-            document.insert_blank_group(self.interpreter.file, r)
+        return self._base_create(refs, constant.GROUP_TYPE)
 
     def group_display(self, refs):
         """Show a single line summary of a group."""
@@ -255,30 +261,25 @@ class BaseExtension(InterpreterExtension):
         else:
             document.remove_metadata(self.interpreter.file, k)
 
-    def palette_intensity_create(self, refs):
-        """Create an empty intensity palette."""
-        for r in refs:
-            document.insert_blank_intensity_palette(self.interpreter.file, r)
-
-    def palette_focus_create(self, refs):
-        """Create an empty focus palette."""
-        for r in refs:
-            document.insert_blank_focus_palette(self.interpreter.file, r)
-
-    def palette_colour_create(self, refs):
-        """Create an empty colour palette."""
-        for r in refs:
-            document.insert_blank_colour_palette(self.interpreter.file, r)
+    def palette_all_create(self, refs):
+        """Create an empty all palette (preset)."""
+        return self._base_create(refs, constant.ALL_PALETTE_TYPE)
 
     def palette_beam_create(self, refs):
         """Create an empty beam palette."""
-        for r in refs:
-            document.insert_blank_beam_palette(self.interpreter.file, r)
+        return self._base_create(refs, constant.BEAM_PALETTE_TYPE)
 
-    def palette_all_create(self, refs):
-        """Create an empty all palette (preset)."""
-        for r in refs:
-            document.insert_blank_all_palette(self.interpreter.file, r)
+    def palette_colour_create(self, refs):
+        """Create an empty colour palette."""
+        return self._base_create(refs, constant.COLOUR_PALETTE_TYPE)
+
+    def palette_focus_create(self, refs):
+        """Create an empty focus palette."""
+        return self._base_create(refs, constant.FOCUS_PALETTE_TYPE)
+
+    def palette_intensity_create(self, refs):
+        """Create an empty intensity palette."""
+        return self._base_create(refs, constant.INTENSITY_PALETTE_TYPE)
 
     def palette_all_display(self, refs):
         """Show a single line summary of an all palette."""
@@ -362,8 +363,7 @@ class BaseExtension(InterpreterExtension):
 
     def registry_create(self, refs):
         """Insert a blank registry."""
-        for r in refs:
-            document.insert_blank_registry(self.interpreter.file, r)
+        return self._base_create(refs, constant.REGISTRY_TYPE)
 
     def registry_display(self, refs):
         """Display a single-line summary of a registry."""

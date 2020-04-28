@@ -21,6 +21,7 @@ import json
 import uuid
 import math
 from copy import deepcopy
+from pylux.lib import constant
 
 
 # File operations. These functions load JSON documents from files and
@@ -95,6 +96,34 @@ def get_by_ref(doc, type, ref):
         if decimal.Decimal(obj['ref']).normalize() == decimal.Decimal(ref).normalize():
             return obj
     return False
+
+
+def insert_blank_object(doc, obj_type, ref, **kwargs):
+    """Insert a blank object of a type. Add the default blank object featuring only
+    object type, ref and uuid. Then add any fields from the object type definition in
+    lib.constant. If the values of any of these new keys were passed as kwargs to the
+    insert_blank_object function, *and* are of the correct type (or can be converted
+    to the correct type, then set the values of the keys to those kwargs passed. If
+    no relevant kwarg was passed, just use the default value given in the object
+    definition (usually an empty list, or dict)."""
+    if str(ref) == '0':
+        ref = autoref(doc, obj_type[0])
+    new_obj = {
+        'type': obj_type[0],
+        'ref': str(ref),
+        'uuid': str(uuid.uuid4())
+    }
+    for field, default_val in obj_type[2].items():
+        if field in kwargs:
+            if type(kwargs[field]) == type(field):
+                new_obj[field] = kwargs[field]
+            else:
+                new_obj[field] = deepcopy(default_val)
+        else:
+            new_obj[field] = deepcopy(default_val)
+    doc.append(new_obj)
+
+    return new_obj
 
 
 def get_metadata(doc):
@@ -218,15 +247,7 @@ def find_fixture_intens(fix):
 
 
 def insert_blank_fixture(doc, ref):
-    if ref == 0:
-        ref = autoref(doc, 'fixture')
-    fixture = {
-        'type': 'fixture',
-        'ref': str(ref),
-        'uuid': str(uuid.uuid4())
-    }
-    doc.append(fixture)
-    return fixture
+    return insert_blank_object(doc, constant.FIXTURE_TYPE, ref)
 
 
 def insert_fixture_from_json_template(doc, ref, template_file):
@@ -253,16 +274,7 @@ def complete_fixture_from_json_template(fix, template_file):
 
 
 def insert_blank_group(doc, ref):
-    if ref == 0:
-        ref = autoref(doc, 'group')
-    group = {
-        'type': 'group',
-        'ref': str(ref),
-        'uuid': str(uuid.uuid4()),
-        'fixtures': []
-    }
-    doc.append(group)
-    return group
+    return insert_blank_object(doc, constant.GROUP_TYPE, ref)
 
 
 def group_append_fixture_by_ref(doc, group, fix_ref):
@@ -272,27 +284,11 @@ def group_append_fixture_by_ref(doc, group, fix_ref):
 
 
 def insert_blank_registry(doc, ref):
-    registry = {
-        'type': 'registry',
-        'ref': str(ref),
-        'uuid': str(uuid.uuid4()),
-        'table': {}
-    }
-    doc.append(registry)
-    return registry
+    return insert_blank_object(doc, constant.REGISTRY_TYPE, ref)
 
 
 def insert_blank_cue(doc, ref):
-    if ref == 0:
-        ref = autoref(doc, 'cue')
-    cue = {
-        'type': 'cue',
-        'uuid': str(uuid.uuid4()),
-        'ref': ref,
-        'levels': {}
-    }
-    doc.append(cue)
-    return cue
+    return insert_blank_object(doc, constant.CUE_TYPE, ref)
 
 
 def set_cue_fixture_level(cue, fix, level):
@@ -329,37 +325,24 @@ def set_cue_function_level(doc, cue, func, level):
         cue['levels'][func['uuid']] = level
 
 
-def insert_blank_palette(doc, palette_type, ref):
-    if ref == 0:
-        ref = autoref(doc, palette_type+'palette')
-    palette = {
-        'type': palette_type+'palette',
-        'uuid': str(uuid.uuid4()),
-        'ref': ref,
-        'levels': {}
-    }
-    doc.append(palette)
-    return palette
-
-
 def insert_blank_intensity_palette(doc, ref):
-    return insert_blank_palette(doc, 'intensity', ref)
+    return insert_blank_object(doc, constant.INTENSITY_PALETTE_TYPE, ref)
 
 
 def insert_blank_focus_palette(doc, ref):
-    return insert_blank_palette(doc, 'focus', ref)
+    return insert_blank_object(doc, constant.FOCUS_PALETTE_TYPE, ref)
 
 
 def insert_blank_colour_palette(doc, ref):
-    return insert_blank_palette(doc, 'colour', ref)
+    return insert_blank_object(doc, constant.COLOUR_PALETTE_TYPE, ref)
 
 
 def insert_blank_beam_palette(doc, ref):
-    return insert_blank_palette(doc, 'beam', ref)
+    return insert_blank_object(doc, constant.BEAM_PALETTE_TYPE, ref)
 
 
 def insert_blank_all_palette(doc, ref):
-    return insert_blank_palette(doc, 'all', ref)
+    return insert_blank_object(doc, constant.ALL_PALETTE_TYPE, ref)
 
 
 def set_palette_function_level(doc, palette, func, level):
@@ -393,16 +376,7 @@ def get_function_patch_location(doc, func):
 
 def insert_filter_with_params(doc, ref, k, v):
     """Create a new filter with the given parameters."""
-    if ref == '0':
-        ref = autoref(doc, 'filter')
-    filter = {
-        'type': 'filter',
-        'ref': ref,
-        'k': k,
-        'v': v
-    }
-    doc.append(filter)
-    return filter
+    return insert_blank_object(doc, constant.FILTER_TYPE, ref, k=k, v=v)
 
 
 def autoref(doc, type):

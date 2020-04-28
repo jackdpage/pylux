@@ -15,6 +15,8 @@ class CommandLine(urwid.Edit):
         self.keymapper = None
 
     def bind(self, command_interpreter, command_handler):
+        """Attaches the command line to the interpreter and handler function. Now the
+        keymapper can be initialised as it relies on access to the interpreter."""
         self.command_handler = command_handler
         self.keymapper = autocomplete.Keymapper(command_interpreter, self.config)
 
