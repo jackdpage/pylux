@@ -14,10 +14,16 @@ Installation and Dependencies
 -----------------------------
 
 Pylux is written in pure Python 3. You will need the Python interpreter in order
-to run it. You will also need a few dependencies, which can be installed using pip::
+to run it. Different interfaces and extensions require different dependencies. You can
+run the majority of the program from the fallback interface, requiring no dependencies
+at all. However it is recommended to at least install ``urwid`` to benefit from the CLI.
 
-    pip3 install urwid jinja2
-
+========= ============
+Component Dependencies
+========= ============
+cli       urwid
+report    jinja2
+========= ============
 
 Documentation
 -------------
