@@ -8,7 +8,10 @@ from pylux import document, reference
 
 def tag_fixture_colour(fixture):
     if 'gel' in fixture:
-        fixture['colour'] = reference.gel_colours[fixture['gel']]
+        try:
+            fixture['colour'] = reference.gel_colours[fixture['gel']]
+        except KeyError:
+            fixture['colour'] = 'White'
     else:
         fixture['colour'] = 'White'
 

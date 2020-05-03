@@ -448,3 +448,14 @@ def set_metadata(doc, k, v):
     if not parent_metadata_object_exists(doc):
         create_parent_metadata_object(doc)
     get_parent_metadata_object(doc)['tags'][k] = v
+
+
+def get_metadata(doc, k):
+    """Get a metadata value if it exists, else return None"""
+    if not parent_metadata_object_exists(doc):
+        return None
+    metadata_object = get_parent_metadata_object(doc)
+    if k not in metadata_object['tags']:
+        return None
+    else:
+        return metadata_object['tags'][k]

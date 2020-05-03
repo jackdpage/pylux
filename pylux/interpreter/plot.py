@@ -28,7 +28,7 @@ class LightingPlot:
         """
         hung_fixtures = []
         for fixture in self.fixtures:
-            if 'posX' in fixture and 'posY' in fixture and 'symbol' in fixture:
+            if 'posX' in fixture and 'posY' in fixture:
                 hung_fixtures.append(fixture)
         return hung_fixtures
 
@@ -64,8 +64,8 @@ class LightingPlot:
         Returns:
             A tuple in the form (X, Y) of the dimensions of the plot.
         """
-        x_values = []
-        y_values = []
+        x_values = [0]
+        y_values = [0]
         for fixture in self.get_hung_fixtures():
             get_mm = lambda field: float(field) * 1000
             x_values.append(get_mm(fixture['posX']))
@@ -141,16 +141,16 @@ class LightingPlot:
         Returns:
             An ElementTree element - an SVG path.
         """
-        centre = self.get_page_dimensions()[0] / 2
+        centre = self.get_centre_coord()
         height = self.get_page_dimensions()[1]
         margin = float(self.options['margin'])
         centre_line = ET.Element('path')
         if self.options['centre-line-extend'] == 'True':
-            centre_line.set('d', 'M ' + str(centre) + ' 0 '
-                                                      'L ' + str(centre) + ' ' + str(height))
+            centre_line.set('d', 'M ' + str(centre) + ' 0 ' +
+                            'L ' + str(centre) + ' ' + str(height))
         else:
-            centre_line.set('d', 'M ' + str(centre) + ' ' + str(margin) + ' '
-                                                                          'L ' + str(centre) + ' ' + str(
+            centre_line.set('d', 'M ' + str(centre) + ' ' + str(margin) + ' ' +
+                            'L ' + str(centre) + ' ' + str(
                 height - margin))
         centre_line.set('stroke', 'black')
         centre_line.set('stroke-width',
@@ -170,15 +170,15 @@ class LightingPlot:
         scale = float(self.options['scale'])
         centre = self.get_page_dimensions()[1] / 2
         padding = float(self.options['plaster-line-padding']) * 1000 / scale
-        margin = float(self.options['margin'])
         width = self.get_page_dimensions()[0]
+        width_extent = self.get_plot_width_extent()
         plaster_line = ET.Element('path')
         if self.options['plaster-line-extend'] == 'True':
-            plaster_line.set('d', 'M 0 ' + str(centre + padding) + ' '
-                                                                   'L ' + str(width) + ' ' + str(centre + padding))
+            plaster_line.set('d', 'M 0 ' + str(centre + padding) + ' ' +
+                             'L ' + str(width) + ' ' + str(centre + padding))
         else:
-            plaster_line.set('d', 'M ' + str(margin) + ' ' + str(centre + padding) + ' '
-                                                                                     'L ' + str(width - margin) + ' ' +
+            plaster_line.set('d', 'M ' + str(width_extent[0]) + ' ' + str(centre + padding) + ' ' +
+                             'L ' + str(width_extent[1]) + ' ' +
                              str(centre + padding))
         plaster_line.set('stroke', 'black')
         plaster_line.set('stroke-width',
@@ -186,6 +186,22 @@ class LightingPlot:
         plaster_line.set('stroke-dasharray',
                          self.options['plaster-line-dasharray'])
         return plaster_line
+
+    def get_centre_coord(self):
+        """Get the centre line x coordinate.
+
+        Returns the centre line x coordinate once offsets have
+        been taken into account.
+
+        Returns:
+            A float representing the coordinate in mm.
+        """
+        page_centre = self.get_page_dimensions()[0] / 2
+        if self.options['title-block'] == 'sidebar':
+            sidebar_offset = self.get_title_sidebar_width()
+            return page_centre - sidebar_offset / 2
+        else:
+            return page_centre
 
     def get_plaster_coord(self):
         """Get the plaster line y coordinate.
@@ -200,6 +216,45 @@ class LightingPlot:
         scale = float(self.options['scale'])
         padding = float(self.options['plaster-line-padding']) * 1000 / scale
         return centre + padding
+
+    def get_plot_width_extent(self):
+        """Get the min and max coordinates to stay within the plot width, taking
+        into account margins and titles.
+        Returns a tuple of floats representing the values in mm."""
+        width = self.get_page_dimensions()[0]
+        margin = float(self.options['margin'])
+        min_x = margin
+        if self.options['title-block'] == 'sidebar':
+            sidebar_width = self.get_title_sidebar_width()
+        else:
+            sidebar_width = 0
+        max_x = width - margin - sidebar_width
+
+        return min_x, max_x
+
+    def get_plot_height_extent(self):
+        """Get the min and max coordinates to stay within the plot height"""
+        height = self.get_page_dimensions()[1]
+        margin = float(self.options['margin'])
+        min_y = margin
+        max_y = height - margin
+
+        return min_y, max_y
+
+    def get_physical_constraints(self):
+        """Get the min and max real-life x and y values that represent the plot area, taking
+        into account margins and titles.
+        Returns a tuple of floats: min_x, max_x, min_y, max_y representing values in mm"""
+        scale = float(self.options['scale'])
+        margin = float(self.options['margin'])
+        paper_extents = self.get_plot_width_extent()
+        min_x = (self.get_centre_coord() - paper_extents[0]) * -1 * scale
+        max_x = min_x * -1
+
+        max_y = (self.get_plaster_coord() - margin) * scale
+        min_y = (self.get_page_dimensions()[1] - 2 * margin - self.get_plaster_coord()) * scale * -1
+
+        return min_x, max_x, min_y, max_y
 
     def get_background_image(self):
         """Get the background image from file.
@@ -243,23 +298,23 @@ class LightingPlot:
         """Get the title block ready to be put into the plot."""
         return None
 
+    def get_title_sidebar_width(self):
+        page_dims = self.get_page_dimensions()
+        pc_width = page_dims[0] * float(self.options['vertical-title-width-pc'])
+        if pc_width > float(self.options['vertical-title-max-width']):
+            return float(self.options['vertical-title-max-width'])
+        elif pc_width < float(self.options['vertical-title-min-width']):
+            return float(self.options['vertical-title-min-width'])
+        else:
+            return pc_width
+
     def get_title_sidebar(self):
         """Get the title block in vertical form."""
-
-        def get_sidebar_width(self):
-            page_dims = self.get_page_dimensions()
-            pc_width = page_dims[0] * float(self.options['vertical-title-width-pc'])
-            if pc_width > float(self.options['vertical-title-max-width']):
-                return float(self.options['vertical-title-max-width'])
-            elif pc_width < float(self.options['vertical-title-min-width']):
-                return float(self.options['vertical-title-min-width'])
-            else:
-                return pc_width
 
         # Create sidebar group
         sidebar = ET.Element('g')
         # Create sidebar border
-        sidebar_width = get_sidebar_width(self)
+        sidebar_width = self.get_title_sidebar_width()
         page_dims = self.get_page_dimensions()
         margin = float(self.options['margin'])
         left_border = page_dims[0] - margin - sidebar_width
@@ -270,27 +325,27 @@ class LightingPlot:
         sidebar_box.set('stroke-width', str(self.options['line-weight-heavy']))
         # Create title text within HTML foreignObject element (to support text wrapping)
         html_cont = ET.SubElement(sidebar, 'foreignObject')
-        html_cont.set('width', str(get_sidebar_width(self)))
+        html_cont.set('width', str(self.get_title_sidebar_width()))
         html_cont.set('height', str(page_dims[1] - 2 * margin))
         html_cont.set('x', str(left_border))
         html_cont.set('y', str(margin))
         text_title = ET.SubElement(html_cont, 'p')
-        text_title.text = document.get_by_value(self.meta, 'metadata-key', 'Production')[0]['metadata-value']
+        text_title.text = document.get_metadata(self.plot_file, 'Production')
         text_title.set('xmlns', 'http://www.w3.org/1999/xhtml')
+        text_title.set('style', self.options['title-style'])
 
-        def generate_title_text_style(self):
-            style = []
-            style.append(('text-transform', 'uppercase'))
-            style.append(('font-size', str(self.options['font-size-title']) + 'pt'))
-
-            style_str = ''
-            for i in style:
-                style_str += i[0] + ':' + i[1] + ';'
-
-            return style_str
-
-        text_title.set('style', generate_title_text_style(self))
         return sidebar
+
+    def fixture_will_fit(self, fixture):
+        """See if a fixture will fit in the physical contstraints of the plot."""
+        constraints = self.get_physical_constraints()
+        x = float(fixture['posX']) * 1000
+        y = float(fixture['posY']) * 1000
+
+        if constraints[0] <= x <= constraints[1] and constraints[2] <= y <= constraints[3]:
+            return True
+        else:
+            return False
 
     def get_fixture_icon(self, fixture):
         """Return an SVG group for a single fixture.
@@ -305,13 +360,16 @@ class LightingPlot:
             An ElementTree object representing an SVG 'g' element.
         """
         # Get the base SVG element
-        symbol_name = fixture['symbol']
+        if 'symbol' not in fixture:
+            symbol_name = self.options['fallback-symbol']
+        else:
+            symbol_name = fixture['symbol']
         tree = ET.parse(data.get_data('symbol/' + symbol_name + '.svg'))
         root = tree.getroot()
         svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
         symbol = root.find('ns0:g', svg_ns)
         # Transform based on scaling and data
-        centre = self.get_page_dimensions()[0] / 2
+        centre = self.get_centre_coord()
         plaster = self.get_plaster_coord()
         scale = float(self.options['scale'])
         plot_pos = lambda dim: (float(fixture['pos' + dim]) * 1000)
@@ -383,26 +441,26 @@ class LightingPlot:
         return point
 
     def generate_plot(self):
-        if self.can_fit_page():
-            self.lighting_plot = self.get_empty_plot()
-            root = self.lighting_plot.getroot()
-            if self.options['page-border'] == 'True':
-                root.append(self.get_page_border())
-            try:
-                root.append(self.get_background_image())
-            except FileNotFoundError:
-                pass
-            root.append(self.get_centre_line())
-            root.append(self.get_plaster_line())
-            for fixture in self.fixtures:
-                tagger.tag_fixture_all_doc_independent(fixture)
+        self.lighting_plot = self.get_empty_plot()
+        root = self.lighting_plot.getroot()
+        if self.options['page-border'] == 'True':
+            root.append(self.get_page_border())
+        try:
+            root.append(self.get_background_image())
+        except FileNotFoundError:
+            pass
+        root.append(self.get_centre_line())
+        root.append(self.get_plaster_line())
+        for fixture in self.fixtures:
+            tagger.tag_fixture_all_doc_independent(fixture)
+            if self.fixture_will_fit(fixture):
                 if self.options['show-beams'] == 'True':
                     root.append(self.get_fixture_beam(fixture))
                 if self.options['show-focus-point'] == 'True':
                     root.append(self.get_fixture_focus_point(fixture))
                 root.append(self.get_fixture_icon(fixture))
-            if self.options['title-block'] != 'None':
-                root.append(self.get_title_block())
+        if self.options['title-block'] != 'None':
+            root.append(self.get_title_block())
 
 
 class FixtureSymbol:
