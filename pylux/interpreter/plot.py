@@ -330,7 +330,7 @@ class LightingPlot:
         html_cont.set('x', str(left_border))
         html_cont.set('y', str(margin))
         text_title = ET.SubElement(html_cont, 'p')
-        text_title.text = document.get_metadata(self.plot_file, 'Production')
+        text_title.text = document.get_metadata(self.plot_file, 'title')
         text_title.set('xmlns', 'http://www.w3.org/1999/xhtml')
         text_title.set('style', self.options['title-style'])
 

@@ -38,6 +38,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Group', 'Query'), self.group_query))
         self.commands.append(RegularCommand(('Group', 'Remove'), self.group_remove))
         self.commands.append(RegularCommand(('Group', 'Set'), self.group_set))
+        self.commands.append(NoRefsCommand(('Metadata', 'About'), self.metadata_about))
         self.commands.append(NoRefsCommand(('Metadata', 'Set'), self.metadata_set))
         self.commands.append(RegularCommand(('AllPalette', 'About'), self.palette_all_about))
         self.commands.append(RegularCommand(('AllPalette', 'CopyTo'), self.palette_all_clone))
@@ -302,6 +303,13 @@ class BaseExtension(InterpreterExtension):
     def group_set(self, refs, k, v):
         """Set an arbitrary data tag in a group."""
         return self._base_set(refs, constant.GROUP_TYPE, k, v)
+
+    def metadata_about(self):
+        """Show the values of all stored metadata."""
+        m = document.get_parent_metadata_object(self.interpreter.file)
+        self.interpreter.msg.post_output(['{0} Metadata Tags:'.format(str(len(m['tags'])))])
+        for k, v in m['tags'].items():
+            self.interpreter.msg.post_output([printer.get_metadata_string(k, v)])
 
     def metadata_set(self, k, v=None):
         """Set the value of a metadata tag. If no value is given, delete the tag."""
