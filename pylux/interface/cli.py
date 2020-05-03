@@ -1,3 +1,4 @@
+from ast import literal_eval
 import urwid
 from pylux import document, interpreter
 from pylux.lib import autocomplete, printer, exception
@@ -191,10 +192,11 @@ def main(init_globals):
 
     app = Application(init_globals)
     command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
-    command_interpreter.register_extension('base')
-    command_interpreter.register_extension('eos')
-    command_interpreter.register_extension('report')
-    command_interpreter.register_extension('plot')
+    for ext in literal_eval(app.config['interpreter']['default-extensions']):
+        try:
+            command_interpreter.register_extension(ext)
+        except (exception.DependencyError, ModuleNotFoundError):
+            print('One or more dependencies for {0} were missing. Aborting load'.format(ext))
     app.bind(command_interpreter, post_command)
     palette = generate_palette()
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), palette)

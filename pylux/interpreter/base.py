@@ -1,3 +1,4 @@
+from ast import literal_eval
 from pylux.interpreter import RegularCommand, InterpreterExtension, NoRefsCommand
 from pylux import document, clihelper
 from pylux.lib import printer, data, constant, exception
@@ -194,7 +195,7 @@ class BaseExtension(InterpreterExtension):
             self.interpreter.msg.post_output([str(len(f))+' Data Tags:'])
             self.interpreter.msg.post_output(['    '+str(k)+': '+str(f[k])
                                               for k in sorted(f)
-                                              if k not in self.interpreter.config['cli']['ignore-about-tags']])
+                                              if k not in literal_eval(self.interpreter.config['cli']['ignore-about-tags'])])
             try:
                 if len(f['personality']):
                     self.interpreter.msg.post_output([str(len(f['personality']))+' DMX Functions:'])
