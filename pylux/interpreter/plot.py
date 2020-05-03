@@ -409,12 +409,12 @@ class LightingPlot:
             colour = 'black'
         beam = ET.Element('path')
         scale = float(self.options['scale'])
-        centre = self.get_page_dimensions()[0] / 2
+        centre = self.get_centre_coord()
         plaster = self.get_plaster_coord()
         startx = (float(fixture['posX']) * 1000) * (1 / scale) + centre
-        starty = (float(fixture['posY']) * 1000) * (1 / scale) + plaster
+        starty = (float(fixture['posY']) * 1000) * (1 / scale) * -1 + plaster
         endx = (float(fixture['focusX']) * 1000) * (1 / scale) + centre
-        endy = (float(fixture['focusY']) * 1000) * (1 / scale) + plaster
+        endy = (float(fixture['focusY']) * 1000) * (1 / scale) * -1 + plaster
         beam.set('d', 'M ' + str(startx) + ' ' + str(starty) +
                  ' L ' + str(endx) + ' ' + str(endy))
         beam.set('stroke', colour)
@@ -429,10 +429,10 @@ class LightingPlot:
             colour = 'black'
         point = ET.Element('circle')
         scale = float(self.options['scale'])
-        centre = self.get_page_dimensions()[0] / 2
+        centre = self.get_centre_coord()
         plaster = self.get_plaster_coord()
         posx = float(fixture['focusX']) * 1000 * (1 / scale) + centre
-        posy = float(fixture['focusY']) * 1000 * (1 / scale) + plaster
+        posy = float(fixture['focusY']) * 1000 * (1 / scale) * -1 + plaster
         point.set('cx', str(posx))
         point.set('cy', str(posy))
         point.set('r', str(self.options['focus-point-radius']))
@@ -454,9 +454,9 @@ class LightingPlot:
         for fixture in self.fixtures:
             tagger.tag_fixture_all_doc_independent(fixture)
             if self.fixture_will_fit(fixture):
-                if self.options['show-beams'] == 'True':
+                if self.options['show-beams'] == 'True' and 'focusX' in fixture and 'focusY' in fixture:
                     root.append(self.get_fixture_beam(fixture))
-                if self.options['show-focus-point'] == 'True':
+                if self.options['show-focus-point'] == 'True' and 'focusX' in fixture and 'focusY' in fixture:
                     root.append(self.get_fixture_focus_point(fixture))
                 root.append(self.get_fixture_icon(fixture))
         if self.options['title-block'] != 'None':
