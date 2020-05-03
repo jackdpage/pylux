@@ -69,6 +69,13 @@ class EosExtension(InterpreterExtension):
             if match:
                 parameters[match.group(1)] = match.group(3).strip()
 
+        # Grab the file title if one doesn't already exist in the metadata
+        for l in raw:
+            match = re.match('\$\$Title', l)
+            if match:
+                if not document.get_metadata(self.interpreter.file, 'title'):
+                    document.set_metadata(self.interpreter.file, 'title', resolve_line(l)[1])
+
         if target == 'conventional_patch':
             entries = []
             r = re.compile('Patch.*')

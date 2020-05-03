@@ -98,6 +98,13 @@ def get_generic_text_widget(obj, pre=''):
     return s
 
 
+def get_metadata_string(k, v):
+
+    s = [('metadata', k), ': ', v]
+
+    return s
+
+
 EXTRA_TEXT = {
     'fixture': get_fixture_extra_text,
     'cue': get_cue_extra_text,
