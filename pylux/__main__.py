@@ -17,9 +17,10 @@
 
 import argparse
 import configparser
+import importlib
 import os.path
 
-from pylux import cli, document
+from pylux import document
 
 
 def main():
@@ -29,7 +30,8 @@ def main():
     config = configparser.ConfigParser()
     config.read(['pylux.conf'])
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('-f', '--file', default='autosave.json')
+    arg_parser.add_argument('-f', '--file', default=config['main']['default-file'])
+    arg_parser.add_argument('-i', '--interface', default=config['main']['default-interface'])
     args = arg_parser.parse_args()
 
     # If the specified file or autosave file doesn't exist, create a blank json document there
@@ -38,8 +40,17 @@ def main():
 
     init_globals = {'FILE': args.file, 'CONFIG': config, 'LOAD_LOC': args.file}
 
-    print('Launching command line interface')
-    cli.main(init_globals)
+    try:
+        print('Launching {0} interface'.format(args.interface))
+        try:
+            interface_module = importlib.import_module('.'+args.interface, package='pylux.interface')
+        except ModuleNotFoundError:
+            print('One or more dependencies for {0} were missing. Reverting to fallback interface...'.format(args.interface))
+            interface_module = importlib.import_module('.fallback', package='pylux.interface')
+    except ModuleNotFoundError:
+        print('Couldn\'t source {0} interface. Reverting to fallback interface...'.format(args.interface))
+        interface_module = importlib.import_module('.fallback', package='pylux.interface')
+    interface_module.main(init_globals)
 
 
 if __name__ == '__main__':

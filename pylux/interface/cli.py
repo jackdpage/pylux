@@ -1,6 +1,6 @@
 import urwid
 from pylux import document, interpreter
-from pylux.lib import autocomplete, printer
+from pylux.lib import autocomplete, printer, exception
 
 
 NUMERIC_KEYS = [str(i) for i in range(0, 10)]
