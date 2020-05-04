@@ -1,4 +1,6 @@
 from pylux import interpreter, document
+from pylux.lib import exception
+from ast import literal_eval
 
 
 class MessageBus:
@@ -45,10 +47,11 @@ def main(init_globals):
 
     app = Application(init_globals)
     command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
-    command_interpreter.register_extension('base')
-    command_interpreter.register_extension('eos')
-    command_interpreter.register_extension('report')
-    command_interpreter.register_extension('plot')
+    for ext in literal_eval(app.config['interpreter']['default-extensions']):
+        try:
+            command_interpreter.register_extension(ext)
+        except (exception.DependencyError, ModuleNotFoundError):
+            print('One or more dependencies for {0} were missing. Aborting load'.format(ext))
     while True:
         cmd = input('[pylux] ')
         post_command(cmd)
