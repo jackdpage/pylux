@@ -30,6 +30,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Fixture', 'Remove'), self.fixture_remove))
         self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
         self.commands.append(RegularCommand(('Fixture', 'Unpatch'), self.fixture_unpatch))
+        self.commands.append(RegularCommand(('Fixture', 'UpdateFrom'), self.fixture_updatefrom))
         self.commands.append(RegularCommand(('Group', 'About'), self.group_about))
         self.commands.append(RegularCommand(('Group', 'Append'), self.group_append_fixture))
         self.commands.append(RegularCommand(('Group', 'CopyTo'), self.group_clone))
@@ -45,26 +46,31 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('AllPalette', 'Create'), self.palette_all_create, check_refs=False))
         self.commands.append(RegularCommand(('AllPalette', 'Display'), self.palette_all_display))
         self.commands.append(RegularCommand(('AllPalette', 'Remove'), self.palette_all_remove))
+        self.commands.append(RegularCommand(('AllPalette', 'Set'), self.palette_all_set))
         self.commands.append(RegularCommand(('BeamPalette', 'About'), self.palette_beam_about))
         self.commands.append(RegularCommand(('BeamPalette', 'CopyTo'), self.palette_beam_clone))
         self.commands.append(RegularCommand(('BeamPalette', 'Create'), self.palette_beam_create, check_refs=False))
         self.commands.append(RegularCommand(('BeamPalette', 'Display'), self.palette_beam_display))
         self.commands.append(RegularCommand(('BeamPalette', 'Remove'), self.palette_beam_remove))
+        self.commands.append(RegularCommand(('BeamPalette', 'Set'), self.palette_beam_set))
         self.commands.append(RegularCommand(('ColourPalette', 'About'), self.palette_colour_about))
         self.commands.append(RegularCommand(('ColourPalette', 'CopyTo'), self.palette_colour_clone))
         self.commands.append(RegularCommand(('ColourPalette', 'Create'), self.palette_colour_create, check_refs=False))
         self.commands.append(RegularCommand(('ColourPalette', 'Display'), self.palette_colour_display))
         self.commands.append(RegularCommand(('ColourPalette', 'Remove'), self.palette_colour_remove))
+        self.commands.append(RegularCommand(('ColourPalette', 'Set'), self.palette_colour_set))
         self.commands.append(RegularCommand(('FocusPalette', 'About'), self.palette_focus_about))
         self.commands.append(RegularCommand(('FocusPalette', 'CopyTo'), self.palette_focus_clone))
         self.commands.append(RegularCommand(('FocusPalette', 'Create'), self.palette_focus_create, check_refs=False))
         self.commands.append(RegularCommand(('FocusPalette', 'Display'), self.palette_focus_display))
         self.commands.append(RegularCommand(('FocusPalette', 'Remove'), self.palette_focus_remove))
+        self.commands.append(RegularCommand(('FocusPalette', 'Set'), self.palette_focus_set))
         self.commands.append(RegularCommand(('IntensityPalette', 'About'), self.palette_intensity_about))
         self.commands.append(RegularCommand(('IntensityPalette', 'CopyTo'), self.palette_intensity_clone))
         self.commands.append(RegularCommand(('IntensityPalette', 'Create'), self.palette_intensity_create, check_refs=False))
         self.commands.append(RegularCommand(('IntensityPalette', 'Display'), self.palette_intensity_display))
         self.commands.append(RegularCommand(('IntensityPalette', 'Remove'), self.palette_intensity_remove))
+        self.commands.append(RegularCommand(('IntensityPalette', 'Set'), self.palette_intensity_set))
         self.commands.append(RegularCommand(('Registry', 'About'), self.registry_about))
         self.commands.append(RegularCommand(('Registry', 'Create'), self.registry_create, check_refs=False))
         self.commands.append(RegularCommand(('Registry', 'Display'), self.registry_display))
@@ -259,6 +265,16 @@ class BaseExtension(InterpreterExtension):
         for r in refs:
             document.unpatch_fixture_by_ref(self.interpreter.file, r)
 
+    def fixture_updatefrom(self, refs, template):
+        """Update a fixture from a template file, overwriting existing tags."""
+        template_file = data.get_data('fixture/'+template+'.json')
+        if not template_file:
+            self.interpreter.msg.post_feedback(['Template {0} does not exist, aborting'.format(template)])
+        else:
+            for r in refs:
+                fix = document.get_by_ref(self.interpreter.file, 'fixture', r)
+                document.update_fixture_from_json_template(fix, template_file)
+
     def group_about(self, refs):
         """Display the contents of a group."""
         for r in refs:
@@ -417,6 +433,26 @@ class BaseExtension(InterpreterExtension):
     def palette_intensity_remove(self, refs):
         """Remove an intensity palette."""
         return self._base_remove(refs, constant.INTENSITY_PALETTE_TYPE)
+
+    def palette_all_set(self, refs, k, v):
+        """Set an arbitrary data tag in an all palette."""
+        return self._base_set(refs, constant.ALL_PALETTE_TYPE, k, v)
+
+    def palette_beam_set(self, refs, k, v):
+        """Set an arbitrary data tag in a beam palette."""
+        return self._base_set(refs, constant.BEAM_PALETTE_TYPE, k, v)
+
+    def palette_colour_set(self, refs, k, v):
+        """Set an arbitrary data tag in a colour palette."""
+        return self._base_set(refs, constant.COLOUR_PALETTE_TYPE, k, v)
+
+    def palette_focus_set(self, refs, k, v):
+        """Set an arbitrary data tag in a focus palette."""
+        return self._base_set(refs, constant.FOCUS_PALETTE_TYPE, k, v)
+
+    def palette_intensity_set(self, refs, k, v):
+        """Set an arbitrary data tag in an intensity palette."""
+        return self._base_set(refs, constant.INTENSITY_PALETTE_TYPE, k, v)
 
     def registry_about(self, refs):
         """Show a summary of the used addresses in a registry but don't provide any further information."""

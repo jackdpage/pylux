@@ -265,14 +265,14 @@ def insert_blank_fixture(doc, ref):
 
 
 def insert_fixture_from_json_template(doc, ref, template_file):
+    fixture = insert_blank_fixture(doc, ref)
     with open(template_file) as f:
-        fixture = json.load(f)
-        fixture['ref'] = ref
-        fixture['uuid'] = str(uuid.uuid4())
-        if 'personality' in fixture:
-            for function in fixture['personality']:
-                function['uuid'] = str(uuid.uuid4())
-        doc.append(fixture)
+        template = json.load(f)
+        for k, v in template.items():
+            fixture[k] = v
+    if 'personality' in fixture:
+        for function in fixture['personality']:
+            function['uuid'] = str(uuid.uuid4())
 
 
 def complete_fixture_from_json_template(fix, template_file):
@@ -285,6 +285,14 @@ def complete_fixture_from_json_template(fix, template_file):
         for k in template:
             if k not in fix:
                 fix[k] = template[k]
+
+
+def update_fixture_from_json_template(fix, template_file):
+    with open(template_file) as f:
+        template = json.load(f)
+        for k, v in template.items():
+            if k != 'personality':
+                fix[k] = v
 
 
 def insert_blank_group(doc, ref):
