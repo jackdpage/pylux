@@ -48,6 +48,13 @@ class Interpreter:
         self.commands = []
         self.triggers = {}
         self.noref_triggers = {}
+        self.register_commands()
+
+    def register_commands(self):
+        self.register_command(NoRefsCommand(('Program', 'ReloadConfig'), self.reload_config))
+
+    def reload_config(self):
+        self.config.read(['pylux.conf'])
 
     def _get_init_keywords(self):
         """Get all the keywords which could be the first keyword of a command."""
