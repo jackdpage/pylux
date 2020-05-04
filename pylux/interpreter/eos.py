@@ -115,7 +115,10 @@ class EosExtension(InterpreterExtension):
                     if res[0] == '$$Manuf':
                         template['manufacturer'] = res[1]
                     elif res[0] == '$$Model':
-                        template['fixture-type'] = res[1]
+                        if self.interpreter.config['ascii']['substitute-delimiters'] == 'True':
+                            template['fixture-type'] = res[1].replace('_', ' ')
+                        else:
+                            template['fixture-type'] = res[1]
                     elif res[0] == '$$PersChan':
                         pers.append({
                             'type': 'function',

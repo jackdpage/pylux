@@ -30,44 +30,50 @@ def get_generic_ref(obj):
     return ref_print
 
 
-def get_fixture_extra_text(obj):
+def get_fixture_extra_text(obj, **kwargs):
     if 'fixture-type' in obj:
         fixture_type = obj['fixture-type']
     else:
         fixture_type = 'n/a'
 
-    return '', fixture_type+' - ', ''
+    if not kwargs['label']:
+        return '', fixture_type, ''
+    else:
+        return '', fixture_type+' - ', ''
 
 
-def get_cue_extra_text(obj):
-    return '', '', get_cue_level_string(obj)
+def get_cue_extra_text(obj, **kwargs):
+    if not kwargs['label']:
+        return '', '[Unlabelled]', get_cue_level_string(obj)
+    else:
+        return '', '', get_cue_level_string(obj)
 
 
-def get_cp_extra_text(obj):
+def get_cp_extra_text(obj, **kwargs):
     return ('colourpalette', 'CP'), '', get_cue_level_string(obj)
 
 
-def get_bp_extra_text(obj):
+def get_bp_extra_text(obj, **kwargs):
     return ('beampalette', 'BP'), '', get_cue_level_string(obj)
 
 
-def get_fp_extra_text(obj):
+def get_fp_extra_text(obj, **kwargs):
     return ('focuspalette', 'FP'), '', get_cue_level_string(obj)
 
 
-def get_ip_extra_text(obj):
+def get_ip_extra_text(obj, **kwargs):
     return ('intensitypalette', 'IP'), '', get_cue_level_string(obj)
 
 
-def get_ap_extra_text(obj):
+def get_ap_extra_text(obj, **kwargs):
     return ('allpalette', 'AP'), '', get_cue_level_string(obj)
 
 
-def get_group_extra_text(obj):
+def get_group_extra_text(obj, **kwargs):
     return '', '', ' ('+str(len(obj['fixtures']))+' fixtures)'
 
 
-def get_registry_extra_text(obj):
+def get_registry_extra_text(obj, **kwargs):
     return 'Universe ', '', str(len(obj['table']))+' occupied'
 
 
@@ -87,9 +93,9 @@ def get_generic_text_widget(obj, pre=''):
     elif obj['type'] == 'filter':
         label = obj['k']+'='+obj['v']
     else:
-        label = 'Unlabelled'
+        label = ''
     if obj['type'] in EXTRA_TEXT:
-        extra = EXTRA_TEXT[obj['type']](obj)
+        extra = EXTRA_TEXT[obj['type']](obj, label=label)
     else:
         extra = ('', '', '')
 
