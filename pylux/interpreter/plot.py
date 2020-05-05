@@ -5,6 +5,7 @@ from pylux.lib.data import get_data
 import xml.etree.ElementTree as ET
 import os
 import math
+from ast import literal_eval
 
 
 class LightingPlot:
@@ -31,6 +32,38 @@ class LightingPlot:
             if 'posX' in fixture and 'posY' in fixture:
                 hung_fixtures.append(fixture)
         return hung_fixtures
+
+    def get_hung_types(self):
+        """Return a list of fixture types used and their corresponding symbol
+        tags. Will assume that all fixture types have the same symbol tag so tough
+        luck if they don't."""
+        fixture_types = {}
+        hung = self.get_hung_fixtures()
+        for f in hung:
+            if f['fixture-type'] not in fixture_types:
+                if 'symbol' in f:
+                    fixture_types[f['fixture-type']] = f['symbol']
+                else:
+                    fixture_types[f['fixture-type']] = self.options['fallback-symbol']
+        return fixture_types
+
+    def get_plotted_fixtures(self):
+        """Return a list of fixtures which are hung and also fit in the plot area."""
+        return [i for i in self.get_hung_fixtures() if self.fixture_will_fit(i)]
+
+    def get_plotted_types(self):
+        """Return a list of fixture types used which actually managed to fit. Also
+        provide symbol tags. As with get_hung_types, will assume the first fixture
+        with a symbol tag it finds is the correct one for all of that type."""
+        fixture_types = {}
+        plotted = self.get_plotted_fixtures()
+        for f in plotted:
+            if f['fixture-type'] not in fixture_types:
+                if 'symbol' in f:
+                    fixture_types[f['fixture-type']] = f['symbol']
+                else:
+                    fixture_types[f['fixture-type']] = self.options['fallback-symbol']
+        return fixture_types
 
     def get_page_dimensions(self):
         """Return the physical size of the paper.
@@ -329,10 +362,41 @@ class LightingPlot:
         html_cont.set('height', str(page_dims[1] - 2 * margin))
         html_cont.set('x', str(left_border))
         html_cont.set('y', str(margin))
-        text_title = ET.SubElement(html_cont, 'p')
-        text_title.text = document.get_metadata(self.plot_file, 'title')
-        text_title.set('xmlns', 'http://www.w3.org/1999/xhtml')
-        text_title.set('style', self.options['title-style'])
+        div = ET.SubElement(html_cont, 'div')
+        div.set('xmlns', 'http://www.w3.org/1999/xhtml')
+        div.set('id', 'parent')
+        stylesheet_link = ET.SubElement(div, 'link')
+        stylesheet_link.set('xmlns', 'http://www.w3.org/1999/xhtml')
+        stylesheet_link.set('href', self.options['style-source'])
+        stylesheet_link.set('rel', 'stylesheet')
+        # Attempt to match any tags in the config with metadata tags and input these as titles.
+        # Note this will not add any headings, only the title text themselves. Add headings
+        # using CSS ::before selector in the external style document
+        for t in literal_eval(self.options['titles']):
+            if t in document.get_parent_metadata_object(self.plot_file)['tags']:
+                element = ET.SubElement(div, 'p')
+                element.text = document.get_metadata(self.plot_file, t)
+                element.set('xmlns', 'http://www.w3.org/1999/xhtml')
+                element.set('class', 'title-'+t)
+
+        fixture_types = self.get_plotted_types()
+        for fixture_type, symbol in fixture_types.items():
+            legend_div = ET.SubElement(div, 'div')
+            legend_div.set('class', 'legend')
+            parent_svg = ET.SubElement(legend_div, 'svg')
+            parent_svg.set('xmlns', 'http://www.w3.org/2000/svg')
+            icon = self.get_legend_fixture_icon(symbol)
+            # Every icon is given a square SVG bounding box based on a percentage of the width of the sidebar. This is
+            # defined with the sidebar-icon-width-factor property. For example, with a setting of 4, the SVG fixture
+            # icon will have a width and height of 25% of the width of the sidebar, and the fixture type label will
+            # have a width of 75% of the width of the sidebar.
+            parent_svg.set('height', str(self.get_title_sidebar_width() / float(self.options['sidebar-icon-width-factor'])))
+            parent_svg.append(icon)
+            label = ET.SubElement(legend_div, 'p')
+            label.text = fixture_type
+            icon_pc_width = 100 / float(self.options['sidebar-icon-width-factor'])
+            parent_svg.set('width', str(icon_pc_width)+'%')
+            label.set('style', 'width:'+str(100-icon_pc_width)+'%')
 
         return sidebar
 
@@ -347,38 +411,16 @@ class LightingPlot:
         else:
             return False
 
-    def get_fixture_icon(self, fixture):
-        """Return an SVG group for a single fixture.
-
-        Search the package data for a symbol for this fixture, then
-        transform as appropriate based on tags and plot scaling.
-
-        Args:
-            fixture: the fixture object to create an icon for.
-
-        Returns:
-            An ElementTree object representing an SVG 'g' element.
-        """
-        # Get the base SVG element
-        if 'symbol' not in fixture:
-            symbol_name = self.options['fallback-symbol']
-        else:
-            symbol_name = fixture['symbol']
+    def render_symbol(self, symbol_name, colour='White'):
+        """Generate a symbol from the given symbol name. Finds the appropriate symbol and
+        sets correct path colours and line weights according to the document scale. Does
+        not apply any transformation so it will need to be scaled and translated before
+        inserting into the document."""
+        scale = float(self.options['scale'])
         tree = ET.parse(data.get_data('symbol/' + symbol_name + '.svg'))
         root = tree.getroot()
         svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
         symbol = root.find('ns0:g', svg_ns)
-        # Transform based on scaling and data
-        centre = self.get_centre_coord()
-        plaster = self.get_plaster_coord()
-        scale = float(self.options['scale'])
-        plot_pos = lambda dim: (float(fixture['pos' + dim]) * 1000)
-        rotation = fixture['rotation']
-        colour = fixture['colour']
-        symbol.set('transform', 'scale( ' + str(1 / scale) + ' ) ' +
-                   'translate(' + str(centre * scale + plot_pos('X')) + ' ' +
-                   str(plaster * scale - plot_pos('Y')) + ') ' +
-                   'rotate(' + str(rotation) + ')')
         for path in symbol:
             if path.get('class') == 'outer':
                 path.set('fill', colour)
@@ -400,6 +442,50 @@ class LightingPlot:
                 path.set('fill', colour)
                 path.set('stroke-width',
                          str(float(self.options['line-weight-heavy']) * scale))
+
+        return symbol
+
+    def get_fixture_icon(self, fixture):
+        """Return an SVG group for a single fixture.
+
+        Search the package data for a symbol for this fixture, then
+        transform as appropriate based on tags and plot scaling.
+
+        Args:
+            fixture: the fixture object to create an icon for.
+
+        Returns:
+            An ElementTree object representing an SVG 'g' element.
+        """
+        # Get the base SVG element
+        if 'symbol' not in fixture:
+            symbol_name = self.options['fallback-symbol']
+        else:
+            symbol_name = fixture['symbol']
+        # Transform based on scaling and data
+        centre = self.get_centre_coord()
+        plaster = self.get_plaster_coord()
+        scale = float(self.options['scale'])
+        plot_pos = lambda dim: (float(fixture['pos' + dim]) * 1000)
+        rotation = fixture['rotation']
+        colour = fixture['colour']
+        symbol = self.render_symbol(symbol_name, colour=colour)
+        symbol.set('transform', 'scale( ' + str(1 / scale) + ' ) ' +
+                   'translate(' + str(centre * scale + plot_pos('X')) + ' ' +
+                   str(plaster * scale - plot_pos('Y')) + ') ' +
+                   'rotate(' + str(rotation) + ')')
+
+        return symbol
+
+    def get_legend_fixture_icon(self, symbol_name):
+        scale = float(self.options['scale'])
+        width = self.get_title_sidebar_width() / (float(self.options['sidebar-icon-width-factor']) * 2) * scale
+        height = width
+        symbol = self.render_symbol(symbol_name)
+        symbol.set('transform', 'scale( ' + str(1 / scale) + ' ) ' +
+                   'translate( ' + str(width) +
+                   ' ' + str(height + float(self.options['line-weight-heavy'])) + ')')
+
         return symbol
 
     def get_fixture_beam(self, fixture):
