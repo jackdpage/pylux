@@ -10,7 +10,6 @@ _build/
 *.idv
 *.tmp
 *.lg
-*.css
 *.xref
 *.zip
 __pycache__/
