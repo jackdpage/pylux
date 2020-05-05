@@ -1,0 +1,58 @@
+p {
+    font-family: "CMU Sans Serif", Verdana, Sans serif;
+}
+
+#parent {
+    padding: 1px;
+}
+
+.title-production {
+    font-size: 5pt;
+    font-style: italic;
+    text-transform: capitalize;
+    text-align: center;
+    margin: 0;
+}
+
+.title-company {
+    font-size: 3pt;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.title-venue {
+    font-size: 4pt;
+    text-align: center;
+}
+
+.title-venue::before {
+    content: "Venue";
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 3pt;
+    display: block;
+}
+
+.title-lighting_designer {
+    font-size: 4pt;
+    text-align: center;
+}
+
+.title-lighting_designer::before {
+    content: "Lighting Design";
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 3pt;
+    display: block;
+}
+
+.legend svg {
+    display: inline-block;
+}
+
+.legend p {
+    font-size: 3pt;
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 0;
+}
