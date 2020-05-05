@@ -26,5 +26,13 @@
      cy="25"
      cx="25"
      id="path4489-7"/>
+    <g id="handles">
+        <polyline
+            id="north"
+            points="0 -262.5" />
+        <polyline
+            id="south"
+            points="0 75" />
+    </g>
 </g>
 </svg>

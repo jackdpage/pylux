@@ -8,5 +8,13 @@
         stroke='black'
         d='M -75 0 A 75 75 0 0 0 75 0 L 75 -262.5 L -75 -262.5 L -75 0'
         class='outer' />
+    <g id="handles">
+        <polyline
+            id="north"
+            points="0 -262.5" />
+        <polyline
+            id="south"
+            points="0 75" />
+    </g>
 </g>
 </svg>

@@ -13,5 +13,13 @@
         stroke="black"
         d="M 0 -50 L 175 -50 L 175 50 L -175 50 L -175 -50 L 0 -50"
         class="outer" />
+    <g id="handles">
+        <polyline
+            id="north"
+            points="0 -150" />
+        <polyline
+            id="south"
+            points="0 200" />
+    </g>
 </g>
 </svg>

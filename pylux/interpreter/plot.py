@@ -1,7 +1,6 @@
-from pylux.interpreter import InterpreterExtension, RegularCommand, NoRefsCommand
+from pylux.interpreter import InterpreterExtension, NoRefsCommand
 from pylux import document, reference
 from pylux.lib import data, tagger
-from pylux.lib.data import get_data
 import xml.etree.ElementTree as ET
 import os
 import math
@@ -445,6 +444,17 @@ class LightingPlot:
 
         return symbol
 
+    def get_legend_fixture_icon(self, symbol_name):
+        scale = float(self.options['scale'])
+        width = self.get_title_sidebar_width() / (float(self.options['sidebar-icon-width-factor']) * 2) * scale
+        height = width
+        symbol = self.render_symbol(symbol_name)
+        symbol.set('transform', 'scale( ' + str(1 / scale) + ' ) ' +
+                   'translate( ' + str(width) +
+                   ' ' + str(height + float(self.options['line-weight-heavy'])) + ')')
+
+        return symbol
+
     def get_fixture_icon(self, fixture):
         """Return an SVG group for a single fixture.
 
@@ -457,40 +467,42 @@ class LightingPlot:
         Returns:
             An ElementTree object representing an SVG 'g' element.
         """
-        # Get the base SVG element
+        centre = self.get_centre_coord()
+        plaster = self.get_plaster_coord()
+        scale = 1 / float(self.options['scale'])
+        plot_pos = lambda dim: (float(fixture['pos' + dim]) * 1000)
+        rotation = fixture['rotation']
+        colour = fixture['colour']
+
+        # Create the container for all objects which compose the fixture icon and
+        # translate to the correct position
+        container = ET.Element('g')
+        container.set('transform',
+                      'translate(' + str(centre + plot_pos('X') * scale) + ' ' +
+                      str(plaster - plot_pos('Y') * scale) + ')')
+
+        # Create the channel number block if applicable
+        if self.options['show-channel-number'] == 'True':
+            container.append(self.get_fixture_channel_block(fixture))
+
+        # Create the actual fixture symbol itself
         if 'symbol' not in fixture:
             symbol_name = self.options['fallback-symbol']
         else:
             symbol_name = fixture['symbol']
-        # Transform based on scaling and data
-        centre = self.get_centre_coord()
-        plaster = self.get_plaster_coord()
-        scale = float(self.options['scale'])
-        plot_pos = lambda dim: (float(fixture['pos' + dim]) * 1000)
-        rotation = fixture['rotation']
-        colour = fixture['colour']
+        # Scale and rotational transforms are on the symbol source group
+        # translation transforms are on the container group which also
+        # contains channel identifiers etc
         symbol = self.render_symbol(symbol_name, colour=colour)
-        symbol.set('transform', 'scale( ' + str(1 / scale) + ' ) ' +
-                   'translate(' + str(centre * scale + plot_pos('X')) + ' ' +
-                   str(plaster * scale - plot_pos('Y')) + ') ' +
+        symbol.set('transform', 'scale( ' + str(scale) + ' ) ' +
                    'rotate(' + str(rotation) + ')')
+        container.append(symbol)
 
-        return symbol
-
-    def get_legend_fixture_icon(self, symbol_name):
-        scale = float(self.options['scale'])
-        width = self.get_title_sidebar_width() / (float(self.options['sidebar-icon-width-factor']) * 2) * scale
-        height = width
-        symbol = self.render_symbol(symbol_name)
-        symbol.set('transform', 'scale( ' + str(1 / scale) + ' ) ' +
-                   'translate( ' + str(width) +
-                   ' ' + str(height + float(self.options['line-weight-heavy'])) + ')')
-
-        return symbol
+        return container
 
     def get_fixture_beam(self, fixture):
         if self.options['beam-source-colour'] == 'True':
-            colour = self.get_fixture_colour(fixture)
+            colour = fixture['colour']
         else:
             colour = 'black'
         beam = ET.Element('path')
@@ -510,7 +522,7 @@ class LightingPlot:
 
     def get_fixture_focus_point(self, fixture):
         if self.options['focus-point-source-colour'] == 'True':
-            colour = self.get_fixture_colour(fixture)
+            colour = fixture['colour']
         else:
             colour = 'black'
         point = ET.Element('circle')
@@ -525,6 +537,55 @@ class LightingPlot:
         point.set('fill', colour)
 
         return point
+
+    def get_fixture_channel_block(self, fixture):
+        handle = self.get_fixture_handle_offset(fixture, 'south')
+        if -90 <= float(fixture['rotation']) <= 90 or 270 <= float(fixture['rotation']) <= 360:
+            bounding_centre = handle[0], handle[1] + 1.5 * float(self.options['channel-number-radius'])
+        else:
+            bounding_centre = handle[0], handle[1] * -1 - 1.5 * float(self.options['channel-number-radius'])
+        channel_block = ET.Element('g')
+        if self.options['channel-number-connector'] == 'True':
+            channel_block.append(ET.Element('line', attrib={
+                'x1': '0', 'x2': str(bounding_centre[0]),
+                'y1': '0', 'y2': str(bounding_centre[1]),
+                'stroke-width': self.options['line-weight-light'], 'stroke': 'black'
+            }))
+        bounding_box = ET.SubElement(channel_block, 'circle')
+        bounding_box.set('r', self.options['channel-number-radius'])
+        bounding_box.set('fill', 'White')
+        bounding_box.set('stroke', 'black')
+        bounding_box.set('stroke-width', self.options['line-weight-light'])
+        bounding_box.set('cx', str(bounding_centre[0]))
+        bounding_box.set('cy', str(bounding_centre[1]))
+        channel_number = ET.SubElement(channel_block, 'text')
+        channel_number.set('text-anchor', 'middle')
+        channel_number.set('dominant-baseline', 'central')
+        channel_number.set('x', str(bounding_centre[0]))
+        channel_number.set('y', str(bounding_centre[1]))
+        channel_number.text = fixture['ref']
+        channel_number.set('class', 'channel-number')
+        return channel_block
+
+    def get_fixture_handle_offset(self, fixture, handle_name):
+        """Finds a handle in the fixture icon with the specified name.
+        Gives coordinates in (x, y) tuple. Returns (0, 0) if handle
+        was not found. The coordinates are in actual scaled units for the
+        current document so ready to be used."""
+        if 'symbol' not in fixture:
+            symbol_name = self.options['fallback-symbol']
+        else:
+            symbol_name = fixture['symbol']
+        svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
+        icon = self.render_symbol(symbol_name)
+        groups = icon.findall('ns0:g', svg_ns)
+        for g in groups:
+            if g.get('id') == 'handles':
+                handles = g.findall('ns0:polyline', svg_ns)
+                for h in handles:
+                    if h.get('id') == handle_name:
+                        return [float(i) / float(self.options['scale']) for i in h.get('points').split()]
+        return 0, 0
 
     def generate_plot(self):
         self.lighting_plot = self.get_empty_plot()
@@ -549,72 +610,6 @@ class LightingPlot:
             root.append(self.get_title_block())
 
 
-class FixtureSymbol:
-    """Manages the SVG symbols for fixtures."""
-
-    def __init__(self, fixture):
-        """Load the fixture symbol file."""
-        self.fixture = fixture
-        symbol_name = fixture.data['symbol']
-        tree = ET.parse(get_data('symbol/' + symbol_name + '.svg'))
-        root = tree.getroot()
-        self.ns = {'ns0': 'http://www.w3.org/2000/svg'}
-        self.image_group = root.find('ns0:g', self.ns)
-
-    def get_fixture_group(self):
-        """Return a transformed symbol g element."""
-        posX_mm = float(self.fixture.data['posX']) * 1000
-        posY_mm = float(self.fixture.data['posY']) * 1000
-        rotation_deg = self.fixture.data['rotation']
-        colour = self.fixture.data['colour']
-        self.image_group.set('transform', 'translate(' +
-                             str(posX_mm) + ' ' + str(posY_mm) + ') rotate(' + str(rotation_deg) + ')')
-        for path in self.image_group:
-            if path.get('class') == 'outer':
-                path.set('fill', colour)
-        return self.image_group
-
-    def get_fixture_beam(self):
-        """Return a beam path element."""
-        posX_mm = str(float(self.fixture.data['posX']) * 1000)
-        posY_mm = str(float(self.fixture.data['posY']) * 1000)
-        focusX_mm = str(float(self.fixture.data['focusX']) * 1000)
-        focusY_mm = str(float(self.fixture.data['focusY']) * 1000)
-        beam = ET.Element('path')
-        beam.set('d', 'M ' + posX_mm + ' ' + posY_mm + ' L ' + focusX_mm + ' ' + focusY_mm)
-        beam.set('stroke', 'black')
-        beam.set('stroke-width', '6')
-        beam.set('stroke-dasharray', '10,10')
-        return beam
-
-    def get_circuit_icon(self):
-        """Return a circuit and connector g element."""
-        rotation_deg = self.fixture.data['rotation']
-        posX_mm = float(self.fixture.data['posX']) * 1000
-        posY_mm = float(self.fixture.data['posY']) * 1000
-        connector_endX = posX_mm - 200 * math.cos(math.radians(rotation_deg))
-        connector_endY = posY_mm - 200 * math.sin(math.radians(rotation_deg))
-        icon_group = ET.Element('g')
-        connector = ET.SubElement(icon_group, 'path')
-        connector.set('d', 'M ' + str(posX_mm) + ' ' + str(posY_mm) +
-                      ' L ' + str(connector_endX) + ' ' + str(connector_endY))
-        connector.set('stroke', 'black')
-        connector.set('stroke-width', '3')
-        circle = ET.SubElement(icon_group, 'circle')
-        circle.set('cx', str(connector_endX))
-        circle.set('cy', str(connector_endY))
-        circle.set('r', '60')
-        circle.set('stroke', 'black')
-        circle.set('stroke-width', '6')
-        circle.set('fill', 'white')
-        text = ET.SubElement(icon_group, 'text')
-        text.text = self.fixture.data['circuit']
-        text.set('x', str(connector_endX))
-        text.set('y', str(connector_endY))
-        text.set('font-size', '60')
-        return icon_group
-
-
 class PlotExtension(InterpreterExtension):
 
     def __init__(self, interpreter):
@@ -634,6 +629,11 @@ class PlotExtension(InterpreterExtension):
 
     def plot_write(self, path):
         self.plot.lighting_plot.write(os.path.expanduser(path))
+        with open(path, 'r+') as f:
+            header = '<?xml-stylesheet type="text/css" href="'+self.options['svg-style-source']+'" ?>'
+            content = f.read()
+            f.seek(0, 0)
+            f.write(header.rstrip('\r\n') + '\n' + content)
 
     def plot_set(self, k, v):
         self.options[k] = v
