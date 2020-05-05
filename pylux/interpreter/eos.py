@@ -73,8 +73,8 @@ class EosExtension(InterpreterExtension):
         for l in raw:
             match = re.match('\$\$Title', l)
             if match:
-                if not document.get_metadata(self.interpreter.file, 'title'):
-                    document.set_metadata(self.interpreter.file, 'title', resolve_line(l)[1])
+                if not document.get_metadata(self.interpreter.file, 'production'):
+                    document.set_metadata(self.interpreter.file, 'production', resolve_line(l)[1])
 
         if target == 'conventional_patch':
             entries = []
@@ -178,7 +178,7 @@ class EosExtension(InterpreterExtension):
                         fixture['posY'] = pos_array[1]
                         fixture['posZ'] = pos_array[2]
                     if res[0] == '$$Orientation':
-                        fixture['rotation'] = res[1].split()[1]
+                        fixture['rotation'] = res[1].split()[2]
 
         elif target == 'cues':
             cue_blocks = extract_blocks('Cue.*')
