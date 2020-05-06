@@ -56,3 +56,9 @@ p {
     vertical-align: text-top;
     margin: 0;
 }
+
+.notation {
+    font-size: 3pt;
+    font-family: sans-serif;
+    font-stretch: condensed
+}

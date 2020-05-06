@@ -319,24 +319,15 @@ class LightingPlot:
         return image_group
 
     def get_title_block(self):
-        if self.options['title-block'] == 'corner':
-            return self.get_title_corner()
-        elif self.options['title-block'] == 'sidebar':
-            return self.get_title_sidebar()
-        elif self.options['title-block'] == None:
-            return None
-
-    def get_title_corner(self):
-        """Get the title block ready to be put into the plot."""
-        return None
+        return self.get_title_sidebar()
 
     def get_title_sidebar_width(self):
         page_dims = self.get_page_dimensions()
-        pc_width = page_dims[0] * float(self.options['vertical-title-width-pc'])
-        if pc_width > float(self.options['vertical-title-max-width']):
-            return float(self.options['vertical-title-max-width'])
-        elif pc_width < float(self.options['vertical-title-min-width']):
-            return float(self.options['vertical-title-min-width'])
+        pc_width = page_dims[0] * float(self.options['sidebar-title-width-pc'])
+        if pc_width > float(self.options['sidebar-title-max-width']):
+            return float(self.options['sidebar-title-max-width'])
+        elif pc_width < float(self.options['sidebar-title-min-width']):
+            return float(self.options['sidebar-title-min-width'])
         else:
             return pc_width
 
@@ -649,7 +640,7 @@ class PlotExtension(InterpreterExtension):
 
     def __init__(self, interpreter):
         super().__init__(interpreter)
-        self.options = self.interpreter.config['plotter']
+        self.options = self.interpreter.config['plot']
         self.plot = None
 
     def register_commands(self):
@@ -665,7 +656,7 @@ class PlotExtension(InterpreterExtension):
     def plot_write(self, path):
         self.plot.lighting_plot.write(os.path.expanduser(path))
         with open(path, 'r+') as f:
-            header = '<?xml-stylesheet type="text/css" href="'+self.options['svg-style-source']+'" ?>'
+            header = '<?xml-stylesheet type="text/css" href="'+self.options['style-source']+'" ?>'
             content = f.read()
             f.seek(0, 0)
             f.write(header.rstrip('\r\n') + '\n' + content)
