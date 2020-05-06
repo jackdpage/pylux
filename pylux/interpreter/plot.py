@@ -1,6 +1,6 @@
 from pylux.interpreter import InterpreterExtension, NoRefsCommand
 from pylux import document, reference
-from pylux.lib import data, tagger
+from pylux.lib import data, tagger, polygon
 import xml.etree.ElementTree as ET
 import os
 import math
@@ -177,7 +177,7 @@ class LightingPlot:
         height = self.get_page_dimensions()[1]
         margin = float(self.options['margin'])
         centre_line = ET.Element('path')
-        if self.options['centre-line-extend'] == 'True':
+        if self.options.getboolean('centre-line-extend'):
             centre_line.set('d', 'M ' + str(centre) + ' 0 ' +
                             'L ' + str(centre) + ' ' + str(height))
         else:
@@ -205,7 +205,7 @@ class LightingPlot:
         width = self.get_page_dimensions()[0]
         width_extent = self.get_plot_width_extent()
         plaster_line = ET.Element('path')
-        if self.options['plaster-line-extend'] == 'True':
+        if self.options.getboolean('plaster-line-extend'):
             plaster_line.set('d', 'M 0 ' + str(centre + padding) + ' ' +
                              'L ' + str(width) + ' ' + str(centre + padding))
         else:
@@ -445,6 +445,7 @@ class LightingPlot:
         return symbol
 
     def get_legend_fixture_icon(self, symbol_name):
+        """Translate a fixture icon so it is in the correct place in the legend."""
         scale = float(self.options['scale'])
         width = self.get_title_sidebar_width() / (float(self.options['sidebar-icon-width-factor']) * 2) * scale
         height = width
@@ -456,23 +457,16 @@ class LightingPlot:
         return symbol
 
     def get_fixture_icon(self, fixture):
-        """Return an SVG group for a single fixture.
-
-        Search the package data for a symbol for this fixture, then
-        transform as appropriate based on tags and plot scaling.
-
-        Args:
-            fixture: the fixture object to create an icon for.
-
-        Returns:
-            An ElementTree object representing an SVG 'g' element.
-        """
+        """Return a transformed fixture icon."""
         centre = self.get_centre_coord()
         plaster = self.get_plaster_coord()
         scale = 1 / float(self.options['scale'])
         plot_pos = lambda dim: (float(fixture['pos' + dim]) * 1000)
         rotation = fixture['rotation']
-        colour = fixture['colour']
+        if self.options.getboolean('colour-fixtures'):
+            colour = fixture['colour']
+        else:
+            colour = 'White'
 
         # Create the container for all objects which compose the fixture icon and
         # translate to the correct position
@@ -481,9 +475,8 @@ class LightingPlot:
                       'translate(' + str(centre + plot_pos('X') * scale) + ' ' +
                       str(plaster - plot_pos('Y') * scale) + ')')
 
-        # Create the channel number block if applicable
-        if self.options['show-channel-number'] == 'True':
-            container.append(self.get_fixture_channel_block(fixture))
+        # Create the additional information notation
+        container.append(self.get_fixture_notation_block(fixture))
 
         # Create the actual fixture symbol itself
         if 'symbol' not in fixture:
@@ -501,7 +494,7 @@ class LightingPlot:
         return container
 
     def get_fixture_beam(self, fixture):
-        if self.options['beam-source-colour'] == 'True':
+        if self.options.getboolean('beam-source-colour'):
             colour = fixture['colour']
         else:
             colour = 'black'
@@ -521,7 +514,7 @@ class LightingPlot:
         return beam
 
     def get_fixture_focus_point(self, fixture):
-        if self.options['focus-point-source-colour'] == 'True':
+        if self.options.getboolean('focus-point-source-colour'):
             colour = fixture['colour']
         else:
             colour = 'black'
@@ -538,34 +531,76 @@ class LightingPlot:
 
         return point
 
-    def get_fixture_channel_block(self, fixture):
+    def get_fixture_notation_block(self, fixture):
         handle = self.get_fixture_handle_offset(fixture, 'south')
-        if -90 <= float(fixture['rotation']) <= 90 or 270 <= float(fixture['rotation']) <= 360:
-            bounding_centre = handle[0], handle[1] + 1.5 * float(self.options['channel-number-radius'])
-        else:
-            bounding_centre = handle[0], handle[1] * -1 - 1.5 * float(self.options['channel-number-radius'])
-        channel_block = ET.Element('g')
-        if self.options['channel-number-connector'] == 'True':
-            channel_block.append(ET.Element('line', attrib={
-                'x1': '0', 'x2': str(bounding_centre[0]),
-                'y1': '0', 'y2': str(bounding_centre[1]),
+        notation_container_size = float(self.options['channel-notation-radius'])
+        notation_spacing = 1.5
+
+        def get_notation_centre(index, inverted=False):
+            """Calculate the coordinates of a given notation bounding box centre, by
+            index. For example, the first notation object from the fixture will be
+            index zero, then 1, 2 etc."""
+            if not inverted:
+                return handle[0], handle[1] + notation_container_size * (index * notation_spacing + notation_spacing + index)
+            else:
+                return handle[0], - handle[1] - notation_container_size * (index * notation_spacing + notation_spacing + index)
+
+        def get_relevant_notations():
+            """Get the list of required notations in order from fixture outwards. In tuple
+            form of shape, text. e.g. [(6, '23'), (0, '1')] Hexagon = 6, circle = 0, etc"""
+            ordered = []
+            if 'dimmer' not in fixture and 'circuit' in fixture:
+                if self.options.getboolean('show-circuit-number'):
+                    ordered.append((6, fixture['circuit']))
+            if 'circuit' not in fixture and 'dimmer' in fixture:
+                if self.options.getboolean('show-dimmer-number'):
+                    ordered.append((6, fixture['dimmer']))
+            if 'dimmer' in fixture and 'circuit' in fixture:
+                if self.options.getboolean('show-circuit-number'):
+                    ordered.append((6, fixture['circuit']))
+                if self.options.getboolean('show-dimmer-number'):
+                    ordered.append((4, fixture['dimmer']))
+            if self.options.getboolean('show-channel-number'):
+                ordered.append((0, fixture['ref']))
+            return ordered
+
+        def is_inverted():
+            """Is the fixture inverted i.e. rotated more than 90deg"""
+            if -90 <= float(fixture['rotation']) <= 90 or 270 <= float(fixture['rotation']) <= 360:
+                return False
+            else:
+                return True
+
+        notation_group = ET.Element('g')
+        notations = get_relevant_notations()
+        # Add the connecting line from the centre of the fixture to the distance of the
+        # final notation block, if they are enabled
+        if self.options.getboolean('notation-connectors'):
+            notation_group.append(ET.Element('line', attrib={
+                'x1': '0', 'x2': str(get_notation_centre(len(notations) - 1, inverted=is_inverted())[0]),
+                'y1': '0', 'y2': str(get_notation_centre(len(notations) - 1, inverted=is_inverted())[1]),
                 'stroke-width': self.options['line-weight-light'], 'stroke': 'black'
             }))
-        bounding_box = ET.SubElement(channel_block, 'circle')
-        bounding_box.set('r', self.options['channel-number-radius'])
-        bounding_box.set('fill', 'White')
-        bounding_box.set('stroke', 'black')
-        bounding_box.set('stroke-width', self.options['line-weight-light'])
-        bounding_box.set('cx', str(bounding_centre[0]))
-        bounding_box.set('cy', str(bounding_centre[1]))
-        channel_number = ET.SubElement(channel_block, 'text')
-        channel_number.set('text-anchor', 'middle')
-        channel_number.set('dominant-baseline', 'central')
-        channel_number.set('x', str(bounding_centre[0]))
-        channel_number.set('y', str(bounding_centre[1]))
-        channel_number.text = fixture['ref']
-        channel_number.set('class', 'channel-number')
-        return channel_block
+        for i, notation in enumerate(notations):
+            notation_block = ET.SubElement(notation_group, 'g')
+            # generate_polygon gives us the correctly sized shape to put the notation label in, we just need
+            # to style and move it to the correct place
+            bounding_box = polygon.generate_polygon(float(self.options['channel-notation-radius']), notation[0])
+            bounding_centre = get_notation_centre(i, inverted=is_inverted())
+            bounding_box.set('fill', 'White')
+            bounding_box.set('stroke', 'black')
+            bounding_box.set('stroke-width', self.options['line-weight-light'])
+            bounding_box.set('transform', 'translate('+str(bounding_centre[0])+' '+str(bounding_centre[1])+')')
+            notation_block.append(bounding_box)
+            channel_number = ET.SubElement(notation_block, 'text', attrib={
+                'text-anchor': 'middle',
+                'dominant-baseline': 'central',
+                'x': str(bounding_centre[0]),
+                'y': str(bounding_centre[1]),
+                'class': 'notation'
+            })
+            channel_number.text = notation[1]
+        return notation_group
 
     def get_fixture_handle_offset(self, fixture, handle_name):
         """Finds a handle in the fixture icon with the specified name.
@@ -590,7 +625,7 @@ class LightingPlot:
     def generate_plot(self):
         self.lighting_plot = self.get_empty_plot()
         root = self.lighting_plot.getroot()
-        if self.options['page-border'] == 'True':
+        if self.options.getboolean('page-border'):
             root.append(self.get_page_border())
         try:
             root.append(self.get_background_image())
@@ -601,9 +636,9 @@ class LightingPlot:
         for fixture in self.fixtures:
             tagger.tag_fixture_all_doc_independent(fixture)
             if self.fixture_will_fit(fixture):
-                if self.options['show-beams'] == 'True' and 'focusX' in fixture and 'focusY' in fixture:
+                if self.options.getboolean('show-beams') and 'focusX' in fixture and 'focusY' in fixture:
                     root.append(self.get_fixture_beam(fixture))
-                if self.options['show-focus-point'] == 'True' and 'focusX' in fixture and 'focusY' in fixture:
+                if self.options.getboolean('show-focus-point') and 'focusX' in fixture and 'focusY' in fixture:
                     root.append(self.get_fixture_focus_point(fixture))
                 root.append(self.get_fixture_icon(fixture))
         if self.options['title-block'] != 'None':
