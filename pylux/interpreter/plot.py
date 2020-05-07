@@ -418,18 +418,15 @@ class LightingPlot:
                          str(float(self.options['line-weight-heavy']) * scale))
                 path.set('stroke', 'black')
             if path.get('class') == 'weight-override-light':
-                path.set('fill', colour)
                 path.set('stroke', 'black')
                 path.set('stroke-width',
                          str(float(self.options['line-weight-light']) * scale))
             if path.get('class') == 'weight-override-medium':
                 path.set('stroke', 'black')
-                path.set('fill', colour)
                 path.set('stroke-width',
                          str(float(self.options['line-weight-medium']) * scale))
             if path.get('class') == 'weight-override-heavy':
                 path.set('stroke', 'black')
-                path.set('fill', colour)
                 path.set('stroke-width',
                          str(float(self.options['line-weight-heavy']) * scale))
 
