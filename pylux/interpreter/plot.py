@@ -357,7 +357,7 @@ class LightingPlot:
         div.set('id', 'parent')
         stylesheet_link = ET.SubElement(div, 'link')
         stylesheet_link.set('xmlns', 'http://www.w3.org/1999/xhtml')
-        stylesheet_link.set('href', self.options['style-source'])
+        stylesheet_link.set('href', data.get_data('style/'+self.options['style-source']))
         stylesheet_link.set('rel', 'stylesheet')
         # Attempt to match any tags in the config with metadata tags and input these as titles.
         # Note this will not add any headings, only the title text themselves. Add headings
@@ -656,7 +656,7 @@ class PlotExtension(InterpreterExtension):
     def plot_write(self, path):
         self.plot.lighting_plot.write(os.path.expanduser(path))
         with open(path, 'r+') as f:
-            header = '<?xml-stylesheet type="text/css" href="'+self.options['style-source']+'" ?>'
+            header = '<?xml-stylesheet type="text/css" href="'+data.get_data('style/'+self.options['style-source'])+'" ?>'
             content = f.read()
             f.seek(0, 0)
             f.write(header.rstrip('\r\n') + '\n' + content)

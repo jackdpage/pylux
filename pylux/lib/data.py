@@ -3,10 +3,10 @@ import os
 LOCATIONS = {
         'home' : os.path.expanduser('~/.pylux'),
         'root' : os.path.abspath('/usr/share/pylux'),
-        'devdir' : os.path.normpath('pylux/content')}
+        'local' : os.path.normpath('./content')}
 
 # Priority of data locations, high to low
-PRIORITY = ['devdir', 'home', 'root']
+PRIORITY = ['local', 'home', 'root']
 
 def get_data(path, location='auto'):
     # If location is auto, return the data from the directory with 
