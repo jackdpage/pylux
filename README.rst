@@ -13,6 +13,14 @@ You can also import data from an Eos ASCII export, including the complete patch
 Installation and Dependencies
 -----------------------------
 
+Clone the code and content repositories locally::
+
+  git clone --recurse-submodules https://github.com/jackdpage/pylux.git
+  
+Execute the pylux module from the repository root::
+
+  python3 -m pylux
+
 Pylux is written in pure Python 3. You will need the Python interpreter in order
 to run it. Different interfaces and extensions require different dependencies. You can
 run the majority of the program from the fallback interface, requiring no dependencies
