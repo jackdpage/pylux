@@ -17,6 +17,10 @@ Clone the code and content repositories locally::
 
   git clone --recurse-submodules https://github.com/jackdpage/pylux.git
   
+To get the absolute latest version of the content repository, update the submodule from the remote::
+
+  git submodule update --remote --merge
+  
 Execute the pylux module from the repository root::
 
   python3 -m pylux
