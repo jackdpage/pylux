@@ -78,6 +78,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Registry', 'Remove'), self.registry_remove))
         self.commands.append(RegularCommand(('Structure', 'About'), self.structure_about))
         self.commands.append(RegularCommand(('Structure', 'Create'), self.structure_create, check_refs=False))
+        self.commands.append(RegularCommand(('Structure', 'CopyTo'), self.structure_clone))
         self.commands.append(RegularCommand(('Structure', 'Display'), self.structure_display))
         self.commands.append(RegularCommand(('Structure', 'Set'), self.structure_set))
         self.commands.append(RegularCommand(('Structure', 'Remove'), self.structure_remove))
@@ -518,6 +519,10 @@ class BaseExtension(InterpreterExtension):
     def structure_about(self, refs):
         """Show the stored data tags of a structure."""
         return self._base_about(refs, constant.STRUCTURE_TYPE)
+
+    def structure_clone(self, refs, dest):
+        """Clone a structure."""
+        return self._base_clone(refs, constant.STRUCTURE_TYPE, dest)
 
     def structure_create(self, refs, structure_type):
         """Insert a blank structure object."""

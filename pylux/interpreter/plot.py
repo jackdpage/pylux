@@ -219,6 +219,15 @@ class LightingPlot:
                          self.options['plaster-line-dasharray'])
         return plaster_line
 
+    def get_coordinate(self, measurement, dimension):
+        """Get a scaled coordinate in the x or y dimension, taking into account
+        margins, padding etc. Provide measurement in millimetres."""
+        scale = float(self.options['scale'])
+        if dimension == 'x':
+            return self.get_centre_coord() + measurement / scale
+        elif dimension == 'y':
+            return self.get_plaster_coord() - measurement / scale
+
     def get_centre_coord(self):
         """Get the centre line x coordinate.
 
@@ -317,6 +326,24 @@ class LightingPlot:
             path.set('fill-opacity', '0')
 
         return image_group
+
+    def get_structure(self, structure):
+        """Get structure SVG element."""
+        if 'structure_type' not in structure:
+            return None
+        elif structure['structure_type'] == 'batten' or structure['structure_type'] == 'architecture':
+            if all(i in structure for i in ('startX', 'startY', 'endX', 'endY')):
+                element = ET.Element('polyline')
+                element.set('stroke', 'black')
+                element.set('stroke-width', self.options['line-weight-heavy'])
+                element.set('points',
+                            str(self.get_coordinate(float(structure['startX'])*1000, 'x')) + ',' +
+                            str(self.get_coordinate(float(structure['startY'])*1000, 'y')) + ' ' +
+                            str(self.get_coordinate(float(structure['endX'])*1000, 'x')) + ',' +
+                            str(self.get_coordinate(float(structure['endY'])*1000, 'y')))
+                return element
+            else:
+                return None
 
     def get_title_block(self):
         return self.get_title_sidebar()
@@ -643,6 +670,11 @@ class LightingPlot:
             pass
         root.append(self.get_centre_line())
         root.append(self.get_plaster_line())
+        for structure in document.get_by_type(self.plot_file, 'structure'):
+            try:
+                root.append(self.get_structure(structure))
+            except TypeError:
+                pass
         for fixture in self.fixtures:
             tagger.tag_fixture_all_doc_independent(fixture)
             if self.fixture_will_fit(fixture):
