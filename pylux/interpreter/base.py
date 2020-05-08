@@ -76,6 +76,20 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Registry', 'Display'), self.registry_display))
         self.commands.append(RegularCommand(('Registry', 'Query'), self.registry_query))
         self.commands.append(RegularCommand(('Registry', 'Remove'), self.registry_remove))
+        self.commands.append(RegularCommand(('Structure', 'About'), self.structure_about))
+        self.commands.append(RegularCommand(('Structure', 'Create'), self.structure_create, check_refs=False))
+        self.commands.append(RegularCommand(('Structure', 'Display'), self.structure_display))
+        self.commands.append(RegularCommand(('Structure', 'Set'), self.structure_set))
+        self.commands.append(RegularCommand(('Structure', 'Remove'), self.structure_remove))
+
+    def _base_about(self, refs, obj_type):
+        for ref in refs:
+            obj = document.get_by_ref(self.interpreter.file, obj_type[0], ref)
+            self.interpreter.msg.post_output([printer.get_generic_text_widget(obj)])
+            self.interpreter.msg.post_output([str(len(obj))+' Data Tags:'])
+            self.interpreter.msg.post_output(['    '+str(k)+': '+str(obj[k])
+                                              for k in sorted(obj)
+                                              if k not in literal_eval(self.interpreter.config['cli']['ignore-about-tags'])])
 
     def _base_clone(self, refs, obj_type, dest):
         """Copy range to single (expanded to range) or copy single to range. If given a single source and single
@@ -500,6 +514,26 @@ class BaseExtension(InterpreterExtension):
     def registry_remove(self, refs):
         """Remove a registry."""
         return self._base_remove(refs, constant.REGISTRY_TYPE)
+
+    def structure_about(self, refs):
+        """Show the stored data tags of a structure."""
+        return self._base_about(refs, constant.STRUCTURE_TYPE)
+
+    def structure_create(self, refs, structure_type):
+        """Insert a blank structure object."""
+        return self._base_create(refs, constant.STRUCTURE_TYPE, structure_type=structure_type)
+
+    def structure_display(self, refs):
+        """Display a single-line summary of a structure."""
+        return self._base_display(refs, constant.STRUCTURE_TYPE)
+
+    def structure_remove(self, refs):
+        """Remove a structure."""
+        return self._base_remove(refs, constant.STRUCTURE_TYPE)
+
+    def structure_set(self, refs, k, v):
+        """Set an arbitrary data tag in a structure."""
+        return self._base_set(refs, constant.STRUCTURE_TYPE, k, v)
 
 
 def register_extension(interpreter):

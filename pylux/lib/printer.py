@@ -77,6 +77,17 @@ def get_registry_extra_text(obj, **kwargs):
     return 'Universe ', '', str(len(obj['table']))+' occupied'
 
 
+def get_structure_extra_text(obj, **kwargs):
+    if 'structure_type' not in obj:
+        structure_type = 'no type'
+    else:
+        if obj['structure_type'] == '':
+            structure_type = 'no type'
+        else:
+            structure_type = obj['structure_type']
+    return '', '', ' ('+structure_type+')'
+
+
 def get_generic_text_widget(obj, pre=''):
     if 'ref' in obj:
         ref_print = (obj['type'], obj['ref']+' ')
@@ -120,5 +131,6 @@ EXTRA_TEXT = {
     'focuspalette': get_fp_extra_text,
     'beampalette': get_bp_extra_text,
     'intensitypalette': get_ip_extra_text,
-    'allpalette': get_ap_extra_text
+    'allpalette': get_ap_extra_text,
+    'structure': get_structure_extra_text
 }
