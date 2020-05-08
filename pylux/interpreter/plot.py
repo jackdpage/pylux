@@ -331,6 +331,10 @@ class LightingPlot:
         else:
             return pc_width
 
+    def get_internal_sidebar_width(self):
+        """Get the effective available width in the sidebar, once padding has been taken account for"""
+        return self.get_title_sidebar_width() - 2 * float(self.options['sidebar-title-padding'])
+
     def get_title_sidebar(self):
         """Get the title block in vertical form."""
 
@@ -348,9 +352,9 @@ class LightingPlot:
         sidebar_box.set('stroke-width', str(self.options['line-weight-heavy']))
         # Create title text within HTML foreignObject element (to support text wrapping)
         html_cont = ET.SubElement(sidebar, 'foreignObject')
-        html_cont.set('width', str(self.get_title_sidebar_width()))
+        html_cont.set('width', str(self.get_internal_sidebar_width()))
         html_cont.set('height', str(page_dims[1] - 2 * margin))
-        html_cont.set('x', str(left_border))
+        html_cont.set('x', str(left_border + float(self.options['sidebar-title-padding'])))
         html_cont.set('y', str(margin))
         div = ET.SubElement(html_cont, 'div')
         div.set('xmlns', 'http://www.w3.org/1999/xhtml')
@@ -370,23 +374,19 @@ class LightingPlot:
                 element.set('class', 'title-'+t)
 
         fixture_types = self.get_plotted_types()
-        for fixture_type, symbol in fixture_types.items():
+        for fixture_type, symbol_name in fixture_types.items():
             legend_div = ET.SubElement(div, 'div')
             legend_div.set('class', 'legend')
             parent_svg = ET.SubElement(legend_div, 'svg')
             parent_svg.set('xmlns', 'http://www.w3.org/2000/svg')
-            icon = self.get_legend_fixture_icon(symbol)
-            # Every icon is given a square SVG bounding box based on a percentage of the width of the sidebar. This is
-            # defined with the sidebar-icon-width-factor property. For example, with a setting of 4, the SVG fixture
-            # icon will have a width and height of 25% of the width of the sidebar, and the fixture type label will
-            # have a width of 75% of the width of the sidebar.
-            parent_svg.set('height', str(self.get_title_sidebar_width() / float(self.options['sidebar-icon-width-factor'])))
+            icon = self.get_legend_fixture_icon(symbol_name)
+            parent_svg.set('height', str(self.get_symbol_height(icon)))
             parent_svg.append(icon)
             label = ET.SubElement(legend_div, 'p')
             label.text = fixture_type
-            icon_pc_width = 100 / float(self.options['sidebar-icon-width-factor'])
+            icon_pc_width = self.get_symbol_width(icon) / self.get_internal_sidebar_width() * 100
             parent_svg.set('width', str(icon_pc_width)+'%')
-            label.set('style', 'width:'+str(100-icon_pc_width)+'%')
+            label.set('style', 'width:'+str(100-icon_pc_width-float(self.options['legend-text-margin']))+'%;margin-left:'+self.options['legend-text-margin']+'%')
 
         return sidebar
 
@@ -401,16 +401,21 @@ class LightingPlot:
         else:
             return False
 
+    def get_original_symbol(self, symbol_name):
+        """Get symbol group from the file, unscaled and unformatted."""
+        tree = ET.parse(data.get_data('symbol/' + symbol_name + '.svg'))
+        root = tree.getroot()
+        svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
+        symbol = root.find('ns0:g', svg_ns)
+        return symbol
+
     def render_symbol(self, symbol_name, colour='White'):
         """Generate a symbol from the given symbol name. Finds the appropriate symbol and
         sets correct path colours and line weights according to the document scale. Does
         not apply any transformation so it will need to be scaled and translated before
         inserting into the document."""
         scale = float(self.options['scale'])
-        tree = ET.parse(data.get_data('symbol/' + symbol_name + '.svg'))
-        root = tree.getroot()
-        svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
-        symbol = root.find('ns0:g', svg_ns)
+        symbol = self.get_original_symbol(symbol_name)
         for path in symbol:
             if path.get('class') == 'outer':
                 path.set('fill', colour)
@@ -432,15 +437,39 @@ class LightingPlot:
 
         return symbol
 
+    def get_fixture_symbol_name(self, fixture):
+        """Determine the symbol name to be used for a fixture"""
+        if 'symbol' not in fixture:
+            return self.options['fallback-symbol']
+        else:
+            return fixture['symbol']
+
+    def get_symbol_width(self, symbol):
+        """Get actual scaled width of the symbol based on east and west handles"""
+        max_x = self.get_symbol_handle_offset(symbol, 'east')[0]
+        min_x = self.get_symbol_handle_offset(symbol, 'west')[0]
+        return max_x - min_x + 2 * float(self.options['line-weight-heavy'])
+
+    def get_symbol_height(self, symbol):
+        """Get actual scaled height of the symbol based on north and south handles"""
+        max_y = self.get_symbol_handle_offset(symbol, 'south')[1]
+        min_y = self.get_symbol_handle_offset(symbol, 'north')[1]
+        return max_y - min_y + 2 * float(self.options['line-weight-heavy'])
+
+    def get_symbol_north_height(self, symbol):
+        """Get the actual scaled height of a symbol between its centre and north handle."""
+        return self.get_symbol_handle_offset(symbol, 'north')[1] * -1 + float(self.options['line-weight-heavy'])
+
     def get_legend_fixture_icon(self, symbol_name):
         """Translate a fixture icon so it is in the correct place in the legend."""
         scale = float(self.options['scale'])
-        width = self.get_title_sidebar_width() / (float(self.options['sidebar-icon-width-factor']) * 2) * scale
-        height = width
         symbol = self.render_symbol(symbol_name)
+        width = self.get_symbol_width(symbol) * scale
+        height = self.get_symbol_north_height(symbol) * scale
+        # Translate the symbol half its width and height so the top corner of it is flush
+        # with the top left corner of the SVG element.
         symbol.set('transform', 'scale( ' + str(1 / scale) + ' ) ' +
-                   'translate( ' + str(width) +
-                   ' ' + str(height + float(self.options['line-weight-heavy'])) + ')')
+                   'translate( ' + str(width / 2) + ' ' + str(height) + ')')
 
         return symbol
 
@@ -467,10 +496,7 @@ class LightingPlot:
         container.append(self.get_fixture_notation_block(fixture))
 
         # Create the actual fixture symbol itself
-        if 'symbol' not in fixture:
-            symbol_name = self.options['fallback-symbol']
-        else:
-            symbol_name = fixture['symbol']
+        symbol_name = self.get_fixture_symbol_name(fixture)
         # Scale and rotational transforms are on the symbol source group
         # translation transforms are on the container group which also
         # contains channel identifiers etc
@@ -520,7 +546,7 @@ class LightingPlot:
         return point
 
     def get_fixture_notation_block(self, fixture):
-        handle = self.get_fixture_handle_offset(fixture, 'south')
+        handle = self.get_symbol_handle_offset(self.render_symbol(self.get_fixture_symbol_name(fixture)), 'south')
         notation_container_size = float(self.options['channel-notation-radius'])
         notation_spacing = 1.5
 
@@ -590,25 +616,21 @@ class LightingPlot:
             channel_number.text = notation[1]
         return notation_group
 
-    def get_fixture_handle_offset(self, fixture, handle_name):
+    def get_symbol_handle_offset(self, symbol, handle_name):
         """Finds a handle in the fixture icon with the specified name.
         Gives coordinates in (x, y) tuple. Returns (0, 0) if handle
         was not found. The coordinates are in actual scaled units for the
         current document so ready to be used."""
-        if 'symbol' not in fixture:
-            symbol_name = self.options['fallback-symbol']
-        else:
-            symbol_name = fixture['symbol']
         svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
-        icon = self.render_symbol(symbol_name)
-        groups = icon.findall('ns0:g', svg_ns)
+        groups = symbol.findall('ns0:g', svg_ns)
         for g in groups:
             if g.get('id') == 'handles':
                 handles = g.findall('ns0:polyline', svg_ns)
                 for h in handles:
                     if h.get('id') == handle_name:
                         return [float(i) / float(self.options['scale']) for i in h.get('points').split()]
-        return 0, 0
+        fallback_handle = self.options['fallback-handle-'+handle_name]
+        return [float(i) / float(self.options['scale']) for i in fallback_handle.split(',')]
 
     def generate_plot(self):
         self.lighting_plot = self.get_empty_plot()
