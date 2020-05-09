@@ -4,11 +4,11 @@ Pylux
 Pylux is a program for creating and managing documentation for stage lighting.
 
 Pylux currently has the capability to generate plaintext documentation from
-Jinja template files and create 2D plots in SVG although you will need to provide
+Jinja template files and create 2D plots in SVG although you will need to provide 
 your own fixture vector files.
 
-You can also import data from an Eos ASCII export, including the complete patch
-(excluding multicell fixtures), groups, and cues.
+You can also import data from an Eos ASCII export, including the complete patch,
+groups, palettes, and cues.
 
 Installation and Dependencies
 -----------------------------
@@ -36,6 +36,16 @@ Component Dependencies
 cli       urwid
 report    jinja2
 ========= ============
+
+Sample Output
+-------------
+Rendered at 1:75 on A4
+
+.. image:: https://i.imgur.com/gSwwKeQ.png
+
+Rendered at 1:50 on A3
+
+.. image:: https://i.imgur.com/d6tWIof.png
 
 Documentation
 -------------
