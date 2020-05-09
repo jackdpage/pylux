@@ -85,6 +85,9 @@ Drawing Options
 ``centre-line-extend``, ``plaster-line-extend``
     When set to True, the centre and plaster lines will printed beyond the page border into
     the margin, to the extent of the actual paper. Defaults ``False``.
+``draw-structures``
+    When enabled, correctly formatted and tagged structure objects in the file will be
+    rendered onto the plot. Default ``True``.
 
 Fixture Icon Options
 ^^^^^^^^^^^^^^^^^^^^
@@ -99,6 +102,11 @@ Fixture Icon Options
     default of white. This colouring is applied to all parts of the fixture icon with the
     ``outer`` class, whilst white is applied to all parts with the ``inner`` class.
     Default ``False``.
+``fallback-handle-north``, ``fallback-handle-south``, ``fallback-handle-east``, ``fallback-handle-west``
+    If fixture symbols are being used that do not contain correctly tagged handles, these
+    fallback handles will be used in their place. Primarily used for latching additional data to
+    icons and calculating icon size. Measured in unscaled millimetres.
+    Defaults ``0, -200``, ``0, 200``, ``150, 0``, ``-150, 0``
 
 Additional Component Settings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -148,16 +156,49 @@ Title Block Format
     by ``sidebar-title-width-pc``. Minimum and maximum widths, in millimetres can be provided
     to ensure that sidebar titles remain sensible widths when changing the paper size.
     Defaults ``0.1``, ``50``, ``100``.
+``sidebar-title-padding``
+    The amount of space to leave inside the title block, to prevent titles and other items
+    rendering right against the sidebar boundaries. Measured in millimetres. Default ``2``.
 ``titles``
     A list of metadata tags to include in the title section of the title block. These are
     added to an HTML foreignObject element for external styling with the included stylesheet.
     Only the tag values are added, headings should be added using the ::before CSS selector.
     Class names given to the text paragraph will be ``title-meta_tag_name``. Format as a
     literal list of strings. Default ``['company', 'production', 'venue', 'lighting_designer']``
-``sidebar-icon-width-factor``
-    In a sidebar title block, the fixture icon legend is shown as a vertical list. This setting
-    determines the proportion of the width of the sidebar which will contain the icon, whilst
-    the remainder will be occupied by the label text. For example, a value of ``4`` will mean
-    that 100/4 = 25% of the sidebar width will be the icon itself and the remaining 75% will be
-    the label for the legend. This will require adjustment if you are changing the scale and
-    have fixtures whose geometric centres are not equivalent to their hanging points. Default ``3.2``.
+``legend-text-margin``
+    The space to leave between the fixture symbol in the legend and its corresponding text
+    label. Measured as a percentage of the overall title bar width. Default ``2``.
+
+Scale Rule Settings
+^^^^^^^^^^^^^^^^^^^
+
+``show-scale-rule``
+    Show a scale rule in the bottom left corner of the page when enabled. Default ``True``.
+``scale-rule-major-increment``, ``scale-rule-minor-increment``
+    The scale rule gives you a minor scale (drawn to the left-hand-side) and a major scale
+    (drawn to the right-hand-side). Both can have their increment defined independently.
+    This is the unscaled length to draw each increment at. Measured in metres. Defaults ``1``, ``0.5``.
+``scale-rule-major-length``, ``scale-rule-minor-length``
+    The overall unscaled length to draw the corresponding side of the rule to. Will only draw
+    complete increments, so any length defined over a whole number of increments will be
+    ignored. For example an increment of 1 and a length of 3.4 will result in a
+    rule of length 3. Measured in metres. Defaults ``3``, ``2``.
+``scale-rule-thickness``
+    The height of scale rule to draw. This is the height excluding the border line (which is
+    drawn according to ``line-weight-light``). Measured in millimetres. Default ``1``.
+``scale-rule-padding``
+    The distance to leave between the scale rule and the lower left hand corner of the plot
+    area boundary. The same distance is left on both the x and y axis and this is measured to
+    the lower left hand corner of the rule itself, not any associated text. Measured in
+    millimetres. Default ``3``.
+``scale-rule-label-padding``
+    The distance to leave between the top of the rule itself and the labels marking the
+    distances on the rule. Measured in millimetres. Default ``0.5``.
+``scale-text-padding``
+    The distance to leave between the top of the rule itself and the associated text
+    labelling the scale of the plot (in the form SCALE 1:x). This will likely only require
+    changing if you change the marking labels font size in the stylesheet. Measured in millimetres.
+    Default ``3.5``.
+``scale-rule-units``
+    The name to give to the units on the scale rule, as printed to the right of it.
+    Default ``metres``.
