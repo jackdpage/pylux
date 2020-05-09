@@ -3,7 +3,7 @@ from pylux import document, reference
 from pylux.lib import data, tagger, polygon
 import xml.etree.ElementTree as ET
 import os
-import math
+import decimal
 from ast import literal_eval
 
 
@@ -297,6 +297,17 @@ class LightingPlot:
 
         return min_x, max_x, min_y, max_y
 
+    def is_within_bounds(self, coordinate):
+        """Given an x, y tuple in millimetres representing a scaled on-paper coordinate, determine
+        whether it is within the drawing area or not."""
+        constraints = self.get_physical_constraints()
+        if constraints[0] <= coordinate[0] <= constraints[1]:
+            return True
+        elif constraints[2] <= coordinate[1] <= constraints[3]:
+            return True
+        else:
+            return False
+
     def get_background_image(self):
         """Get the background image from file.
 
@@ -416,6 +427,99 @@ class LightingPlot:
             label.set('style', 'width:'+str(100-icon_pc_width-float(self.options['legend-text-margin']))+'%;margin-left:'+self.options['legend-text-margin']+'%')
 
         return sidebar
+
+    def get_scale_rule(self):
+        scale = float(self.options['scale'])
+        container = ET.Element('g', attrib={'class': 'rule'})
+        # Generate a list of points the rule contains
+        major_increments = []
+        minor_increments = []
+        i = 0
+        while (i + 1) * decimal.Decimal(self.options['scale-rule-major-increment']) <= decimal.Decimal(self.options['scale-rule-major-length']):
+            major_increments.append(i * decimal.Decimal(self.options['scale-rule-major-increment']))
+            i += 1
+        i = 0
+        while (i + 1) * decimal.Decimal(self.options['scale-rule-minor-increment']) <= decimal.Decimal(
+                self.options['scale-rule-minor-length']):
+            minor_increments.append(
+                -1 * i * decimal.Decimal(self.options['scale-rule-minor-increment']) - decimal.Decimal(
+                    self.options['scale-rule-minor-increment']))
+            i += 1
+        minor_width = abs(float(minor_increments[-1]))*1000 / scale
+        total_width = (abs(float(minor_increments[-1]))*1000 + (float(major_increments[-1])+float(self.options['scale-rule-major-increment']))*1000) / scale
+        # Create bounding box around the scale with the decorative border. This is required over putting
+        # the border on individual ticks as otherwise it will make black ticks look larger than white ticks.
+        container.append(ET.Element('rect', attrib={
+            'x': str(float(minor_increments[-1])*1000 / scale),
+            # Calculate total rule width
+            'width': str(total_width),
+            'y': str(-1 * float(self.options['scale-rule-thickness']) - float(self.options['line-weight-light'])),
+            'height': self.options['scale-rule-thickness'],
+            'stroke': 'black',
+            'stroke-width': self.options['line-weight-light'],
+            'fill': 'white',
+        }))
+        # Label at the zero position needs to be added manually as it won't be added through any of the tick
+        # iterations
+        zero_val = ET.SubElement(container, 'text', attrib={
+            'x': '0', 'y': str(-1 * float(self.options['scale-rule-label-padding']) -
+                               float(self.options['scale-rule-thickness']) -
+                               2 * float(self.options['line-weight-light']))})
+        zero_val.text = '0'
+        scale_label = ET.SubElement(container, 'text', attrib={
+            'x': str(total_width / 2 - minor_width), 'y': str(-1 * float(self.options['scale-rule-label-padding']) -
+                                                              float(self.options['scale-rule-thickness']) -
+                                                              2 * float(self.options['line-weight-light']) -
+                                                              float(self.options['scale-text-padding']))})
+        scale_label.text = 'SCALE 1:'+self.options['scale']
+        unit_label = ET.SubElement(container, 'text', attrib={
+            'x': str(total_width - minor_width + float(self.options['scale-text-padding'])),
+            'y': str(-1 * float(self.options['scale-rule-label-padding']) -
+                               float(self.options['scale-rule-thickness']) -
+                               2 * float(self.options['line-weight-light'])),
+            'class': 'units-label'
+        })
+        unit_label.text = self.options['scale-rule-units']
+
+        def add_scale_tick(start_point, filled, m):
+            """Add minor or major tick (according to m) at a starting point. Minor ticks assumed to be
+            in negative direction."""
+            scale_bar = ET.SubElement(container, 'rect')
+            scale_bar.set('x', str(float(start_point) * 1000 / scale))
+            scale_bar.set('width', str(float(self.options['scale-rule-'+m+'-increment']) * 1000 / scale))
+            scale_bar.set('y', str(-1 * float(self.options['scale-rule-thickness']) - float(self.options['line-weight-light'])))
+            scale_bar.set('height', self.options['scale-rule-thickness'])
+            if filled:
+                scale_bar.set('fill', 'black')
+            else:
+                scale_bar.set('fill', 'white')
+            tick_label = ET.SubElement(container, 'text')
+            # For minor labels, the label will be at the left-point (start_point) of the tick. For major labels,
+            # the label will be at the right-point (start_point + increment) of the tick
+            if m == 'minor':
+                tick_label.set('x', str(float(start_point) * 1000 / scale))
+                tick_label.text = str(abs(start_point))
+            else:
+                tick_label.set('x', str(((float(start_point) + float(self.options['scale-rule-major-increment'])) * 1000 / scale)))
+                tick_label.text = str(start_point + decimal.Decimal(self.options['scale-rule-major-increment']))
+            tick_label.set('y', str(-1 * float(self.options['scale-rule-label-padding']) -
+                                    float(self.options['scale-rule-thickness']) -
+                                    2 * float(self.options['line-weight-light'])))
+
+        # Add major increments, starting with a filled one
+        increment_filled = True
+        for i in major_increments:
+            add_scale_tick(i, increment_filled, 'major')
+            increment_filled = not increment_filled
+        # Add minor increments, starting with an unfilled one
+        increment_filled = False
+        for i in minor_increments:
+            add_scale_tick(i, increment_filled, 'minor')
+            increment_filled = not increment_filled
+        container.set('transform', 'translate(' +
+                      str(self.get_plot_width_extent()[0] + minor_width + float(self.options['scale-rule-padding'])) +
+                      ' ' + str(self.get_plot_height_extent()[1] - float(self.options['scale-rule-padding'])) + ')')
+        return container
 
     def fixture_will_fit(self, fixture):
         """See if a fixture will fit in the physical contstraints of the plot."""
@@ -670,11 +774,12 @@ class LightingPlot:
             pass
         root.append(self.get_centre_line())
         root.append(self.get_plaster_line())
-        for structure in document.get_by_type(self.plot_file, 'structure'):
-            try:
-                root.append(self.get_structure(structure))
-            except TypeError:
-                pass
+        if self.options.getboolean('draw-structures'):
+            for structure in document.get_by_type(self.plot_file, 'structure'):
+                try:
+                    root.append(self.get_structure(structure))
+                except TypeError:
+                    pass
         for fixture in self.fixtures:
             tagger.tag_fixture_all_doc_independent(fixture)
             if self.fixture_will_fit(fixture):
@@ -683,6 +788,8 @@ class LightingPlot:
                 if self.options.getboolean('show-focus-point') and 'focusX' in fixture and 'focusY' in fixture:
                     root.append(self.get_fixture_focus_point(fixture))
                 root.append(self.get_fixture_icon(fixture))
+        if self.options.getboolean('show-scale-rule'):
+            root.append(self.get_scale_rule())
         if self.options['title-block'] != 'None':
             root.append(self.get_title_block())
 
