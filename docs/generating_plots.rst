@@ -121,6 +121,9 @@ Additional Component Settings
     Each of the channel, circuit and dimmer numbers are printed in a box as given by the
     standard. Use this option to change the nominal size of the boxes. Measured in
     millimetres. Default ``3.1``.
+``channel-notation-spacing``
+    The space to leave between each notation item and the next. Also the space between the fixture
+    edge and the first notation item. Measured in millimetres. Default ``1.5``.
 ``notation-connectors``
     If disabled, will prevent the connector lines between the fixture body and external notation
     numbers (channel, circuit, dimmer) from being draw. Default ``True``.
@@ -202,3 +205,12 @@ Scale Rule Settings
 ``scale-rule-units``
     The name to give to the units on the scale rule, as printed to the right of it.
     Default ``metres``.
+
+Debug Settings
+^^^^^^^^^^^^^^
+
+``show-fixture-hitboxes``
+    If enabled, the internal hitbox that the program uses for collision detection will be
+    rendered in the plot. Useful for debugging purposes and not much else. Default ``False``.
+``hitbox-colour``
+    The colour to render the aforementioned hitboxes in. Default ``red``.
