@@ -1,6 +1,6 @@
 from pylux.interpreter import InterpreterExtension, NoRefsCommand
 from pylux import document, reference
-from pylux.lib import data, tagger, polygon
+from pylux.lib import data, tagger, polygon, plothelper
 import xml.etree.ElementTree as ET
 import os
 import decimal
@@ -32,27 +32,13 @@ class LightingPlot:
                 hung_fixtures.append(fixture)
         return hung_fixtures
 
-    def get_hung_types(self):
-        """Return a list of fixture types used and their corresponding symbol
-        tags. Will assume that all fixture types have the same symbol tag so tough
-        luck if they don't."""
-        fixture_types = {}
-        hung = self.get_hung_fixtures()
-        for f in hung:
-            if f['fixture-type'] not in fixture_types:
-                if 'symbol' in f:
-                    fixture_types[f['fixture-type']] = f['symbol']
-                else:
-                    fixture_types[f['fixture-type']] = self.options['fallback-symbol']
-        return fixture_types
-
     def get_plotted_fixtures(self):
         """Return a list of fixtures which are hung and also fit in the plot area."""
         return [i for i in self.get_hung_fixtures() if self.fixture_will_fit(i)]
 
     def get_plotted_types(self):
         """Return a list of fixture types used which actually managed to fit. Also
-        provide symbol tags. As with get_hung_types, will assume the first fixture
+        provide symbol tags. Will assume the first fixture
         with a symbol tag it finds is the correct one for all of that type."""
         fixture_types = {}
         plotted = self.get_plotted_fixtures()
@@ -80,11 +66,6 @@ class LightingPlot:
             return dimensions
         elif orientation == 'landscape':
             return (dimensions[1], dimensions[0])
-
-    def get_margin_bounds(self):
-        # This could be a function to get margin coordinates to make
-        # placement easier, but it isn't
-        return None
 
     def get_plot_size(self):
         """Return the physical size of the plot area.
@@ -138,86 +119,6 @@ class LightingPlot:
         svg_root.set('viewBox', '0 0 ' + str(page_dims[0]) + ' ' + str(page_dims[1]))
         svg_tree = ET.ElementTree(element=svg_root)
         return svg_tree
-
-    def get_page_border(self):
-        """Get the page border ready to be put into the plot.
-
-        Returns a path element that borders the plot on all four
-        sides.
-
-        Returns:
-            An ElementTree element - an SVG path.
-        """
-        margin = float(self.options['margin'])
-        weight = float(self.options['line-weight-heavy'])
-        paper = self.get_page_dimensions()
-        border = ET.Element('path')
-        border.set('d', 'M ' + str(margin) + ' ' + str(margin) + ' '
-                                                                 'L ' + str(paper[0] - margin) + ' ' + str(margin) + ' '
-                                                                                                                     'L ' + str(
-            paper[0] - margin) + ' ' + str(paper[1] - margin) + ' '
-                                                                'L ' + str(margin) + ' ' + str(paper[1] - margin) + ' '
-                                                                                                                    'L ' + str(
-            margin) + ' ' + str(margin))
-        border.set('fill', 'white')
-        border.set('stroke', 'black')
-        border.set('stroke-width', str(weight))
-        return border
-
-    def get_centre_line(self):
-        """Get the centre line to insert.
-
-        Returns a path element that represents the centre line,
-        containing the recommended dash appearance.
-
-        Returns:
-            An ElementTree element - an SVG path.
-        """
-        centre = self.get_centre_coord()
-        height = self.get_page_dimensions()[1]
-        margin = float(self.options['margin'])
-        centre_line = ET.Element('path')
-        if self.options.getboolean('centre-line-extend'):
-            centre_line.set('d', 'M ' + str(centre) + ' 0 ' +
-                            'L ' + str(centre) + ' ' + str(height))
-        else:
-            centre_line.set('d', 'M ' + str(centre) + ' ' + str(margin) + ' ' +
-                            'L ' + str(centre) + ' ' + str(
-                height - margin))
-        centre_line.set('stroke', 'black')
-        centre_line.set('stroke-width',
-                        str(self.options['line-weight-medium']))
-        centre_line.set('stroke-dasharray',
-                        self.options['centre-line-dasharray'])
-        return centre_line
-
-    def get_plaster_line(self):
-        """Get the plaster line to insert.
-
-        Returns a path element that represents the plaster line.
-
-        Returns:
-            An ElementTree element - an SVG path.
-        """
-        scale = float(self.options['scale'])
-        centre = self.get_page_dimensions()[1] / 2
-        padding = float(self.options['plaster-line-padding']) * 1000 / scale
-        width = self.get_page_dimensions()[0]
-        width_extent = self.get_plot_width_extent()
-        plaster_line = ET.Element('path')
-        if self.options.getboolean('plaster-line-extend'):
-            plaster_line.set('d', 'M 0 ' + str(centre + padding) + ' ' +
-                             'L ' + str(width) + ' ' + str(centre + padding))
-        else:
-            plaster_line.set('d', 'M ' + str(width_extent[0]) + ' ' + str(centre + padding) + ' ' +
-                             'L ' + str(width_extent[1]) + ' ' +
-                             str(centre + padding))
-        plaster_line.set('stroke', 'black')
-        plaster_line.set('stroke-width',
-                         str(self.options['line-weight-medium']))
-        plaster_line.set('stroke-dasharray',
-                         self.options['plaster-line-dasharray'])
-        return plaster_line
 
     def get_coordinate(self, measurement, dimension):
         """Get a scaled coordinate in the x or y dimension, taking into account
@@ -428,99 +329,6 @@ class LightingPlot:
 
         return sidebar
 
-    def get_scale_rule(self):
-        scale = float(self.options['scale'])
-        container = ET.Element('g', attrib={'class': 'rule'})
-        # Generate a list of points the rule contains
-        major_increments = []
-        minor_increments = []
-        i = 0
-        while (i + 1) * decimal.Decimal(self.options['scale-rule-major-increment']) <= decimal.Decimal(self.options['scale-rule-major-length']):
-            major_increments.append(i * decimal.Decimal(self.options['scale-rule-major-increment']))
-            i += 1
-        i = 0
-        while (i + 1) * decimal.Decimal(self.options['scale-rule-minor-increment']) <= decimal.Decimal(
-                self.options['scale-rule-minor-length']):
-            minor_increments.append(
-                -1 * i * decimal.Decimal(self.options['scale-rule-minor-increment']) - decimal.Decimal(
-                    self.options['scale-rule-minor-increment']))
-            i += 1
-        minor_width = abs(float(minor_increments[-1]))*1000 / scale
-        total_width = (abs(float(minor_increments[-1]))*1000 + (float(major_increments[-1])+float(self.options['scale-rule-major-increment']))*1000) / scale
-        # Create bounding box around the scale with the decorative border. This is required over putting
-        # the border on individual ticks as otherwise it will make black ticks look larger than white ticks.
-        container.append(ET.Element('rect', attrib={
-            'x': str(float(minor_increments[-1])*1000 / scale),
-            # Calculate total rule width
-            'width': str(total_width),
-            'y': str(-1 * float(self.options['scale-rule-thickness']) - float(self.options['line-weight-light'])),
-            'height': self.options['scale-rule-thickness'],
-            'stroke': 'black',
-            'stroke-width': self.options['line-weight-light'],
-            'fill': 'white',
-        }))
-        # Label at the zero position needs to be added manually as it won't be added through any of the tick
-        # iterations
-        zero_val = ET.SubElement(container, 'text', attrib={
-            'x': '0', 'y': str(-1 * float(self.options['scale-rule-label-padding']) -
-                               float(self.options['scale-rule-thickness']) -
-                               2 * float(self.options['line-weight-light']))})
-        zero_val.text = '0'
-        scale_label = ET.SubElement(container, 'text', attrib={
-            'x': str(total_width / 2 - minor_width), 'y': str(-1 * float(self.options['scale-rule-label-padding']) -
-                                                              float(self.options['scale-rule-thickness']) -
-                                                              2 * float(self.options['line-weight-light']) -
-                                                              float(self.options['scale-text-padding']))})
-        scale_label.text = 'SCALE 1:'+self.options['scale']
-        unit_label = ET.SubElement(container, 'text', attrib={
-            'x': str(total_width - minor_width + float(self.options['scale-text-padding'])),
-            'y': str(-1 * float(self.options['scale-rule-label-padding']) -
-                               float(self.options['scale-rule-thickness']) -
-                               2 * float(self.options['line-weight-light'])),
-            'class': 'units-label'
-        })
-        unit_label.text = self.options['scale-rule-units']
-
-        def add_scale_tick(start_point, filled, m):
-            """Add minor or major tick (according to m) at a starting point. Minor ticks assumed to be
-            in negative direction."""
-            scale_bar = ET.SubElement(container, 'rect')
-            scale_bar.set('x', str(float(start_point) * 1000 / scale))
-            scale_bar.set('width', str(float(self.options['scale-rule-'+m+'-increment']) * 1000 / scale))
-            scale_bar.set('y', str(-1 * float(self.options['scale-rule-thickness']) - float(self.options['line-weight-light'])))
-            scale_bar.set('height', self.options['scale-rule-thickness'])
-            if filled:
-                scale_bar.set('fill', 'black')
-            else:
-                scale_bar.set('fill', 'white')
-            tick_label = ET.SubElement(container, 'text')
-            # For minor labels, the label will be at the left-point (start_point) of the tick. For major labels,
-            # the label will be at the right-point (start_point + increment) of the tick
-            if m == 'minor':
-                tick_label.set('x', str(float(start_point) * 1000 / scale))
-                tick_label.text = str(abs(start_point))
-            else:
-                tick_label.set('x', str(((float(start_point) + float(self.options['scale-rule-major-increment'])) * 1000 / scale)))
-                tick_label.text = str(start_point + decimal.Decimal(self.options['scale-rule-major-increment']))
-            tick_label.set('y', str(-1 * float(self.options['scale-rule-label-padding']) -
-                                    float(self.options['scale-rule-thickness']) -
-                                    2 * float(self.options['line-weight-light'])))
-
-        # Add major increments, starting with a filled one
-        increment_filled = True
-        for i in major_increments:
-            add_scale_tick(i, increment_filled, 'major')
-            increment_filled = not increment_filled
-        # Add minor increments, starting with an unfilled one
-        increment_filled = False
-        for i in minor_increments:
-            add_scale_tick(i, increment_filled, 'minor')
-            increment_filled = not increment_filled
-        container.set('transform', 'translate(' +
-                      str(self.get_plot_width_extent()[0] + minor_width + float(self.options['scale-rule-padding'])) +
-                      ' ' + str(self.get_plot_height_extent()[1] - float(self.options['scale-rule-padding'])) + ')')
-        return container
-
     def fixture_will_fit(self, fixture):
         """See if a fixture will fit in the physical contstraints of the plot."""
         constraints = self.get_physical_constraints()
@@ -604,149 +412,6 @@ class LightingPlot:
 
         return symbol
 
-    def get_fixture_icon(self, fixture):
-        """Return a transformed fixture icon."""
-        centre = self.get_centre_coord()
-        plaster = self.get_plaster_coord()
-        scale = 1 / float(self.options['scale'])
-        plot_pos = lambda dim: (float(fixture['pos' + dim]) * 1000)
-        rotation = fixture['rotation']
-        if self.options.getboolean('colour-fixtures'):
-            colour = fixture['colour']
-        else:
-            colour = 'White'
-
-        # Create the container for all objects which compose the fixture icon and
-        # translate to the correct position
-        container = ET.Element('g')
-        container.set('transform',
-                      'translate(' + str(centre + plot_pos('X') * scale) + ' ' +
-                      str(plaster - plot_pos('Y') * scale) + ')')
-
-        # Create the additional information notation
-        container.append(self.get_fixture_notation_block(fixture))
-
-        # Create the actual fixture symbol itself
-        symbol_name = self.get_fixture_symbol_name(fixture)
-        # Scale and rotational transforms are on the symbol source group
-        # translation transforms are on the container group which also
-        # contains channel identifiers etc
-        symbol = self.render_symbol(symbol_name, colour=colour)
-        symbol.set('transform', 'scale( ' + str(scale) + ' ) ' +
-                   'rotate(' + str(rotation) + ')')
-        container.append(symbol)
-
-        return container
-
-    def get_fixture_beam(self, fixture):
-        if self.options.getboolean('beam-source-colour'):
-            colour = fixture['colour']
-        else:
-            colour = 'black'
-        beam = ET.Element('path')
-        scale = float(self.options['scale'])
-        centre = self.get_centre_coord()
-        plaster = self.get_plaster_coord()
-        startx = (float(fixture['posX']) * 1000) * (1 / scale) + centre
-        starty = (float(fixture['posY']) * 1000) * (1 / scale) * -1 + plaster
-        endx = (float(fixture['focusX']) * 1000) * (1 / scale) + centre
-        endy = (float(fixture['focusY']) * 1000) * (1 / scale) * -1 + plaster
-        beam.set('d', 'M ' + str(startx) + ' ' + str(starty) +
-                 ' L ' + str(endx) + ' ' + str(endy))
-        beam.set('stroke', colour)
-        beam.set('stroke-width', self.options['line-weight-light'])
-        beam.set('stroke-dasharray', self.options['beam-dasharray'])
-        return beam
-
-    def get_fixture_focus_point(self, fixture):
-        if self.options.getboolean('focus-point-source-colour'):
-            colour = fixture['colour']
-        else:
-            colour = 'black'
-        point = ET.Element('circle')
-        scale = float(self.options['scale'])
-        centre = self.get_centre_coord()
-        plaster = self.get_plaster_coord()
-        posx = float(fixture['focusX']) * 1000 * (1 / scale) + centre
-        posy = float(fixture['focusY']) * 1000 * (1 / scale) * -1 + plaster
-        point.set('cx', str(posx))
-        point.set('cy', str(posy))
-        point.set('r', str(self.options['focus-point-radius']))
-        point.set('fill', colour)
-
-        return point
-
-    def get_fixture_notation_block(self, fixture):
-        handle = self.get_symbol_handle_offset(self.render_symbol(self.get_fixture_symbol_name(fixture)), 'south')
-        notation_container_size = float(self.options['channel-notation-radius'])
-        notation_spacing = 1.5
-
-        def get_notation_centre(index, inverted=False):
-            """Calculate the coordinates of a given notation bounding box centre, by
-            index. For example, the first notation object from the fixture will be
-            index zero, then 1, 2 etc."""
-            if not inverted:
-                return handle[0], handle[1] + notation_container_size * (index * notation_spacing + notation_spacing + index)
-            else:
-                return handle[0], - handle[1] - notation_container_size * (index * notation_spacing + notation_spacing + index)
-
-        def get_relevant_notations():
-            """Get the list of required notations in order from fixture outwards. In tuple
-            form of shape, text. e.g. [(6, '23'), (0, '1')] Hexagon = 6, circle = 0, etc"""
-            ordered = []
-            if 'dimmer' not in fixture and 'circuit' in fixture:
-                if self.options.getboolean('show-circuit-number'):
-                    ordered.append((6, fixture['circuit']))
-            if 'circuit' not in fixture and 'dimmer' in fixture:
-                if self.options.getboolean('show-dimmer-number'):
-                    ordered.append((6, fixture['dimmer']))
-            if 'dimmer' in fixture and 'circuit' in fixture:
-                if self.options.getboolean('show-circuit-number'):
-                    ordered.append((6, fixture['circuit']))
-                if self.options.getboolean('show-dimmer-number'):
-                    ordered.append((4, fixture['dimmer']))
-            if self.options.getboolean('show-channel-number'):
-                ordered.append((0, fixture['ref']))
-            return ordered
-
-        def is_inverted():
-            """Is the fixture inverted i.e. rotated more than 90deg"""
-            if -90 <= float(fixture['rotation']) <= 90 or 270 <= float(fixture['rotation']) <= 360:
-                return False
-            else:
-                return True
-
-        notation_group = ET.Element('g')
-        notations = get_relevant_notations()
-        # Add the connecting line from the centre of the fixture to the distance of the
-        # final notation block, if they are enabled
-        if self.options.getboolean('notation-connectors'):
-            notation_group.append(ET.Element('line', attrib={
-                'x1': '0', 'x2': str(get_notation_centre(len(notations) - 1, inverted=is_inverted())[0]),
-                'y1': '0', 'y2': str(get_notation_centre(len(notations) - 1, inverted=is_inverted())[1]),
-                'stroke-width': self.options['line-weight-light'], 'stroke': 'black'
-            }))
-        for i, notation in enumerate(notations):
-            notation_block = ET.SubElement(notation_group, 'g')
-            # generate_polygon gives us the correctly sized shape to put the notation label in, we just need
-            # to style and move it to the correct place
-            bounding_box = polygon.generate_polygon(float(self.options['channel-notation-radius']), notation[0])
-            bounding_centre = get_notation_centre(i, inverted=is_inverted())
-            bounding_box.set('fill', 'White')
-            bounding_box.set('stroke', 'black')
-            bounding_box.set('stroke-width', self.options['line-weight-light'])
-            bounding_box.set('transform', 'translate('+str(bounding_centre[0])+' '+str(bounding_centre[1])+')')
-            notation_block.append(bounding_box)
-            channel_number = ET.SubElement(notation_block, 'text', attrib={
-                'text-anchor': 'middle',
-                'dominant-baseline': 'central',
-                'x': str(bounding_centre[0]),
-                'y': str(bounding_centre[1]),
-                'class': 'notation'
-            })
-            channel_number.text = notation[1]
-        return notation_group
-
     def get_symbol_handle_offset(self, symbol, handle_name):
         """Finds a handle in the fixture icon with the specified name.
         Gives coordinates in (x, y) tuple. Returns (0, 0) if handle
@@ -765,31 +430,41 @@ class LightingPlot:
 
     def generate_plot(self):
         self.lighting_plot = self.get_empty_plot()
+        canvas = plothelper.Canvas(self.options)
         root = self.lighting_plot.getroot()
         if self.options.getboolean('page-border'):
-            root.append(self.get_page_border())
+            root.append(plothelper.PageBorderComponent(canvas).plot_component)
         try:
             root.append(self.get_background_image())
         except FileNotFoundError:
             pass
-        root.append(self.get_centre_line())
-        root.append(self.get_plaster_line())
+        root.append(plothelper.CentreLineComponent(canvas).plot_component)
+        root.append(plothelper.PlasterLineComponent(canvas).plot_component)
         if self.options.getboolean('draw-structures'):
             for structure in document.get_by_type(self.plot_file, 'structure'):
                 try:
                     root.append(self.get_structure(structure))
                 except TypeError:
                     pass
+        # We have to iterate through the fixtures to create the component list, before adding anything
+        # to the actual plot. This is to allow the hitbox plot to be created so that notation and other
+        # components can be placed properly.
+        fixture_components = []
         for fixture in self.fixtures:
-            tagger.tag_fixture_all_doc_independent(fixture)
             if self.fixture_will_fit(fixture):
-                if self.options.getboolean('show-beams') and 'focusX' in fixture and 'focusY' in fixture:
-                    root.append(self.get_fixture_beam(fixture))
-                if self.options.getboolean('show-focus-point') and 'focusX' in fixture and 'focusY' in fixture:
-                    root.append(self.get_fixture_focus_point(fixture))
-                root.append(self.get_fixture_icon(fixture))
+                tagger.tag_fixture_all_doc_independent(fixture)
+                fixture_components.append(plothelper.FixtureComponent(fixture, canvas))
+        for fixture_component in fixture_components:
+            if self.options.getboolean('show-beams'):
+                root.append(plothelper.FixtureBeamComponent(fixture_component, canvas).plot_component)
+            if self.options.getboolean('show-focus-point'):
+                root.append(plothelper.FixtureFocusPointComponent(fixture_component, canvas).plot_component)
+            root.append(plothelper.FixtureNotationBlockComponent(fixture_component, canvas).plot_component)
+            root.append(fixture_component.plot_component)
+            if self.options.getboolean('show-fixture-hitboxes'):
+                root.append(fixture_component.hitbox_component.visualisation)
         if self.options.getboolean('show-scale-rule'):
-            root.append(self.get_scale_rule())
+            root.append(plothelper.RulerComponent(canvas).plot_component)
         if self.options['title-block'] != 'None':
             root.append(self.get_title_block())
 
