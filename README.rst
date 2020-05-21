@@ -35,6 +35,7 @@ Component Dependencies
 ========= ============
 cli       urwid
 report    jinja2
+plot      numpy
 ========= ============
 
 Sample Output
