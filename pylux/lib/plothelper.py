@@ -162,7 +162,7 @@ class HitboxComponent:
                     str(self.x_range[1]) + ',' + str(self.y_range[1]) + ' ' +
                     str(self.x_range[1]) + ',' + str(self.y_range[0]))
         polygon.set('fill', 'none')
-        polygon.set('stroke-width', self._canvas.options['line-weight-light'])
+        polygon.set('stroke-width', self._canvas.options['line-weight-hitbox'])
         polygon.set('stroke', self._canvas.options['hitbox-colour'])
         return polygon
 
@@ -347,6 +347,9 @@ class FixtureNotationBlockComponent:
         self.fixture_component = fixture_component
         self.canvas = canvas
         self._used_notation = self._get_used_notations()
+        self._radius = float(self.canvas.options['channel-notation-radius'])
+        self._spacing = float(self.canvas.options['channel-notation-spacing'])
+        self._centres = self._calculate_centres()
         self.item_components = []
         self.plot_component = self._get_fixture_notation_block()
 
@@ -369,9 +372,101 @@ class FixtureNotationBlockComponent:
             ordered.append((0, self.fixture_component.fixture['ref']))
         return ordered
 
+    def _apply_crude_rotation(self, centre):
+        """Centres are calculated assuming that the fixture is pointing in the zero (north)
+        direction. However, it is quite possible that it will be inverted or pointing in some
+        other intermediary direction, so we need to rotate these centres with the fixture. Rather
+        than rotating by the exact rotation of the fixture, we rotate either 0 or 180 degrees.
+        This way, where there is a line of fixtures with slightly differing rotations, their
+        notations will line up, which looks a lot nicer. The exception is if a fixture is
+        rotated exactly 90 degrees, in which case it is probably on a boom or similar, so the
+        notation will also be rotated exactly 90 degrees."""
+        rotation = float(self.fixture_component.fixture['rotation'])
+        unrotated_offest = numpy.array([[centre[0] - self.fixture_component.get_x_pos()],
+                                        [centre[1] - self.fixture_component.get_y_pos()]])
+        if 90 < rotation < 270:
+            rotation_amount = 180
+        elif rotation == 90:
+            rotation_amount = 90
+        elif rotation == 270 or rotation == -90:
+            rotation_amount = 270
+        else:
+            rotation_amount = 0
+        rotation_matrix = numpy.array([[math.cos(math.radians(rotation_amount)),
+                                        -math.sin(math.radians(rotation_amount))],
+                                       [math.sin(math.radians(rotation_amount)),
+                                        math.cos(math.radians(rotation_amount))]])
+        rotated_offset = rotation_matrix.dot(unrotated_offest)
+        return (rotated_offset[0][0] + self.fixture_component.get_x_pos(),
+                rotated_offset[1][0] + self.fixture_component.get_y_pos())
+
+    def _reverse_crude_rotation(self, centre):
+        """Apply the reverse of the crude rotation. This is done because in actual fact, centres
+        are calculated based on the fixture pointing in a zero direction, and then rotated.
+        Therefore we want to make sure the origin we are starting from is the origin as if it
+        had not been rotated."""
+        rotation = float(self.fixture_component.fixture['rotation'])
+        unrotated_offest = numpy.array([[centre[0] - self.fixture_component.get_x_pos()],
+                                        [centre[1] - self.fixture_component.get_y_pos()]])
+        if 90 < rotation < 270:
+            rotation_amount = 180
+        elif rotation == 90:
+            rotation_amount = 270
+        elif rotation == 270 or rotation == -90:
+            rotation_amount = 90
+        else:
+            rotation_amount = 0
+        rotation_matrix = numpy.array([[math.cos(math.radians(rotation_amount)),
+                                        -math.sin(math.radians(rotation_amount))],
+                                       [math.sin(math.radians(rotation_amount)),
+                                        math.cos(math.radians(rotation_amount))]])
+        rotated_offset = rotation_matrix.dot(unrotated_offest)
+        return (rotated_offset[0][0] + self.fixture_component.get_x_pos(),
+                rotated_offset[1][0] + self.fixture_component.get_y_pos())
+
+    def _generate_hitbox_from_centre(self, centre):
+        """Create a hitbox object from a centre coordinate."""
+        return HitboxComponent(centre[0] - self._radius, centre[1] - self._radius,
+                               centre[0] + self._radius, centre[1] + self._radius,
+                               self.canvas)
+
+    def _calculate_centres(self):
+        """Calculates where the notation items should be without colliding with existing features and following
+        the placement hierarchy."""
+        # The functions which are used to calculate an (unrotated centre) from an origin, o, in
+        # preference order
+        placement_functions = [
+            lambda o: (o[0], o[1] + 2 * self._radius + self._spacing),
+            lambda o: (o[0] + (2 * self._radius + self._spacing) / math.sqrt(2),
+                       o[1] + (2 * self._radius + self._spacing) / math.sqrt(2)),
+            lambda o: (o[0] + 2 * self._radius + self._spacing,
+                       o[1] + 2 * self._radius + self._spacing)
+        ]
+        n_items = len(self._used_notation)
+        centres = []
+        # Start with the south handle
+        origin = (self.fixture_component.get_x_pos(), self.fixture_component.get_y_pos() +
+                  self.fixture_component.get_symbol_handle_offset('south')[1] - self._radius)
+        while len(centres) < n_items:
+            for f in placement_functions:
+                c = self._apply_crude_rotation(f(origin))
+                if not self.canvas.hitbox_plot.does_collide(self._generate_hitbox_from_centre(c)):
+                    centres.append(c)
+                    origin = self._reverse_crude_rotation(c)
+                    break
+                # If this is the last option in the placement functions, we really have no choice
+                # but to just use it, otherwise we will be stuck in the while loop forever
+                elif placement_functions.index(f) == len(placement_functions) - 1:
+                    centres.append(c)
+                    origin = self._reverse_crude_rotation(c)
+        for c in centres:
+            self.canvas.hitbox_plot.register_hitbox(self._generate_hitbox_from_centre(c))
+        return centres
+
     def _get_notation_item(self, n):
         """Get the nth notation item component"""
-        return FixtureNotationItemComponent(self._used_notation[n][0], self._used_notation[n][1], self)
+        return FixtureNotationItemComponent(self._used_notation[n][0], self._used_notation[n][1],
+                                            self._centres[n], self.canvas)
 
     def _get_fixture_notation_block(self):
         group = ET.Element('g')
@@ -385,78 +480,19 @@ class FixtureNotationBlockComponent:
 
 class FixtureNotationItemComponent:
 
-    def __init__(self, vertices, text, notation_block):
-        self._canvas = notation_block.canvas
+    def __init__(self, vertices, text, centre, canvas):
+        self._canvas = canvas
         self._radius = float(self._canvas.options['channel-notation-radius'])
         self._spacing = float(self._canvas.options['channel-notation-spacing'])
         self._vertices = vertices
         self._text = text
-        self._notation_block = notation_block
-        self._fixture_component = self._notation_block.fixture_component
-        self.centre = (0, 0)
-        self._set_notation_centre()
+        self.centre = centre
         self.plot_component = self._get_notation_item()
 
     def _get_hitbox_component(self):
         return HitboxComponent(self.centre[0] - self._radius, self.centre[1] - self._radius,
                                self.centre[0] + self._radius, self.centre[1] + self._radius,
                                self._canvas)
-
-    def _set_notation_centre(self):
-        """Get the centre point of the next notation item. Will look to the last notation item as a
-        starting point, or use the fixture north/south handle if there hasn't been a notation item
-        created yet."""
-
-        def set_origin_south():
-            if not self._notation_block.item_components:
-                if self._fixture_component.is_inverted():
-                    handle = (self._fixture_component.get_x_pos(),
-                              self._fixture_component.get_y_pos() -
-                              self._fixture_component.get_symbol_handle_offset('south')[1] +
-                              self._radius)
-                else:
-                    handle = (self._fixture_component.get_x_pos(),
-                              self._fixture_component.get_y_pos() +
-                              self._fixture_component.get_symbol_handle_offset('south')[1] -
-                              self._radius)
-            else:
-                handle = self._notation_block.item_components[-1].centre
-            return handle
-
-        def set_origin_north():
-            if not self._notation_block.item_components:
-                if self._fixture_component.is_inverted():
-                    handle = (self._fixture_component.get_x_pos(),
-                              self._fixture_component.get_y_pos() +
-                              abs(self._fixture_component.get_symbol_handle_offset('north')[1]) -
-                              self._radius)
-                else:
-                    handle = (self._fixture_component.get_x_pos(),
-                              self._fixture_component.get_y_pos() -
-                              abs(self._fixture_component.get_symbol_handle_offset('north')[1]) +
-                              self._radius)
-            else:
-                handle = self._notation_block.item_components[-1].centre
-            return handle
-
-        def set_notation_centre_0():
-            if self._fixture_component.is_inverted():
-                self.centre = origin[0], origin[1] - 2 * self._radius - self._spacing
-            else:
-                self.centre = origin[0], origin[1] + 2 * self._radius + self._spacing
-
-        def set_notation_centre_180():
-            if self._fixture_component.is_inverted():
-                self.centre = origin[0], origin[1] + 2 * self._radius + self._spacing
-            else:
-                self.centre = origin[0], origin[1] - 2 * self._radius - self._spacing
-
-        origin = set_origin_south()
-        set_notation_centre_0()
-        hitbox = self._get_hitbox_component()
-        if self._canvas.hitbox_plot.does_collide(hitbox):
-            origin = set_origin_north()
-            set_notation_centre_180()
 
     def _get_notation_item(self):
         group = ET.Element('g')
@@ -492,6 +528,7 @@ class FixtureNotationConnectorComponent:
         polyline.set('points', ' '.join([str(i[0]) + ',' + str(i[1]) for i in points]))
         polyline.set('stroke-width', self._notation_block.canvas.options['line-weight-light'])
         polyline.set('stroke', 'black')
+        polyline.set('fill', 'none')
         return polyline
 
 
