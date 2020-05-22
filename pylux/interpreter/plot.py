@@ -461,8 +461,9 @@ class LightingPlot:
                 root.append(plothelper.FixtureFocusPointComponent(fixture_component, canvas).plot_component)
             root.append(plothelper.FixtureNotationBlockComponent(fixture_component, canvas).plot_component)
             root.append(fixture_component.plot_component)
-            if self.options.getboolean('show-fixture-hitboxes'):
-                root.append(fixture_component.hitbox_component.visualisation)
+            if self.options.getboolean('show-hitboxes'):
+                for hitbox in canvas.hitbox_plot.components:
+                    root.append(hitbox.visualisation)
         if self.options.getboolean('show-scale-rule'):
             root.append(plothelper.RulerComponent(canvas).plot_component)
         if self.options['title-block'] != 'None':
