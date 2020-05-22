@@ -40,13 +40,9 @@ plot      numpy
 
 Sample Output
 -------------
-Rendered at 1:75 on A4
-
-.. image:: https://i.imgur.com/gSwwKeQ.png
-
 Rendered at 1:50 on A3
 
-.. image:: https://i.imgur.com/d6tWIof.png
+.. image:: https://i.ibb.co/DKQRLSD/plota3.png
 
 Documentation
 -------------
