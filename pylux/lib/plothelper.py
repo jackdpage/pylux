@@ -106,8 +106,8 @@ class Canvas:
 
     def get_coordinate(self, coord):
         """From a real-life coordinate, get the scaled coordinate for the plot"""
-        return self._get_centre_coord() + coord[0] * self.rscale, \
-               self._get_plaster_coord() - coord[1] * self.rscale
+        return (self._get_centre_coord() + coord[0] * self.rscale,
+                self._get_plaster_coord() - coord[1] * self.rscale)
 
     def get_line_intersection(self, start, end):
         """Given the start and end coordinates of a straight line, return the
@@ -661,14 +661,19 @@ class RulerComponent:
                 -1 * i * decimal.Decimal(self._canvas.options['scale-rule-minor-increment']) - decimal.Decimal(
                     self._canvas.options['scale-rule-minor-increment']))
             i += 1
-        minor_width = abs(float(minor_increments[-1])) * 1000 * self._canvas.rscale
-        total_width = (abs(float(minor_increments[-1])) * 1000 + (
-                    float(major_increments[-1]) +
-                    float(self._canvas.options['scale-rule-major-increment'])) * 1000) * self._canvas.rscale
+        if minor_increments:
+            minor_width = abs(float(minor_increments[-1])) * 1000 * self._canvas.rscale
+        else:
+            minor_width = 0
+        if major_increments:
+            major_width = (float(major_increments[-1]) + float(self._canvas.options['scale-rule-major-increment'])) * 1000 * self._canvas.rscale
+        else:
+            major_width = 0
+        total_width = minor_width + major_width
         # Create bounding box around the scale with the decorative border. This is required over putting
         # the border on individual ticks as otherwise it will make black ticks look larger than white ticks.
         container.append(ET.Element('rect', attrib={
-            'x': str(float(minor_increments[-1]) * 1000 * self._canvas.rscale),
+            'x': str(-1 * minor_width),
             # Calculate total rule width
             'width': str(total_width),
             'y': str(-1 * float(self._canvas.options['scale-rule-thickness']) -
