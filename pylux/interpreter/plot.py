@@ -1,9 +1,8 @@
 from pylux.interpreter import InterpreterExtension, NoRefsCommand
 from pylux import document, reference
-from pylux.lib import data, tagger, polygon, plothelper
+from pylux.lib import data, tagger, plothelper
 import xml.etree.ElementTree as ET
 import os
-import decimal
 from ast import literal_eval
 
 
@@ -120,15 +119,6 @@ class LightingPlot:
         svg_tree = ET.ElementTree(element=svg_root)
         return svg_tree
 
-    def get_coordinate(self, measurement, dimension):
-        """Get a scaled coordinate in the x or y dimension, taking into account
-        margins, padding etc. Provide measurement in millimetres."""
-        scale = float(self.options['scale'])
-        if dimension == 'x':
-            return self.get_centre_coord() + measurement / scale
-        elif dimension == 'y':
-            return self.get_plaster_coord() - measurement / scale
-
     def get_centre_coord(self):
         """Get the centre line x coordinate.
 
@@ -208,54 +198,6 @@ class LightingPlot:
             return True
         else:
             return False
-
-    def get_background_image(self):
-        """Get the background image from file.
-
-        Returns:
-            The first group element of the SVG image file.
-        """
-        scale = float(self.options['scale'])
-        svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
-        xloc = self.get_page_dimensions()[0] / 2
-        yloc = self.get_plaster_coord()
-        image_file = os.path.expanduser(self.options['background-image'])
-        image_tree = ET.parse(image_file)
-        image_root = image_tree.getroot()
-        image_group = image_root.find('ns0:g', svg_ns)
-        image_group.set('transform', 'scale(' + str(1 / scale) + ') '
-                                                                 'translate(' + str(xloc * scale) + ' ' +
-                        str(yloc * scale) + ')')
-        for path in image_group:
-            path_class = path.get('class')
-            if path.get('class') in reference.usitt_line_weights:
-                weight = reference.usitt_line_weights[path_class]
-            else:
-                weight = 'line-weight-medium'
-            path.set('stroke-width',
-                     str(float(self.options[weight]) * scale))
-            path.set('stroke', '#000000')
-            path.set('fill-opacity', '0')
-
-        return image_group
-
-    def get_structure(self, structure):
-        """Get structure SVG element."""
-        if 'structure_type' not in structure:
-            return None
-        elif structure['structure_type'] == 'batten' or structure['structure_type'] == 'architecture':
-            if all(i in structure for i in ('startX', 'startY', 'endX', 'endY')):
-                element = ET.Element('polyline')
-                element.set('stroke', 'black')
-                element.set('stroke-width', self.options['line-weight-heavy'])
-                element.set('points',
-                            str(self.get_coordinate(float(structure['startX'])*1000, 'x')) + ',' +
-                            str(self.get_coordinate(float(structure['startY'])*1000, 'y')) + ' ' +
-                            str(self.get_coordinate(float(structure['endX'])*1000, 'x')) + ',' +
-                            str(self.get_coordinate(float(structure['endY'])*1000, 'y')))
-                return element
-            else:
-                return None
 
     def get_title_block(self):
         return self.get_title_sidebar()
@@ -435,7 +377,7 @@ class LightingPlot:
         if self.options.getboolean('page-border'):
             root.append(plothelper.PageBorderComponent(canvas).plot_component)
         try:
-            root.append(self.get_background_image())
+            root.append(plothelper.BackgroundImageComponent(canvas).plot_component)
         except FileNotFoundError:
             pass
         root.append(plothelper.CentreLineComponent(canvas).plot_component)

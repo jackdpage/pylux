@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import math
 import numpy
 import decimal
+import os
 
 
 class Canvas:
@@ -821,6 +822,35 @@ class PlasterLineComponent:
         plaster_line.set('stroke-width', str(self._canvas.options['line-weight-medium']))
         plaster_line.set('stroke-dasharray', self._canvas.options['plaster-line-dasharray'])
         return plaster_line
+
+
+class BackgroundImageComponent:
+
+    def __init__(self, canvas):
+        self._canvas = canvas
+        self.plot_component = self._get_plot_component()
+
+    def _get_plot_component(self):
+        svg_ns = {'ns0': 'http://www.w3.org/2000/svg'}
+        image_file = os.path.expanduser(self._canvas.options['background-image'])
+        image_tree = ET.parse(image_file)
+        image_root = image_tree.getroot()
+        image_group = image_root.find('ns0:g', svg_ns)
+        image_group.set('transform', 'translate(' + str(self._canvas.centre) + ' ' +
+                                     str(self._canvas.plaster) + ')' +
+                                     'scale(' + str(self._canvas.rscale) + ') ')
+        for path in image_group:
+            path_class = path.get('class')
+            if path.get('class') in reference.usitt_line_weights:
+                weight = reference.usitt_line_weights[path_class]
+            else:
+                weight = 'line-weight-medium'
+            path.set('stroke-width',
+                     str(float(self._canvas.options[weight]) * self._canvas.scale))
+            path.set('stroke', '#000000')
+            path.set('fill-opacity', '0')
+
+        return image_group
 
 
 class PageBorderComponent:
