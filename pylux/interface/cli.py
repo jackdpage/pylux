@@ -91,14 +91,18 @@ class MessageBus:
     def __init__(self, history, output_pane):
         self.history = history
         self.output = output_pane
+        self.clear_flag = False
 
     def post_feedback(self, lines):
         self.history.add_to_history(lines)
 
     def clear_output(self):
-        self.output.clear()
+        self.clear_flag = True
 
     def post_output(self, lines):
+        if self.clear_flag:
+            self.output.clear()
+            self.clear_flag = False
         for l in lines:
             self.output.append(urwid.Text(l))
 
