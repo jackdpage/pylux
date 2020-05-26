@@ -38,6 +38,13 @@ report    jinja2
 plot      numpy
 ========= ============
 
+Screenshot
+----------
+Screenshot of curses interface showing fixture list on the left and DMX universe summary 
+on the right. Data imported directly from Eos ASCII export with no post-processing.
+
+.. image:: https://i.ibb.co/jkGYtMb/sc.png
+
 Sample Output
 -------------
 Rendered at 1:50 on A3
