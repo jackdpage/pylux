@@ -442,10 +442,7 @@ class LightingPlot:
         root.append(plothelper.PlasterLineComponent(canvas).plot_component)
         if self.options.getboolean('draw-structures'):
             for structure in document.get_by_type(self.plot_file, 'structure'):
-                try:
-                    root.append(self.get_structure(structure))
-                except TypeError:
-                    pass
+                root.append(plothelper.StructureComponent(canvas, structure).plot_component)
         # We have to iterate through the fixtures to create the component list, before adding anything
         # to the actual plot. This is to allow the hitbox plot to be created so that notation and other
         # components can be placed properly.

@@ -104,6 +104,42 @@ class Canvas:
 
         return min_y, max_y
 
+    def get_coordinate(self, coord):
+        """From a real-life coordinate, get the scaled coordinate for the plot"""
+        return self._get_centre_coord() + coord[0] * self.rscale, \
+               self._get_plaster_coord() - coord[1] * self.rscale
+
+    def get_line_intersection(self, start, end):
+        """Given the start and end coordinates of a straight line, return the
+        actual start and end coordinates which will allow it to fit within the borders
+        of the plot, if it extends over them."""
+        # If both x coords are the same, this is a vertical line
+        if start[0] == end[0]:
+            return (start[0], max(self.get_plot_height_extent()[0], start[1])), \
+                   (start[0], min(self.get_plot_height_extent()[1], end[1]))
+        # If both y coords are the same, this is a horizontal line
+        elif start[1] == end[1]:
+            return (max(self.get_plot_width_extent()[0], start[0]), start[1]),\
+                   (min(self.get_plot_width_extent()[1], end[0]), start[1])
+        # If neither are the same, we need to do some maths
+        else:
+            # Find line equation in form y = mx + c
+            m = (end[1] - start[1]) / (end[0] - start[0])
+            c = start[1] - m * start[0]
+            y_intercept_left = m * self.get_plot_width_extent()[0] + c
+            y_intercept_right = m * self.get_plot_width_extent()[1] + c
+            # If y left intercept is out of plot, use x top intercept as start
+            if y_intercept_left < self.get_plot_height_extent()[0]:
+                adj_start = (self.get_plot_height_extent()[0] - c) / m, self.get_plot_height_extent()[0]
+            else:
+                adj_start = self.get_plot_width_extent()[0], y_intercept_left
+            # If y right intercept is out of plot, use x bottom intercept as end
+            if y_intercept_right > self.get_plot_height_extent()[1]:
+                adj_end = (self.get_plot_height_extent()[1] - c) / m, self.get_plot_height_extent()[1]
+            else:
+                adj_end = self.get_plot_width_extent()[1], y_intercept_right
+            return adj_start, adj_end
+
 
 class HitboxPlot:
 
@@ -710,6 +746,32 @@ class RulerComponent:
                       str(self._canvas.get_plot_height_extent()[1] -
                           float(self._canvas.options['scale-rule-padding'])) + ')')
         return container
+
+
+class StructureComponent:
+
+    def __init__(self, canvas, structure):
+        self._canvas = canvas
+        self.structure = structure
+        self.plot_component = self._get_plot_component()
+
+    def _get_plot_component(self):
+        if 'structure_type' not in self.structure:
+            return ET.Element('g')
+        elif self.structure['structure_type'] in ['batten', 'architecture']:
+            if all(i in self.structure for i in ('startX', 'startY', 'endX', 'endY')):
+                start = self._canvas.get_coordinate((float(self.structure['startX']) * 1000,
+                                                     float(self.structure['startY']) * 1000))
+                end = self._canvas.get_coordinate((float(self.structure['endX']) * 1000,
+                                                   float(self.structure['endY']) * 1000))
+                corrected_points = self._canvas.get_line_intersection(start, end)
+                polyline = ET.Element('polyline')
+                polyline.set('stroke', 'black')
+                polyline.set('stroke-width', self._canvas.options['line-weight-heavy'])
+                polyline.set('points', ' '.join([','.join(map(str, i)) for i in corrected_points]))
+                return polyline
+        else:
+            return ET.Element('g')
 
 
 class CentreLineComponent:
