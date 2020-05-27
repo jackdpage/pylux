@@ -55,8 +55,9 @@ def get_by_uuid(doc, uuid):
     '''Return object with given UUID.'''
 
     for obj in doc:
-        if obj['uuid'] == uuid:
-            return obj
+        if 'uuid' in obj:
+            if obj['uuid'] == uuid:
+                return obj
 
 
 def get_by_key(doc, k):

@@ -36,13 +36,15 @@ def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
     - #[] for applying a filter to a range, single number, or any combination
       thereof. Where # is the number of the filter to apply.
     - * symbol for specifying all objects of the appropriate type.
-    - All can also be used in filters e.g. 2[All],!2>4 is all objects of the
+    - * can also be used in filters e.g. 2[*],!2>4 is all objects of the
       given type that satisfy filter 2, and excluding objects 2 through 4
       (including all objects with decimal references in this range)"""
 
     obj_list = document.get_by_type(doc, obj_type)
     ranges = []
     points = []
+    groups = []
+    group_members = []
     catchalls = []
     calculated_refs = []
     # Matches filter ranges of the form #[range] where # is the filter ref
@@ -55,6 +57,8 @@ def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
                 ranges.append((fr[0], decimal.Decimal(r.split('>')[0]), decimal.Decimal(r.split('>')[1])))
             elif r == '*':
                 catchalls.append(fr[0])
+            elif '@' in r:
+                groups.append((fr[0], decimal.Decimal(r.split('@')[1])))
             else:
                 points.append((fr[0], decimal.Decimal(r)))
     # Remove all the filtered ranges from the input, and then search through
@@ -64,11 +68,32 @@ def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
             ranges.append((0, decimal.Decimal(r.split('>')[0]), decimal.Decimal(r.split('>')[1])))
         elif r == '*':
             catchalls.append(0)
+        elif '@' in r:
+            groups.append((0, decimal.Decimal(r.split('@')[1])))
         else:
             try:
                 points.append((0, decimal.Decimal(r)))
             except decimal.InvalidOperation:
                 pass
+    # Turn the groups into a list of fixture refs, but only if the type is fixture.
+    # Filters applied to groups are also checked at this point.
+    if obj_type == 'fixture':
+        for g in groups:
+            if g[0]:
+                filt = document.get_by_ref(doc, 'filter', g[0])
+            else:
+                filt = None
+            group = document.get_by_ref(doc, 'group', g[1])
+            for fix_uuid in group['fixtures']:
+                fix = document.get_by_uuid(doc, fix_uuid)
+                if filt:
+                    try:
+                        if fix[filt['k']] == filt['v']:
+                            group_members.append(decimal.Decimal(fix['ref']))
+                    except KeyError:
+                        pass
+                else:
+                    group_members.append(decimal.Decimal(fix['ref']))
     # That's all the prep done, now check which of the objects in our all objects
     # list satisfies the ranges and points we've created.
     for obj in obj_list:
@@ -86,6 +111,9 @@ def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
                             continue
                     except KeyError:
                         pass
+        if ref in group_members:
+            calculated_refs.append(ref)
+            continue
         for r in ranges:
             if r[0]:
                 filt = document.get_by_ref(doc, 'filter', r[0])
