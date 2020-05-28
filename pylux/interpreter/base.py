@@ -22,7 +22,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Filter', 'Remove'), self.filter_remove))
         self.commands.append(RegularCommand(('Fixture', 'About'), self.fixture_about))
         self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create, check_refs=False))
-        self.commands.append(RegularCommand(('Fixture', 'CreateFrom'), self.fixture_createfrom, check_refs=False))
+        self.commands.append(RegularCommand(('Fixture', 'CreateFromJson'), self.fixture_createfrom_json, check_refs=False))
         self.commands.append(RegularCommand(('Fixture', 'CompleteFrom'), self.fixture_completefrom))
         self.commands.append(RegularCommand(('Fixture', 'CopyTo'), self.fixture_clone))
         self.commands.append(RegularCommand(('Fixture', 'Display'), self.fixture_display))
@@ -139,7 +139,7 @@ class BaseExtension(InterpreterExtension):
             for l in obj['levels']:
                 func = document.get_function_by_uuid(self.interpreter.file, l)
                 fix = document.get_function_parent(self.interpreter.file, func)
-                if func['param'] == 'Intens' or nips:
+                if func['param'] == self.interpreter.config['dimmer-attribute-name'] or nips:
                     self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':'] +
                                                       printer.get_generic_text_widget(func) + [': ',
                                                       printer.get_pretty_level_string(str(obj['levels'][l]))]])
@@ -248,7 +248,7 @@ class BaseExtension(InterpreterExtension):
         """Create a blank fixture."""
         return self._base_create(refs, constant.FIXTURE_TYPE)
 
-    def fixture_createfrom(self, refs, template):
+    def fixture_createfrom_json(self, refs, template):
         """Create a fixture from a template file."""
         template_file = data.get_data('fixture/'+template+'.json')
         if not template_file:
