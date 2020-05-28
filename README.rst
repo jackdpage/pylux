@@ -13,22 +13,25 @@ groups, palettes, and cues.
 Installation and Dependencies
 -----------------------------
 
-Clone the code and content repositories locally::
+Clone the code and content repositories locally and update the content repository from the remote
+to get the latest version::
 
   git clone --recurse-submodules https://github.com/jackdpage/pylux.git
-  
-To get the absolute latest version of the content repository, update the submodule from the remote::
-
   git submodule update --remote --merge
+  
+Create an environment to run in and install dependencies from pip::
+
+  python3 -m venv venv
+  source venv/bin/activate
+  pip3 install urwid jinja2 numpy pygdtf  
   
 Execute the pylux module from the repository root::
 
   python3 -m pylux
 
 Pylux is written in pure Python 3. You will need the Python interpreter in order
-to run it. Different interfaces and extensions require different dependencies. You can
-run the majority of the program from the fallback interface, requiring no dependencies
-at all. However it is recommended to at least install ``urwid`` to benefit from the CLI.
+to run it. Different interfaces and extensions require different dependencies. The 
+program will automatically load components which you have dependencies installed for.
 
 ========= ============
 Component Dependencies
@@ -36,6 +39,7 @@ Component Dependencies
 cli       urwid
 report    jinja2
 plot      numpy
+gdtf      pygdtf
 ========= ============
 
 Screenshot
