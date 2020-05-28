@@ -26,6 +26,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Fixture', 'CompleteFrom'), self.fixture_completefrom))
         self.commands.append(RegularCommand(('Fixture', 'CopyTo'), self.fixture_clone))
         self.commands.append(RegularCommand(('Fixture', 'Display'), self.fixture_display))
+        self.commands.append(RegularCommand(('Fixture', 'Fan'), self.fixture_fan))
         self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
         self.commands.append(RegularCommand(('Fixture', 'Remove'), self.fixture_remove))
         self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
@@ -129,6 +130,21 @@ class BaseExtension(InterpreterExtension):
         for r in refs:
             obj = document.get_by_ref(self.interpreter.file, obj_type[0], r)
             self.interpreter.msg.post_output([printer.get_generic_text_widget(obj)])
+
+    def _base_fan(self, refs, obj_type, k, v_0, v_n):
+        """Apply values to object key linearly from v_0 to v_n."""
+        try:
+            v_0 = float(v_0)
+            v_n = float(v_n)
+        except ValueError:
+            self.interpreter.msg.post_feedback('Values could not be applied. '
+                                               'Fan requires numerical start and end values.')
+            return None
+        v_i = v_0
+        incr = (v_n - v_0) / (len(refs) - 1)
+        for r in refs:
+            document.get_by_ref(self.interpreter.file, obj_type[0], r)[k] = str(v_i)
+            v_i += incr
 
     def _base_levels_query(self, refs, obj_type, nips=True):
         """See the stored level values of all parameter types. Works with objects that
@@ -260,6 +276,10 @@ class BaseExtension(InterpreterExtension):
     def fixture_display(self, refs):
         """Show a single line summary of a fixture."""
         return self._base_display(refs, constant.FIXTURE_TYPE)
+
+    def fixture_fan(self, refs, k, v_0, v_n):
+        """Set tags across a range of fixtures to a range of values."""
+        return self._base_fan(refs, constant.FIXTURE_TYPE, k, v_0, v_n)
 
     def fixture_patch(self, refs, univ, addr):
         """Patch the functions of a fixture in a registry."""
