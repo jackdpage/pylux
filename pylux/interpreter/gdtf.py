@@ -11,7 +11,7 @@ class GdtfExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Fixture', 'CreateFrom'), self.fixture_createfrom, check_refs=False))
 
     def fixture_createfrom(self, refs, template):
-        template_file = data.get_data('fixture/'+template+'.xml')
+        template_file = data.get_data('fixture/'+template+'.gdtf')
         if not template_file:
             self.interpreter.msg.post_feedback(['Template {0} does not exist'.format(template)])
             return None
