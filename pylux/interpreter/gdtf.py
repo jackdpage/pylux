@@ -22,19 +22,20 @@ class GdtfExtension(InterpreterExtension):
             fix['manufacturer'] = fixture_type.manufacturer
             fix['power'] = sum([b.power_consumption for b in fixture_type.get_geometry_by_type('Beam')])
             for dmx_chan in fixture_type.dmx_modes[0].dmx_channels:
-                fix['personality'].append({
-                    'type': 'function',
-                    'uuid': str(uuid.uuid4()),
-                    'param': dmx_chan.logical_channels[0].attribute,
-                    'offset': dmx_chan.offset[0]
-                })
-                if len(dmx_chan.offset) > 1:
+                if dmx_chan.offset:
                     fix['personality'].append({
                         'type': 'function',
                         'uuid': str(uuid.uuid4()),
-                        'param': dmx_chan.logical_channels[0].attribute + ' (16b)',
-                        'offset': dmx_chan.offset[1]
+                        'param': dmx_chan.logical_channels[0].attribute,
+                        'offset': dmx_chan.offset[0]
                     })
+                    if len(dmx_chan.offset) > 1:
+                        fix['personality'].append({
+                            'type': 'function',
+                            'uuid': str(uuid.uuid4()),
+                            'param': dmx_chan.logical_channels[0].attribute + ' (16b)',
+                            'offset': dmx_chan.offset[1]
+                        })
 
 
 def register_extension(interpreter):
