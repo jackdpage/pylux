@@ -79,6 +79,7 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Structure', 'Create'), self.structure_create, check_refs=False))
         self.commands.append(RegularCommand(('Structure', 'CopyTo'), self.structure_clone))
         self.commands.append(RegularCommand(('Structure', 'Display'), self.structure_display))
+        self.commands.append(RegularCommand(('Structure', 'Fan'), self.structure_fan))
         self.commands.append(RegularCommand(('Structure', 'Set'), self.structure_set))
         self.commands.append(RegularCommand(('Structure', 'Remove'), self.structure_remove))
 
@@ -528,6 +529,10 @@ class BaseExtension(InterpreterExtension):
     def structure_display(self, refs):
         """Display a single-line summary of a structure."""
         return self._base_display(refs, constant.STRUCTURE_TYPE)
+
+    def structure_fan(self, refs, k, v_0, v_n):
+        """Set tags across a range of fixtures to a range of values."""
+        return self._base_fan(refs, constant.STRUCTURE_TYPE, k, v_0, v_n)
 
     def structure_remove(self, refs):
         """Remove a structure."""
