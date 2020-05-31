@@ -13,10 +13,14 @@ groups, palettes, and cues.
 Installation and Dependencies
 -----------------------------
 
+Pylux is written in pure Python 3. You will need the Python interpreter in order
+to run it. 
+
 Clone the code and content repositories locally and update the content repository from the remote
 to get the latest version::
 
   git clone --recurse-submodules https://github.com/jackdpage/pylux.git
+  cd pylux
   git submodule update --remote --merge
   
 Create an environment to run in and install dependencies from pip::
@@ -29,8 +33,7 @@ Execute the pylux module from the repository root::
 
   python3 -m pylux
 
-Pylux is written in pure Python 3. You will need the Python interpreter in order
-to run it. Different interfaces and extensions require different dependencies. The 
+Different interfaces and extensions require different dependencies. The 
 program will automatically load components which you have dependencies installed for.
 
 ========= ============
@@ -39,7 +42,7 @@ Component Dependencies
 cli       urwid
 report    jinja2
 plot      numpy
-gdtf      pygdtf
+template  pygdtf
 ========= ============
 
 Screenshot
