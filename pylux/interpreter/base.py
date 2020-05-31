@@ -22,8 +22,6 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Filter', 'Remove'), self.filter_remove))
         self.commands.append(RegularCommand(('Fixture', 'About'), self.fixture_about))
         self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create, check_refs=False))
-        self.commands.append(RegularCommand(('Fixture', 'CreateFromJson'), self.fixture_createfrom_json, check_refs=False))
-        self.commands.append(RegularCommand(('Fixture', 'CompleteFrom'), self.fixture_completefrom))
         self.commands.append(RegularCommand(('Fixture', 'CopyTo'), self.fixture_clone))
         self.commands.append(RegularCommand(('Fixture', 'Display'), self.fixture_display))
         self.commands.append(RegularCommand(('Fixture', 'Fan'), self.fixture_fan))
@@ -248,30 +246,9 @@ class BaseExtension(InterpreterExtension):
         for dest in dests:
             document.insert_duplicate_fixture_by_ref(self.interpreter.file, refs[0], dest)
 
-    def fixture_completefrom(self, refs, template):
-        """Compare an existing fixture with a template file and add any tags which are missing. If there is no
-        personality then the entire template file personality will be added. If there are conflicting personalities
-        then the existing fixture personality is maintained."""
-        template_file = data.get_data('fixture/' + template + '.json')
-        if not template_file:
-            self.interpreter.msg.post_feedback(['Template {0} does not exist, reverting to fallback.'.format(template)])
-            template_file = data.get_data('fixture/' + self.interpreter.config['editor']['fallback-template'] + '.json')
-        for r in refs:
-            fix = document.get_by_ref(self.interpreter.file, 'fixture', r)
-            document.complete_fixture_from_json_template(fix, template_file)
-
     def fixture_create(self, refs):
         """Create a blank fixture."""
         return self._base_create(refs, constant.FIXTURE_TYPE)
-
-    def fixture_createfrom_json(self, refs, template):
-        """Create a fixture from a template file."""
-        template_file = data.get_data('fixture/'+template+'.json')
-        if not template_file:
-            self.interpreter.msg.post_feedback(['Template {0} does not exist, reverting to fallback.'.format(template)])
-            template_file = data.get_data('fixture/'+self.interpreter.config['editor']['fallback-template']+'.json')
-        for r in refs:
-            document.insert_fixture_from_json_template(self.interpreter.file, r, template_file)
 
     def fixture_display(self, refs):
         """Show a single line summary of a fixture."""
