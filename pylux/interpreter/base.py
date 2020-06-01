@@ -16,7 +16,6 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand(('Cue', 'Remove'), self.cue_remove))
         self.commands.append(RegularCommand(('Cue', 'Set'), self.cue_set))
         self.commands.append(RegularCommand(('Cue', 'SetIntens'), self.cue_setintens))
-        self.commands.append(NoRefsCommand(('File', 'Write'), self.file_write))
         self.commands.append(RegularCommand(('Filter', 'CopyTo'), self.filter_clone))
         self.commands.append(RegularCommand(('Filter', 'Create'), self.filter_create, check_refs=False))
         self.commands.append(RegularCommand(('Filter', 'Remove'), self.filter_remove))
@@ -207,10 +206,6 @@ class BaseExtension(InterpreterExtension):
                 intens_func = document.find_fixture_intens(fix)
                 if intens_func:
                     cue['levels'][intens_func['uuid']] = level
-
-    def file_write(self, location):
-        """Write file to location."""
-        document.write_to_file(self.interpreter.file, location)
 
     def filter_clone(self, refs, dest):
         """Clone a filter."""

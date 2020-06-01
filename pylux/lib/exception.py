@@ -9,3 +9,9 @@ class DependencyError(Exception):
     def __init__(self, missing_module):
         super(DependencyError, self).__init__()
         self.missing_module = missing_module
+
+
+class ProgramExit(Exception):
+    def __init__(self):
+        super(ProgramExit, self).__init__()
+

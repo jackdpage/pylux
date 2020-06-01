@@ -38,7 +38,8 @@ def main():
     if not os.path.isfile(args.file):
         document.write_to_file([], args.file)
 
-    init_globals = {'FILE': args.file, 'CONFIG': config, 'LOAD_LOC': args.file}
+    config['main']['load_file'] = args.file
+    init_globals = {'FILE': args.file, 'CONFIG': config}
 
     try:
         print('Launching {0} interface'.format(args.interface))

@@ -1,5 +1,5 @@
 from pylux import clihelper, document
-from pylux.lib import printer
+from pylux.lib import exception
 from importlib import import_module
 
 
@@ -51,7 +51,27 @@ class Interpreter:
         self.register_commands()
 
     def register_commands(self):
+        self.register_command(NoRefsCommand(('File', 'Write'), self.file_write))
+        self.register_command(NoRefsCommand(('File', 'WriteTo'), self.file_writeto))
+        self.register_command(NoRefsCommand(('Program', 'Quit'), self.program_abort))
+        self.register_command(NoRefsCommand(('Program', 'WriteAndQuit'), self.program_exit))
         self.register_command(NoRefsCommand(('Program', 'ReloadConfig'), self.reload_config))
+
+    def file_write(self):
+        document.write_to_file(self.file, self.config['main']['load_file'])
+        self.msg.post_feedback('Saved to '+self.config['main']['load_file'])
+
+    def file_writeto(self, location):
+        self.config['main']['load_file'] = location
+        self.msg.post_feedback('Set default save location to '+location)
+        self.file_write()
+
+    def program_abort(self):
+        raise exception.ProgramExit
+
+    def program_exit(self):
+        self.file_write()
+        self.program_abort()
 
     def reload_config(self):
         self.config.read(['pylux.conf'])

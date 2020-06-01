@@ -2,6 +2,7 @@ from ast import literal_eval
 import urwid
 from pylux import document, interpreter
 from pylux.lib import autocomplete, printer, exception
+import sys
 
 
 NUMERIC_KEYS = [str(i) for i in range(0, 10)]
@@ -204,4 +205,7 @@ def main(init_globals):
     app.bind(command_interpreter, post_command)
     palette = generate_palette()
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), palette)
-    loop.run()
+    try:
+        loop.run()
+    except exception.ProgramExit:
+        sys.exit()
