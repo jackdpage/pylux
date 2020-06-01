@@ -1,9 +1,9 @@
 import os
 
 LOCATIONS = {
-        'home' : os.path.expanduser('~/.pylux'),
-        'root' : os.path.abspath('/usr/share/pylux'),
-        'local' : os.path.normpath('./content')}
+        'home': os.path.expanduser('~/.pylux'),
+        'root': os.path.abspath('/usr/share/pylux'),
+        'local': os.path.normpath('./content')}
 
 # Priority of data locations, high to low
 PRIORITY = ['local', 'home', 'root']

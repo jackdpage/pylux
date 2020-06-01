@@ -1,6 +1,7 @@
-from pylux import clihelper, document
+from pylux import clihelper, document, _ROOT
 from pylux.lib import exception
 from importlib import import_module
+import os.path
 
 
 class RegularCommand:
@@ -74,7 +75,7 @@ class Interpreter:
         self.program_abort()
 
     def reload_config(self):
-        self.config.read(['pylux.conf'])
+        self.config.read([os.path.join(_ROOT, 'default.conf')])
 
     def _get_init_keywords(self):
         """Get all the keywords which could be the first keyword of a command."""

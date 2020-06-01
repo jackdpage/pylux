@@ -4,6 +4,7 @@ import pygdtf
 from pylux.lib import data
 import uuid
 import pathlib
+import os.path
 
 
 class TemplateExtension(InterpreterExtension):
@@ -15,9 +16,9 @@ class TemplateExtension(InterpreterExtension):
     def _get_template_file(self, template):
         template_type = pathlib.Path(template).suffix
         if template_type:
-            template_file = data.get_data('fixture/' + template)
+            template_file = data.get_data(os.path.join('fixture', template))
         else:
-            template_file = data.get_data('fixture/' + template + '.gdtf')
+            template_file = data.get_data(os.path.join('fixture', template + '.gdtf'))
         if not template_file:
             self.interpreter.msg.post_feedback(['Template {0} does not exist'.format(template)])
             return None

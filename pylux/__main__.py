@@ -19,16 +19,16 @@ import argparse
 import configparser
 import importlib
 import os.path
-
-from pylux import document
+import pkg_resources
+from pylux import document, _ROOT
 
 
 def main():
 
-    print('This is Pylux, version 0.4.0')
+    print('This is Pylux, version '+pkg_resources.require('pylux')[0].version)
     
     config = configparser.ConfigParser()
-    config.read(['pylux.conf'])
+    config.read([os.path.join(_ROOT, 'default.conf')])
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-f', '--file', default=config['main']['default-file'])
     arg_parser.add_argument('-i', '--interface', default=config['main']['default-interface'])
