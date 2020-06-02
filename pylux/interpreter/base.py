@@ -163,10 +163,14 @@ class BaseExtension(InterpreterExtension):
         for r in refs:
             document.remove_by_ref(self.interpreter.file, obj_type[0], r)
 
-    def _base_set(self, refs, obj_type, k, v):
+    def _base_set(self, refs, obj_type, k, v=None):
         """Set an arbitrary data tag to a value."""
-        for r in refs:
-            document.get_by_ref(self.interpreter.file, obj_type[0], r)[k] = v
+        if not v:
+            for r in refs:
+                document.get_by_ref(self.interpreter.file, obj_type[0], r).pop(k, None)
+        else:
+            for r in refs:
+                document.get_by_ref(self.interpreter.file, obj_type[0], r)[k] = v
 
     def cue_about(self, refs):
         """Show stored intensity data for a cue."""
@@ -192,7 +196,7 @@ class BaseExtension(InterpreterExtension):
         """Remove a cue."""
         return self._base_remove(refs, constant.CUE_TYPE)
 
-    def cue_set(self, refs, k, v):
+    def cue_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a cue."""
         return self._base_set(refs, constant.CUE_TYPE, k, v)
 
@@ -264,7 +268,7 @@ class BaseExtension(InterpreterExtension):
         self.fixture_unpatch(refs)
         return self._base_remove(refs, constant.FIXTURE_TYPE)
 
-    def fixture_set(self, refs, k, v):
+    def fixture_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a fixture."""
         return self._base_set(refs, constant.FIXTURE_TYPE, k, v)
 
@@ -324,7 +328,7 @@ class BaseExtension(InterpreterExtension):
         """Remove a group."""
         return self._base_remove(refs, constant.GROUP_TYPE)
 
-    def group_set(self, refs, k, v):
+    def group_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a group."""
         return self._base_set(refs, constant.GROUP_TYPE, k, v)
 
@@ -442,23 +446,23 @@ class BaseExtension(InterpreterExtension):
         """Remove an intensity palette."""
         return self._base_remove(refs, constant.INTENSITY_PALETTE_TYPE)
 
-    def palette_all_set(self, refs, k, v):
+    def palette_all_set(self, refs, k, v=None):
         """Set an arbitrary data tag in an all palette."""
         return self._base_set(refs, constant.ALL_PALETTE_TYPE, k, v)
 
-    def palette_beam_set(self, refs, k, v):
+    def palette_beam_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a beam palette."""
         return self._base_set(refs, constant.BEAM_PALETTE_TYPE, k, v)
 
-    def palette_colour_set(self, refs, k, v):
+    def palette_colour_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a colour palette."""
         return self._base_set(refs, constant.COLOUR_PALETTE_TYPE, k, v)
 
-    def palette_focus_set(self, refs, k, v):
+    def palette_focus_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a focus palette."""
         return self._base_set(refs, constant.FOCUS_PALETTE_TYPE, k, v)
 
-    def palette_intensity_set(self, refs, k, v):
+    def palette_intensity_set(self, refs, k, v=None):
         """Set an arbitrary data tag in an intensity palette."""
         return self._base_set(refs, constant.INTENSITY_PALETTE_TYPE, k, v)
 
@@ -533,7 +537,7 @@ class BaseExtension(InterpreterExtension):
         """Remove a structure."""
         return self._base_remove(refs, constant.STRUCTURE_TYPE)
 
-    def structure_set(self, refs, k, v):
+    def structure_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a structure."""
         return self._base_set(refs, constant.STRUCTURE_TYPE, k, v)
 

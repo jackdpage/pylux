@@ -2,6 +2,7 @@ from pylux import clihelper, document, _ROOT
 from pylux.lib import exception
 from importlib import import_module
 import os.path
+import inspect
 
 
 class RegularCommand:
@@ -12,8 +13,12 @@ class RegularCommand:
         # Parmeters are any function vars after the first one (refs) up to the number of arguments
         if function.__code__.co_argcount > 2:
             self.parameters = [i for i in function.__code__.co_varnames[2:function.__code__.co_argcount] if i]
+            self.opt_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is not v.empty]
+            self.req_params = [i for i in self.parameters if i not in self.opt_params]
         else:
             self.parameters = []
+            self.opt_params = []
+            self.req_params = []
 
 
 class NoRefsCommand:
@@ -23,8 +28,12 @@ class NoRefsCommand:
         # This is the same as the RegularCommand, except we are expecting one fewer arguments due to the lack of refs
         if function.__code__.co_argcount > 1:
             self.parameters = [i for i in function.__code__.co_varnames[1:function.__code__.co_argcount] if i]
+            self.opt_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is not v.empty]
+            self.req_params = [i for i in self.parameters if i not in self.opt_params]
         else:
             self.parameters = []
+            self.opt_params = []
+            self.req_params = []
 
 
 class InterpreterExtension:
@@ -118,6 +127,10 @@ class Interpreter:
     def command_failed(self, posted_command):
         self.msg.post_feedback(['Error: Invalid command '+posted_command])
 
+    def bad_parameters(self, command):
+        self.msg.post_feedback(['Error: '+command.trigger[0]+' '+command.trigger[1] +
+                                ' requires at least '+str(len(command.req_params))+' parameters'])
+
     def process_command(self, posted_command):
 
         def calculate_params(n, params):
@@ -135,45 +148,62 @@ class Interpreter:
 
         self.msg.post_feedback(posted_command)
         keywords = posted_command.split()
+        # No commands have fewer than two words
         if len(keywords) < 2:
             self.command_failed(posted_command)
-        else:
+            return
+        # If the first two keywords are in noref_triggers then this is a command with no references
+        elif (keywords[0], keywords[1]) in self.noref_triggers:
             obj = keywords[0]
-
-            # If the first two keywords are in noref_triggers then this is a command with no references
-            if (obj, keywords[1]) in self.noref_triggers:
-                action = keywords[1]
+            action = keywords[1]
+            trigger = (obj, action)
+            if len(keywords) > 2:
+                parameters = keywords[2:]
+            else:
+                parameters = []
+            command = self.noref_triggers[trigger]
+            args = calculate_params(len(command.parameters), parameters)
+            command.function(*args)
+            return
+        # If the first and third keywords are in triggers, then the second keyword will be the references
+        elif len(keywords) > 2:
+            if (keywords[0], keywords[2]) in self.triggers:
+                obj = keywords[0]
+                action = keywords[2]
                 trigger = (obj, action)
-                if len(keywords) > 2:
-                    parameters = keywords[2:]
+                command = self.triggers[trigger]
+                if command.check_refs:
+                    refs = clihelper.safe_resolve_dec_references_with_filters(self.file, obj.lower(), keywords[1])
+                    if not refs:
+                        self.msg.post_feedback('Error: No valid objects in given range')
+                        return
+                else:
+                    refs = clihelper.resolve_references(keywords[1])
+                if len(keywords) > 3:
+                    parameters = keywords[3:]
                 else:
                     parameters = []
-                command = self.noref_triggers[trigger]
-                args = calculate_params(len(command.parameters), parameters)
-                command.function(*args)
-
-            # If the first and third keywords are in triggers, then the second keyword will be the references
-            elif len(keywords) > 2:
-                if (obj, keywords[2]) in self.triggers:
-                    action = keywords[2]
-                    trigger = (obj, action)
-                    command = self.triggers[trigger]
-                    if command.check_refs:
-                        refs = clihelper.safe_resolve_dec_references_with_filters(self.file, obj.lower(), keywords[1])
-                    else:
-                        refs = clihelper.resolve_references(keywords[1])
-                    if len(keywords) > 3:
-                        parameters = keywords[3:]
-                    else:
-                        parameters = []
+                # If the number of parameter keywords is fewer than the required parameters,
+                # then the command cannot be fulfilled
+                if len(parameters) < len(command.req_params):
+                    self.bad_parameters(command)
+                # If the number of parameter keywords is greater than the required parameters,
+                # then the optional parameter must have been supplied too, so calculate the
+                # parameters in case this is a multi-word one
+                elif len(parameters) > len(command.req_params):
                     args = calculate_params(len(command.parameters), parameters)
                     command.function(refs, *args)
-                else:
-                    self.command_failed(posted_command)
-
-            # Otherwise, the command doesn't exist
+                # If the number of parameter keywords is equal to the required parameters, we
+                # can just pass the parameters straight into the function
+                elif len(parameters) == len(command.req_params):
+                    command.function(refs, *parameters)
+                return
             else:
                 self.command_failed(posted_command)
+                return
+        # Otherwise, the command doesn't exist
+        else:
+            self.command_failed(posted_command)
 
     def register_command(self, command):
         self.commands.append(command)
