@@ -87,9 +87,10 @@ class BaseExtension(InterpreterExtension):
             obj = document.get_by_ref(self.interpreter.file, obj_type[0], ref)
             self.interpreter.msg.post_output([printer.get_generic_text_widget(obj)])
             self.interpreter.msg.post_output([str(len(obj))+' Data Tags:'])
-            self.interpreter.msg.post_output(['    '+str(k)+': '+str(obj[k])
+            self.interpreter.msg.post_output([str(k)+': '+str(obj[k])
                                               for k in sorted(obj)
-                                              if k not in literal_eval(self.interpreter.config['cli']['ignore-about-tags'])])
+                                              if k not in literal_eval(
+                    self.interpreter.config['cli']['ignore-about-tags'])], indentation=1)
 
     def _base_clone(self, refs, obj_type, dest):
         """Copy range to single (expanded to range) or copy single to range. If given a single source and single
@@ -467,7 +468,7 @@ class BaseExtension(InterpreterExtension):
         return self._base_set(refs, constant.INTENSITY_PALETTE_TYPE, k, v)
 
     def registry_about(self, refs):
-        """Show a summary of the used addresses in a registry but don't provide any further information."""
+        """Show a summary of the used addresses in a registry but do not provide any further information."""
         for r in refs:
             reg = document.get_by_ref(self.interpreter.file, 'registry', r)
             self.interpreter.msg.post_output([printer.get_generic_text_widget(reg)])

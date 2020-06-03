@@ -11,7 +11,7 @@ class MessageBus:
     def post_feedback(self, lines):
         pass
 
-    def post_output(self, lines):
+    def post_output(self, lines, **kwargs):
         for l in lines:
             print(self.get_pretty_line(l))
 
@@ -23,7 +23,8 @@ class MessageBus:
             if type(i) == str:
                 s += i
             elif type(i) == tuple:
-                s = s + '\033[' + self.config['fallback-colours'][i[0]] + 'm' + i[1] + '\033[m'
+                colour = self.config['fallback-colours'].get(i[0], '0')
+                s = s + '\033[' + colour + 'm' + i[1] + '\033[m'
         return s
 
 

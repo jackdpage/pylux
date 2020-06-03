@@ -89,9 +89,10 @@ class CommandHistory(urwid.Text):
 
 class MessageBus:
 
-    def __init__(self, history, output_pane):
+    def __init__(self, history, output_pane, config):
         self.history = history
         self.output = output_pane
+        self.config = config
         self.clear_flag = False
 
     def post_feedback(self, lines):
@@ -100,11 +101,16 @@ class MessageBus:
     def clear_output(self):
         self.clear_flag = True
 
-    def post_output(self, lines):
+    def post_output(self, lines, indentation=0, **kwargs):
+        indentation_str = ' ' * indentation * int(self.config['cli']['indentation-amount'])
         if self.clear_flag:
             self.output.clear()
             self.clear_flag = False
         for l in lines:
+            if type(l) == list:
+                l.insert(0, indentation_str)
+            elif type(l) == str:
+                l = indentation_str + l
             self.output.append(urwid.Text(l))
 
 
@@ -131,7 +137,7 @@ class Application:
         self.config = init_globals['CONFIG']
         self.cmd = CommandLine(self.config)
         self.view = ApplicationView(self.cmd)
-        self.message_bus = MessageBus(self.view.history, self.view.dynamic_walker)
+        self.message_bus = MessageBus(self.view.history, self.view.dynamic_walker, self.config)
 
     def initialise_file(self, f):
         s = document.get_string_from_file(f)
