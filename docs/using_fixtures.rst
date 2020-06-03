@@ -16,12 +16,21 @@ Creating Fixtures
 
 Because of the complexity of fixtures, especially those that contain DMX 
 functions, it is not recommended to create them from scratch. Instead, 
-create one from a template then edit from there::
+create one from a template then edit from there.
 
-    Fixture 1 CreateFrom Generic/Parcan
+Pylux supports two types of template, General Device Type Format (GDTF) and its
+own JSON format. The default and preferred format is GDTF. Create a fixture from
+an existing template::
 
-This creates a new fixture from the ``Generic/Parcan`` template. This is an
-included fixture template with Pylux. 1 is the reference given to this new fixture.
+    Fixture 1 CreateFrom Generic@Parcan
+
+This creates a fixture from the file ``Generic@Parcan.gdtf``. Pylux assumes that any
+template given without a file extension is a GDTF file. Alternatively, to create the
+fixture from the JSON template::
+
+    Fixture 1 CreateFrom Generic/Parcan.json
+
+1 is the reference given to this new fixture.
 
 Displaying Fixtures
 -------------------

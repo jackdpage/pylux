@@ -10,14 +10,13 @@ can add an entry point into your system PATH.
 -h  Print the usage message then exit
 -v  Print the version number then exit
 -f FILE    Load FILE as the current show file
+-i INTERFACE    Use the specified interface in place of the default
 
 File Management
 ---------------
 
-In addition to loading a file whlist launching, you can also load a
-file by issuing the ``File Open path`` command once open, which will
-discard the current file buffer and load the file at ``path``. When you need 
-to save the file, run ``File Write path``.
+Save the current working file at any time by running ``File Write``. You can also
+change the default save location by running ``File WriteTo location``.
 
 If you do not have an existing file, you can begin working straight away.
 If no file is specified on startup, the program will load ``autosave.json``.
@@ -98,3 +97,14 @@ matches filter 1, and also show 8 and 9, regardless of whether they meet the req
 or not::
 
     1[*],8,9
+
+When specifying fixtures, a reference can also be a group number::
+
+    @30
+
+Group numbers can be used alongside other components, including filters (this means show everything in group
+30 that matches filter 1, 2 through 7 if they match filter 1, 9 regardless of whether it matches a filter,
+and anything that matches filter 2)::
+
+    1[@30,2>7],9,2[*]
+
