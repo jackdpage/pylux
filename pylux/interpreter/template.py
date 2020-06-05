@@ -59,6 +59,9 @@ class TemplateExtension(InterpreterExtension):
     def _fixture_createfrom_gdtf(self, refs, template_file):
         fixture_type = pygdtf.FixtureType(template_file)
         for r in refs:
+            if document.get_by_ref(self.interpreter.file, 'fixture', r):
+                self.interpreter.msg.post_feedback([['Fixture ', str(r), ' already exists. Will not overwrite']])
+                continue
             fix = document.insert_blank_fixture(self.interpreter.file, r)
             fix['fixture-type'] = fixture_type.name
             fix['manufacturer'] = fixture_type.manufacturer
@@ -81,6 +84,9 @@ class TemplateExtension(InterpreterExtension):
 
     def _fixture_createfrom_json(self, refs, template_file):
         for r in refs:
+            if document.get_by_ref(self.interpreter.file, 'fixture', r):
+                self.interpreter.msg.post_feedback([['Fixture ', str(r), ' already exists. Will not overwrite']])
+                continue
             document.insert_fixture_from_json_template(self.interpreter.file, r, template_file)
 
     def fixture_createfrom(self, refs, template):

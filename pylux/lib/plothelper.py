@@ -776,6 +776,8 @@ class StructureComponent:
                 polyline.set('stroke-width', self._canvas.options['line-weight-heavy'])
                 polyline.set('points', ' '.join([','.join(map(str, i)) for i in corrected_points]))
                 return polyline
+            else:
+                return ET.Element('g')
         else:
             return ET.Element('g')
 

@@ -157,13 +157,25 @@ class Interpreter:
             obj = keywords[0]
             action = keywords[1]
             trigger = (obj, action)
+            command = self.noref_triggers[trigger]
             if len(keywords) > 2:
                 parameters = keywords[2:]
             else:
                 parameters = []
-            command = self.noref_triggers[trigger]
-            args = calculate_params(len(command.parameters), parameters)
-            command.function(*args)
+            # If the number of parameter keywords is fewer than the required parameters,
+            # then the command cannot be fulfilled
+            if len(parameters) < len(command.req_params):
+                self.bad_parameters(command)
+            # If the number of parameter keywords is greater than the required parameters,
+            # then the optional parameter must have been supplied too, so calculate the
+            # parameters in case this is a multi-word one
+            elif len(parameters) > len(command.req_params):
+                args = calculate_params(len(command.parameters), parameters)
+                command.function(*args)
+            # If the number of parameter keywords is equal to the required parameters, we
+            # can just pass the parameters straight into the function
+            elif len(parameters) == len(command.req_params):
+                command.function(*parameters)
             return
         # If the first and third keywords are in triggers, then the second keyword will be the references
         elif len(keywords) > 2:

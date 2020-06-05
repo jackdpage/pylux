@@ -5,7 +5,7 @@ with open('README.rst') as f:
 
 setuptools.setup(
     name='pylux',
-    version='1.0a1',
+    version='1.0a3',
     author='Jack Page',
     author_email='jdpboc98@gmail.com',
     description='Program for creating stage and entertainment lighting documentation',
@@ -18,5 +18,5 @@ setuptools.setup(
         ]
     },
     install_requires=['urwid', 'jinja2', 'numpy', 'pygdtf'],
-    packages=['pylux']
+    packages=['pylux', 'pylux.interface', 'pylux.lib', 'pylux.interpreter']
 )

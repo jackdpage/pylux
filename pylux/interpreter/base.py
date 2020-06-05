@@ -122,6 +122,9 @@ class BaseExtension(InterpreterExtension):
     def _base_create(self, refs, obj_type, **kwargs):
         """Create new objects."""
         for r in refs:
+            if document.get_by_ref(self.interpreter.file, obj_type[0], r):
+                self.interpreter.msg.post_feedback([[obj_type[1], ' ', str(r), ' already exists. Will not overwrite']])
+                continue
             document.insert_blank_object(self.interpreter.file, obj_type, r, **kwargs)
 
     def _base_display(self, refs, obj_type):
@@ -522,7 +525,7 @@ class BaseExtension(InterpreterExtension):
         """Clone a structure."""
         return self._base_clone(refs, constant.STRUCTURE_TYPE, dest)
 
-    def structure_create(self, refs, structure_type):
+    def structure_create(self, refs, structure_type=None):
         """Insert a blank structure object."""
         return self._base_create(refs, constant.STRUCTURE_TYPE, structure_type=structure_type)
 
