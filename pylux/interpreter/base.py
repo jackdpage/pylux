@@ -157,7 +157,7 @@ class BaseExtension(InterpreterExtension):
             for l in obj['levels']:
                 func = document.get_function_by_uuid(self.interpreter.file, l)
                 fix = document.get_function_parent(self.interpreter.file, func)
-                if func['param'] == self.interpreter.config['dimmer-attribute-name'] or nips:
+                if func['param'] == self.interpreter.config['cli']['dimmer-attribute-name'] or nips:
                     self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':'] +
                                                       printer.get_generic_text_widget(func) + [': ',
                                                       printer.get_pretty_level_string(str(obj['levels'][l]))]])

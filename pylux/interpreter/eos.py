@@ -2,6 +2,7 @@ from copy import deepcopy
 import math, re
 from pylux.interpreter import RegularCommand, InterpreterExtension, NoRefsCommand
 from pylux import document
+from pylux import reference
 
 
 class EosExtension(InterpreterExtension):
@@ -67,7 +68,11 @@ class EosExtension(InterpreterExtension):
         for l in raw:
             match = re.match(r, l)
             if match:
-                parameters[match.group(1)] = match.group(3).strip()
+                # Convert any parameter names to standardised GDTF equivalents
+                if match.group(3).strip() in reference.EOS_GDTF_MAP:
+                    parameters[match.group(1)] = reference.EOS_GDTF_MAP[match.group(3).strip()]
+                else:
+                    parameters[match.group(1)] = match.group(3).strip()
 
         # Grab the file title if one doesn't already exist in the metadata
         for l in raw:
@@ -76,30 +81,7 @@ class EosExtension(InterpreterExtension):
                 if not document.get_metadata(self.interpreter.file, 'production'):
                     document.set_metadata(self.interpreter.file, 'production', resolve_line(l)[1])
 
-        if target == 'conventional_patch':
-            entries = []
-            r = re.compile('Patch.*')
-            # Scan file for lines beginning with the Patch keyword and populate
-            # into list for parsing.
-            for l in raw:
-                match = re.match(r, l)
-                if match:
-                    entries.append(match.string)
-            # For each patch line found, find each mapping within the line and
-            # add to the plot file using the built in command.
-            r = re.compile('[0-9]*<[0-9]{0,3}')
-            template = self.interpreter.config['ascii']['conventional-template']
-            for e in entries:
-                maps = re.findall(r, e)
-                for f in maps:
-                    ref = f.split('<')[0]
-                    addr = int(f.split('<')[1])
-                    dmx = str(addr % 512)
-                    univ = str(math.floor(addr / 512))
-                    self.parent.functions['fixture_createfrom'](ref, [template])
-                    document.safe_address_fixture_by_ref(self.interpreter.file, ref, univ, addr)
-
-        elif target == 'eos_patch':
+        if target == 'eos_patch':
             personality_blocks = extract_blocks('\$Personality.*')
             patch_blocks = extract_blocks('\$Patch.*')
             templates = {}
@@ -115,14 +97,18 @@ class EosExtension(InterpreterExtension):
                     if res[0] == '$$Manuf':
                         template['manufacturer'] = res[1]
                     elif res[0] == '$$Model':
-                        if self.interpreter.config['ascii']['substitute-delimiters'] == 'True':
+                        if self.interpreter.config['ascii'].getboolean('substitute-delimiters'):
                             template['fixture-type'] = res[1].replace('_', ' ')
                         else:
                             template['fixture-type'] = res[1]
                     elif res[0] == '$$PersChan':
+                        param = parameters[res[1].split()[0]]
+                        # Convert compatible parameter names to standardised GDTF equivalents
+                        if param in reference.EOS_GDTF_MAP:
+                            param = reference.EOS_GDTF_MAP[param]
                         pers.append({
                             'type': 'function',
-                            'param': parameters[res[1].split()[0]],
+                            'param': param,
                             'offset': int(res[1].split()[2]),
                         })
                         if int(res[1].split()[1]) == 2:
@@ -137,12 +123,12 @@ class EosExtension(InterpreterExtension):
                             template['component-cells'] += 1
                         else:
                             template['component-cells'] = 1
-                # If the fixture personality does not contain an Intens parameter, add a virtual Intens parameter
+                # If the fixture personality does not contain a Dimmer parameter, add a virtual Dimmer parameter
                 # with offset zero, so the fixture can be used for commands such as get_fixture_intens
-                if 'Intens' not in [i['param'] for i in pers]:
+                if 'Dimmer' not in [i['param'] for i in pers]:
                     pers.append({
                         'type': 'function',
-                        'param': 'Intens',
+                        'param': 'Dimmer',
                         'offset': 0,
                         'virtual': True
                     })
@@ -162,9 +148,12 @@ class EosExtension(InterpreterExtension):
                 for k in template:
                     fixture[k] = template[k]
                 document.fill_missing_function_uuids(fixture)
-                # Patch the fixture from the address in the @Patch line
-                document.safe_address_fixture_by_ref(self.interpreter.file, fix_ref, univ, dmx)
-                # We've dealt with the main @Patch line, now we can scan through
+                # Patch the fixture from the address in the $Patch line. We only want to do
+                # this if the address is non-zero. If the address is zero, it will be a
+                # multi-cell fixture component with no physical addresses
+                if addr:
+                    document.safe_address_fixture_by_ref(self.interpreter.file, fix_ref, univ, dmx)
+                # We've dealt with the main $Patch line, now we can scan through
                 # the rest of the block and see if we can merge in anything else.
                 for l in patch:
                     res = resolve_line(l)
@@ -214,10 +203,10 @@ class EosExtension(InterpreterExtension):
                             for param_level in res[1].split():
                                 if '@' in param_level:
                                     param_type = parameters[param_level.split('@')[0]]
-                                    # If this parameter is Intens, it will be referring to a 16 bit value, which we
+                                    # If this parameter is Dimmer, it will be referring to a 16 bit value, which we
                                     # have probably already added as an 8 bit from the generic levels lines. Therefore,
                                     # we will remove the 8 bit entry and replace with this 16 bit entry.
-                                    if param_type == 'Intens':
+                                    if param_type == 'Dimmer':
                                         intens_uuid = document.find_fixture_intens(fixture)['uuid']
                                         cue_levels = document.get_by_ref(self.interpreter.file, 'cue', cue_ref)['levels']
                                         if intens_uuid in cue_levels:

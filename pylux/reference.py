@@ -17,6 +17,25 @@
 
 '''This file contains various universal constants.'''
 
+
+EOS_GDTF_MAP = {
+    'Intens': 'Dimmer',
+    'Color_Select': 'Color1',
+    'Gobo_Select': 'Gobo1',
+    'Red': 'ColorAdd_R',
+    'Green': 'ColorAdd_G',
+    'Blue': 'ColorAdd_B',
+    'White': 'ColorAdd_W',
+    'Color_Mix': 'ColorMacro1',
+    'Shutter_Strobe': 'Shutter1Strobe',
+    'Position_MSpeed': 'PositionMSpeed',
+    'Effect_Macros': 'Effects1',
+    'Effect_Macro_Rate': 'Effects1Rate',
+    'Fixture_Global_Reset': 'FixtureGlobalReset',
+    '_Lamp_Control': 'LampControl'
+}
+
+
 usitt_line_weights = {
     'scenery' : 'line-weight-light',
     'leader' : 'line-weight-light',
