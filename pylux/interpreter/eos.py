@@ -81,7 +81,7 @@ class EosExtension(InterpreterExtension):
                 if not document.get_metadata(self.interpreter.file, 'production'):
                     document.set_metadata(self.interpreter.file, 'production', resolve_line(l)[1])
 
-        if target == 'eos_patch':
+        if target == 'patch':
             personality_blocks = extract_blocks('\$Personality.*')
             patch_blocks = extract_blocks('\$Patch.*')
             templates = {}
@@ -137,6 +137,9 @@ class EosExtension(InterpreterExtension):
 
             for patch in patch_blocks:
                 fix_ref = convert_fix_ref(patch[0].split(' ')[1])
+                if document.get_by_ref(self.interpreter.file, 'fixture', fix_ref):
+                    self.interpreter.msg.post_feedback('Fixture '+fix_ref+' already exists. Will not overwrite')
+                    continue
                 # We have to make a deep copy of the template, to ensure that
                 # we aren't adjusting the personality and functions in place
                 # when we add UUIDs
@@ -177,6 +180,9 @@ class EosExtension(InterpreterExtension):
                 if str(cue_list) != '1':
                     break
                 cue_ref = block[0].split()[1]
+                if document.get_by_ref(self.interpreter.file, 'cue', cue_ref):
+                    self.interpreter.msg.post_feedback('Cue ' + cue_ref + ' already exists. Will not overwrite')
+                    continue
                 cue = document.insert_blank_cue(self.interpreter.file, cue_ref)
                 for l in block:
                     res = resolve_line(l)
@@ -221,6 +227,9 @@ class EosExtension(InterpreterExtension):
             group_blocks = extract_blocks('\$Group')
             for block in group_blocks:
                 ref = block[0].split()[1]
+                if document.get_by_ref(self.interpreter.file, 'group', ref):
+                    self.interpreter.msg.post_feedback('Group '+ref+' already exists. Will not overwrite')
+                    continue
                 group = document.insert_blank_group(self.interpreter.file, ref)
                 for l in block:
                     res = resolve_line(l)
@@ -252,21 +261,33 @@ class EosExtension(InterpreterExtension):
             intens_palette_blocks = extract_blocks('\$IntensPalette')
             for block in intens_palette_blocks:
                 ref = block[0].split()[1]
+                if document.get_by_ref(self.interpreter.file, 'intensitypalette', ref):
+                    self.interpreter.msg.post_feedback('IntensityPalette '+ref+' already exists. Will not overwrite')
+                    continue
                 palette = document.insert_blank_intensity_palette(self.interpreter.file, ref)
                 _process_palette_block(block, palette)
             focus_palette_blocks = extract_blocks('\$FocusPalette')
             for block in focus_palette_blocks:
                 ref = block[0].split()[1]
+                if document.get_by_ref(self.interpreter.file, 'focuspalette', ref):
+                    self.interpreter.msg.post_feedback('FocusPalette '+ref+' already exists. Will not overwrite')
+                    continue
                 palette = document.insert_blank_focus_palette(self.interpreter.file, ref)
                 _process_palette_block(block, palette)
             colour_palette_blocks = extract_blocks('\$ColorPalette')
             for block in colour_palette_blocks:
                 ref = block[0].split()[1]
+                if document.get_by_ref(self.interpreter.file, 'colourpalette', ref):
+                    self.interpreter.msg.post_feedback('ColourPalette '+ref+' already exists. Will not overwrite')
+                    continue
                 palette = document.insert_blank_colour_palette(self.interpreter.file, ref)
                 _process_palette_block(block, palette)
             beam_palette_blocks = extract_blocks('\$BeamPalette')
             for block in beam_palette_blocks:
                 ref = block[0].split()[1]
+                if document.get_by_ref(self.interpreter.file, 'beampalette', ref):
+                    self.interpreter.msg.post_feedback('BeamPalette '+ref+' already exists. Will not overwrite')
+                    continue
                 palette = document.insert_blank_beam_palette(self.interpreter.file, ref)
                 _process_palette_block(block, palette)
 
