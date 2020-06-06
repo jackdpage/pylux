@@ -1,9 +1,10 @@
 from pylux.interpreter import InterpreterExtension, NoRefsCommand
-from pylux import document, reference
+from pylux import document, reference, clihelper
 from pylux.lib import data, tagger, plothelper
 import xml.etree.ElementTree as ET
 import os
 from ast import literal_eval
+import decimal
 
 
 class LightingPlot:
@@ -374,12 +375,16 @@ class LightingPlot:
         self.lighting_plot = self.get_empty_plot()
         canvas = plothelper.Canvas(self.options)
         root = self.lighting_plot.getroot()
+        visualised_fixtures = clihelper.safe_resolve_dec_references_with_filters(self.plot_file, 'fixture',
+                                                                                 self.options['output-fixture-filter'])
         if self.options.getboolean('page-border'):
             root.append(plothelper.PageBorderComponent(canvas).plot_component)
         try:
             root.append(plothelper.BackgroundImageComponent(canvas).plot_component)
         except FileNotFoundError:
             pass
+        if self.options.getboolean('visualise-output'):
+            root.append(plothelper.FilterIncidencePlane(canvas).plot_component)
         root.append(plothelper.CentreLineComponent(canvas).plot_component)
         root.append(plothelper.PlasterLineComponent(canvas).plot_component)
         if self.options.getboolean('draw-structures'):
@@ -394,6 +399,9 @@ class LightingPlot:
                 tagger.tag_fixture_all_doc_independent(fixture)
                 fixture_components.append(plothelper.FixtureComponent(fixture, canvas))
         for fixture_component in fixture_components:
+            if self.options.getboolean('visualise-output') and \
+                    decimal.Decimal(fixture_component.fixture['ref']) in visualised_fixtures:
+                canvas.lighting_filter.add_filter(fixture_component)
             if self.options.getboolean('show-beams'):
                 root.append(plothelper.FixtureBeamComponent(fixture_component, canvas).plot_component)
             if self.options.getboolean('show-focus-point'):
@@ -404,6 +412,8 @@ class LightingPlot:
             if self.options.getboolean('show-hitboxes'):
                 for hitbox in canvas.hitbox_plot.components:
                     root.append(hitbox.visualisation)
+        if self.options.getboolean('visualise-output'):
+            root.append(canvas.lighting_filter.plot_component)
         if self.options.getboolean('show-scale-rule'):
             root.append(plothelper.RulerComponent(canvas).plot_component)
         if self.options['title-block'] != 'None':
