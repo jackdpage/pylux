@@ -14,7 +14,6 @@ class HelpExtension(InterpreterExtension):
             for command in self.interpreter.commands:
                 self.interpreter.msg.post_output([['[', command.function.__module__, '] ',
                                                    command.trigger[0], ' ', command.trigger[1]]])
-        if len(command_name.split(' ')) != 2:
             return
         trigger = tuple(command_name.split(' '))
         if trigger in self.interpreter.triggers:

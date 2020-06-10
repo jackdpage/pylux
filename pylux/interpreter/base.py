@@ -169,6 +169,9 @@ class BaseExtension(InterpreterExtension):
 
     def _base_set(self, refs, obj_type, k, v=None):
         """Set an arbitrary data tag to a value."""
+        if k in literal_eval(self.interpreter.config['cli']['protected-tags']):
+            self.interpreter.msg.post_feedback('The {0} tag is protected and cannot be edited'.format(k))
+            return
         if not v:
             for r in refs:
                 document.get_by_ref(self.interpreter.file, obj_type[0], r).pop(k, None)
@@ -233,14 +236,14 @@ class BaseExtension(InterpreterExtension):
             f = document.get_by_ref(self.interpreter.file, 'fixture', ref)
             self.interpreter.msg.post_output([printer.get_generic_text_widget(f)])
             self.interpreter.msg.post_output([str(len(f))+' Data Tags:'])
-            self.interpreter.msg.post_output(['    '+str(k)+': '+str(f[k])
-                                              for k in sorted(f)
-                                              if k not in literal_eval(self.interpreter.config['cli']['ignore-about-tags'])])
+            ignored_tags = literal_eval(self.interpreter.config['cli']['ignore-about-tags'])
+            self.interpreter.msg.post_output([str(k)+': '+str(f[k]) for k in sorted(f) if k not in ignored_tags],
+                                             indentation=1)
             try:
                 if len(f['personality']):
                     self.interpreter.msg.post_output([str(len(f['personality']))+' DMX Functions:'])
                     for func in f['personality']:
-                        self.interpreter.msg.post_output([['    ']+printer.get_generic_text_widget(func)])
+                        self.interpreter.msg.post_output([printer.get_generic_text_widget(func)], indentation=1)
             except KeyError:
                 pass
 
