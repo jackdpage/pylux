@@ -456,7 +456,8 @@ class BeamSpecularFilterComponent:
             'z': '100',
             'pointsAtX': str(self._fixture_component.get_x_focus()),
             'pointsAtY': str(self._fixture_component.get_y_focus()),
-            'limitingConeAngle': '5.5'
+            'limitingConeAngle': str(self._fixture_component.fixture.get('beam_angle',
+                                                                         self._canvas.options['default-beam-angle']))
         }))
         return specular_component
 
@@ -979,3 +980,24 @@ class PageBorderComponent:
         border.set('stroke', 'black')
         border.set('stroke-width', self._canvas.options['line-weight-heavy'])
         return border
+
+
+class PageMaskingComponent:
+
+    def __init__(self, canvas):
+        self._canvas = canvas
+        self.plot_component = self._get_plot_component()
+
+    def _get_plot_component(self):
+        group = ET.Element('g')
+        paper = self._canvas.get_page_dimensions()
+        adj_margin = float(self._canvas.options['margin']) - float(self._canvas.options['line-weight-heavy']) / 2
+        group.append(ET.Element('rect', attrib={'x': '0', 'y': '0', 'width': str(paper[0]),
+                                                'height': str(adj_margin), 'fill': 'white'}))
+        group.append(ET.Element('rect', attrib={'x': '0', 'y': '0', 'width': str(adj_margin),
+                                                'height': str(paper[1]), 'fill': 'white'}))
+        group.append(ET.Element('rect', attrib={'x': str(paper[0] - adj_margin), 'y': '0', 'width': str(adj_margin),
+                                                'height': str(paper[1]), 'fill': 'white'}))
+        group.append(ET.Element('rect', attrib={'x': '0', 'y': str(paper[1] - adj_margin), 'width': str(paper[0]),
+                                                'height': str(adj_margin), 'fill': 'white'}))
+        return group

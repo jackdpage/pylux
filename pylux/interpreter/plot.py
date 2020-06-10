@@ -227,11 +227,15 @@ class LightingPlot:
         page_dims = self.get_page_dimensions()
         margin = float(self.options['margin'])
         left_border = page_dims[0] - margin - sidebar_width
-        sidebar_box = ET.SubElement(sidebar, 'path')
-        sidebar_box.set('d', 'M ' + str(left_border) + ' ' + str(margin) +
-                        ' L ' + str(left_border) + ' ' + str(page_dims[1] - margin))
-        sidebar_box.set('stroke', 'black')
-        sidebar_box.set('stroke-width', str(self.options['line-weight-heavy']))
+        sidebar.append(ET.Element('rect', attrib={
+            'x': str(left_border),
+            'y': str(margin),
+            'width': str(sidebar_width),
+            'height': str(page_dims[1] - 2 * margin),
+            'stroke': 'black',
+            'fill': 'white',
+            'stroke-width': str(self.options['line-weight-heavy'])
+        }))
         # Create title text within HTML foreignObject element (to support text wrapping)
         html_cont = ET.SubElement(sidebar, 'foreignObject')
         html_cont.set('width', str(self.get_internal_sidebar_width()))
@@ -416,6 +420,8 @@ class LightingPlot:
             root.append(canvas.lighting_filter.plot_component)
         if self.options.getboolean('show-scale-rule'):
             root.append(plothelper.RulerComponent(canvas).plot_component)
+        if self.options.getboolean('forced-masking'):
+            root.append(plothelper.PageMaskingComponent(canvas).plot_component)
         if self.options['title-block'] != 'None':
             root.append(self.get_title_block())
 
