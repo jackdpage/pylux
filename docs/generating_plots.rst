@@ -147,6 +147,31 @@ Additional Component Settings
     Similar to the ``beam-source-colour`` option, if enabled, focus points will be rendered
     according to the colour of the gel in the source fixture. Default ``False``.
 
+Visualiser Settings
+^^^^^^^^^^^^^^^^^^^
+``visualise-output``
+    When enabled, the output of fixtures can be rendered semi-realistically using SVG filters and
+    specular lighting. Note that these filters will be highly intensive on the browser used to
+    view the output, so it is recommended to only visualise the output of a few fixtures at a time.
+    Visualisation output only displays correctly in Chromium-based browsers such as Google Chrome
+    or newer versions of Microsoft Edge. Default ``False``.
+``output-fixture-filter``
+    Provide a range of fixtures which will be included in the output that is visualised. This field
+    accepts any of the normal range and filter operators that can be used to specify fixtures on the
+    command line, including groups. Default ``*``.
+``incidence-plane-colour``
+    The colour of the floor surface onto which lights are projected in the visualisation. To obtain a
+    white floor, do not set this colour to white, instead use ``render-incidence-plane``.
+    Accepts any standard HTML colours or hex codes. Default ``#222``.
+``render-incidence-plane``
+    If disabled, visualisations will be rendered onto the white background of the plot, rather than a
+    coloured floor surface. This is better for printing but can make the rendering more difficult to
+    see. Default ``True``.
+``colour-beam-pools``
+    When enabled, visualised beam pools will be coloured appropriately according to the fixture`s
+    colour tag. Disable to project pure white beam pools. Pure white pools will not show up when
+    ``render-incidence-plane`` is disabled. Default ``True``.
+
 Title Block Format
 ^^^^^^^^^^^^^^^^^^
 

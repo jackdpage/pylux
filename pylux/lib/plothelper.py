@@ -24,6 +24,7 @@ class Canvas:
         self.plaster = self._get_plaster_coord()
         self.hitbox_plot = HitboxPlot(self.get_plot_width_extent(),
                                       self.get_plot_height_extent())
+        self.lighting_filter = LightingFilterContainer(self)
 
     def get_page_dimensions(self):
         """Return the physical size of the paper.
@@ -384,6 +385,114 @@ class FixtureFocusPointComponent:
         circle.set('r', str(self._canvas.options['focus-point-radius']))
         circle.set('fill', colour)
         return circle
+
+
+class FilterIncidencePlane:
+
+    def __init__(self, canvas):
+        self._canvas = canvas
+        self.plot_component = self._get_plot_component()
+
+    def _get_plot_component(self):
+        g = ET.Element('g', attrib={'filter': 'url(#lx-render)'})
+        g.append(ET.Element('rect', attrib={
+            'x': str(self._canvas.get_plot_width_extent()[0]),
+            'y': str(self._canvas.get_plot_height_extent()[0]),
+            'width': str(self._canvas.get_plot_width_extent()[1] -
+                         self._canvas.get_plot_width_extent()[0]),
+            'height': str(self._canvas.get_plot_height_extent()[1] -
+                          self._canvas.get_plot_height_extent()[0]),
+            'fill': self._canvas.options['incidence-plane-colour']
+        }))
+        return g
+
+
+class LightingFilterContainer:
+
+    def __init__(self, canvas):
+        self._canvas = canvas
+        self.plot_component = self._get_empty_component()
+        self.filters = []
+
+    def _get_empty_component(self):
+        defs = ET.Element('defs')
+        defs.append(ET.Element('filter', attrib={'id': 'lx-render'}))
+        return defs
+
+    def add_filter(self, fixture_component):
+        if not self.filters:
+            parent_filter = None
+        else:
+            parent_filter = self.filters[-1]
+        specular_component = BeamSpecularFilterComponent(fixture_component, self._canvas)
+        composite_component = BeamCompositeFilterComponent(specular_component, parent_filter, self._canvas)
+        self.filters.append(composite_component)
+        self.plot_component.find('filter').append(specular_component.plot_component)
+        self.plot_component.find('filter').append(composite_component.plot_component)
+
+
+class BeamSpecularFilterComponent:
+
+    def __init__(self, fixture_component, canvas):
+        self._fixture_component = fixture_component
+        self._canvas = canvas
+        self.result_id = 'specular-'+self._fixture_component.fixture['ref']
+        if self._canvas.options.getboolean('colour-beam-pools'):
+            self.colour = self._fixture_component.fixture['colour']
+        else:
+            self.colour = 'White'
+        self.plot_component = self._get_specular_component()
+
+    def _get_specular_component(self):
+        specular_component = ET.Element('feSpecularLighting', attrib={
+            'lighting-color': self.colour,
+            'specularExponent': self._fixture_component.fixture.get('beam_focus',
+                                                                    self._canvas.options['default-beam-focus']),
+            'specularConstant': self._canvas.options['surface-reflectivity'],
+            'result': self.result_id
+        })
+        specular_component.append(ET.Element('feSpotLight', attrib={
+            'x': str(self._fixture_component.get_x_pos()),
+            'y': str(self._fixture_component.get_y_pos()),
+            'z': '100',
+            'pointsAtX': str(self._fixture_component.get_x_focus()),
+            'pointsAtY': str(self._fixture_component.get_y_focus()),
+            'limitingConeAngle': str(self._fixture_component.fixture.get('beam_angle',
+                                                                         self._canvas.options['default-beam-angle']))
+        }))
+        return specular_component
+
+
+class BeamCompositeFilterComponent:
+
+    def __init__(self, filter_component, link, canvas):
+        """feComposite component combining filter and link. Leave link empty to use
+        SourceGraphic. Link is another BeamCompositeFilterComponent"""
+        self._filter_component = filter_component
+        self.result_id = 'composite-'+filter_component.result_id
+        if not link:
+            self._link = 'SourceGraphic'
+            if canvas.options.getboolean('render-incidence-plane'):
+                self._k2 = '1'
+            else:
+                self._k2 = '0'
+        else:
+            self._link = link.result_id
+            self._k2 = '1'
+        self.plot_component = self._get_plot_component()
+
+    def _get_plot_component(self):
+        fe_composite = ET.Element('feComposite', attrib={
+            'in': self._link,
+            'in2': self._filter_component.result_id,
+            'result': self.result_id,
+            'k1': '0',
+            'k2': self._k2,
+            'k3': '1',
+            'k4': '0',
+            'operator': 'arithmetic'
+        })
+        return fe_composite
 
 
 class FixtureNotationBlockComponent:
@@ -872,3 +981,24 @@ class PageBorderComponent:
         border.set('stroke', 'black')
         border.set('stroke-width', self._canvas.options['line-weight-heavy'])
         return border
+
+
+class PageMaskingComponent:
+
+    def __init__(self, canvas):
+        self._canvas = canvas
+        self.plot_component = self._get_plot_component()
+
+    def _get_plot_component(self):
+        group = ET.Element('g')
+        paper = self._canvas.get_page_dimensions()
+        adj_margin = float(self._canvas.options['margin']) - float(self._canvas.options['line-weight-heavy']) / 2
+        group.append(ET.Element('rect', attrib={'x': '0', 'y': '0', 'width': str(paper[0]),
+                                                'height': str(adj_margin), 'fill': 'white'}))
+        group.append(ET.Element('rect', attrib={'x': '0', 'y': '0', 'width': str(adj_margin),
+                                                'height': str(paper[1]), 'fill': 'white'}))
+        group.append(ET.Element('rect', attrib={'x': str(paper[0] - adj_margin), 'y': '0', 'width': str(adj_margin),
+                                                'height': str(paper[1]), 'fill': 'white'}))
+        group.append(ET.Element('rect', attrib={'x': '0', 'y': str(paper[1] - adj_margin), 'width': str(paper[0]),
+                                                'height': str(adj_margin), 'fill': 'white'}))
+        return group
