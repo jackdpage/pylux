@@ -446,8 +446,9 @@ class BeamSpecularFilterComponent:
     def _get_specular_component(self):
         specular_component = ET.Element('feSpecularLighting', attrib={
             'lighting-color': self.colour,
-            'specularExponent': '4',
-            'specularConstant': '1.5',
+            'specularExponent': self._fixture_component.fixture.get('beam_focus',
+                                                                    self._canvas.options['default-beam-focus']),
+            'specularConstant': self._canvas.options['surface-reflectivity'],
             'result': self.result_id
         })
         specular_component.append(ET.Element('feSpotLight', attrib={
