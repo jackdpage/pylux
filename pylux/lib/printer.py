@@ -1,16 +1,21 @@
-def get_pretty_level_string(level):
+from pylux import document
+
+
+def get_pretty_level_string(level, doc=None, show_labels=False, raw_data=False, function=None):
     """From a level, which could be any decimal, hexadecimal or palette, return
     something which looks a bit nicer."""
-    if 'BP' in level:
-        return 'beampalette', level
-    elif 'CP' in level:
-        return 'colourpalette', level
-    elif 'FP' in level:
-        return 'focuspalette', level
-    elif 'IP' in level:
-        return 'intensitypalette', level
-    elif 'AP' in level:
-        return 'allpalette', level
+    if len(level) < 2:
+        return level
+    if level[0:2] in document.PALETTE_ABBRS:
+        formatting = document.PALETTE_ABBRS[level[0:2]]
+        if raw_data and function:
+            palette = document.get_palette_by_cue_string(doc, level)
+            display_str = document.get_palette_raw_level(function, palette)
+        elif show_labels:
+            display_str = document.get_palette_by_cue_string(doc, level).get('label', level)
+        else:
+            display_str = level
+        return formatting, display_str
     else:
         return level
 

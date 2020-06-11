@@ -158,9 +158,12 @@ class BaseExtension(InterpreterExtension):
                 func = document.get_function_by_uuid(self.interpreter.file, l)
                 fix = document.get_function_parent(self.interpreter.file, func)
                 if func['param'] == self.interpreter.config['cli']['dimmer-attribute-name'] or nips:
+                    level_str = printer.get_pretty_level_string(
+                        str(obj['levels'][l]), doc=self.interpreter.file,
+                        show_labels=self.interpreter.config['cli'].getboolean('show-reference-labels'),
+                        raw_data=self.interpreter.config['cli'].getboolean('show-raw-data'), function=func)
                     self.interpreter.msg.post_output([[printer.get_generic_ref(fix), ':'] +
-                                                      printer.get_generic_text_widget(func) + [': ',
-                                                      printer.get_pretty_level_string(str(obj['levels'][l]))]])
+                                                      printer.get_generic_text_widget(func) + [': ', level_str]])
 
     def _base_remove(self, refs, obj_type):
         """Remove an object from the document."""

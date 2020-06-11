@@ -24,6 +24,9 @@ from copy import deepcopy
 from pylux.lib import constant, exception
 
 
+PALETTE_ABBRS = {'IP': 'intensitypalette', 'CP': 'colourpalette', 'BP': 'beampalette',
+                 'FP': 'focuspalette', 'AP': 'allpalette', 'PR': 'allpalette'}
+
 # File operations. These functions load JSON documents from files and
 # deserialise into strings which can be used by object retrieval functions.
 
@@ -394,6 +397,22 @@ def set_palette_function_level(doc, palette, func, level):
         palette['levels'][fine_func[0]['uuid']] = str(lower_bit)
     else:
         palette['levels'][func['uuid']] = level
+
+
+def get_palette_by_cue_string(doc, cue_string):
+    """From the string in a cue level (eg FP1), get the corresponding palette object"""
+    if len(cue_string) < 2:
+        return
+    if cue_string[0:2] in PALETTE_ABBRS:
+        return get_by_ref(doc, PALETTE_ABBRS[cue_string[0:2]], cue_string[2:])
+
+
+def get_palette_raw_level(function, palette):
+    """Find the raw value for a function within a certain palette."""
+    if function.get('uuid') in palette['levels']:
+        return palette['levels'][function.get('uuid')]
+    else:
+        return
 
 
 def get_function_patch_location(doc, func):
