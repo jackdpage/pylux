@@ -1,5 +1,5 @@
-from pylux import clihelper, document, _ROOT
-from pylux.lib import exception
+from pylux import clihelper, document
+from pylux.lib import exception, data
 from importlib import import_module
 import os.path
 import inspect
@@ -68,23 +68,34 @@ class Interpreter:
         self.register_command(NoRefsCommand(('Program', 'ReloadConfig'), self.reload_config))
 
     def file_write(self):
+        """Save changes to the default write location. If no write location has been
+        set since opening the program, this will be the same as the load location."""
         document.write_to_file(self.file, self.config['main']['load_file'])
         self.msg.post_feedback('Saved to '+self.config['main']['load_file'])
 
     def file_writeto(self, location):
+        """Change the default write location and then save the file there. Any future
+        saves using File Write will also save to this location."""
         self.config['main']['load_file'] = location
         self.msg.post_feedback('Set default save location to '+location)
         self.file_write()
 
     def program_abort(self):
+        """Exit the program immediately without saving changes to disk."""
         raise exception.ProgramExit
 
     def program_exit(self):
+        """Save changes to the default write location, then exit the program."""
         self.file_write()
         self.program_abort()
 
     def reload_config(self):
-        self.config.read([os.path.join(_ROOT, 'default.conf')])
+        """Refresh the configuration by reloading all configuration files.
+        Configuration files named config.ini will be loaded in the following order, with latter files
+        being preferred to earlier files where options clash:
+            built-in defaults => /usr/share/pylux => ~/.pylux => ./content
+        Settings changed on a per-file basis will not be affected."""
+        self.config.read([os.path.join(data.LOCATIONS[i], 'config.ini') for i in reversed(data.PRIORITY)])
 
     def _get_init_keywords(self):
         """Get all the keywords which could be the first keyword of a command."""

@@ -11,7 +11,7 @@ setuptools.setup(
     description='Program for creating stage and entertainment lighting documentation',
     long_description=long_description,
     url='https://github.com/jackdpage/pylux',
-    package_data={'pylux': ['default.conf']},
+    package_data={'pylux': ['config.ini']},
     entry_points={
         'console_scripts': [
             'pylux = pylux.__main__:main'

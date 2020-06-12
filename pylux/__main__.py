@@ -20,7 +20,8 @@ import configparser
 import importlib
 import os.path
 import pkg_resources
-from pylux import document, _ROOT
+from pylux import document
+from pylux.lib import data
 
 
 def main():
@@ -28,7 +29,7 @@ def main():
     print('This is Pylux, version '+pkg_resources.require('pylux')[0].version)
     
     config = configparser.ConfigParser()
-    config.read([os.path.join(_ROOT, 'default.conf')])
+    config.read([os.path.join(data.LOCATIONS[i], 'config.ini') for i in reversed(data.PRIORITY)])
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-f', '--file', default=config['main']['default-file'])
     arg_parser.add_argument('-i', '--interface', default=config['main']['default-interface'])
