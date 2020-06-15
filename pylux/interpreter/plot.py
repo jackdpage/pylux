@@ -1,5 +1,5 @@
 from pylux.interpreter import InterpreterExtension, NoRefsCommand
-from pylux import document, reference, clihelper
+from pylux import OLDdocument, reference, clihelper
 from pylux.lib import data, tagger, plothelper
 import xml.etree.ElementTree as ET
 import os
@@ -10,9 +10,9 @@ import decimal
 class LightingPlot:
 
     def __init__(self, plot, options):
-        self.fixtures = document.get_by_type(plot, 'fixture')
+        self.fixtures = OLDdocument.get_by_type(plot, 'fixture')
         self.fixtures = self.get_hung_fixtures()
-        self.meta = document.get_by_type(plot, 'metadata')
+        self.meta = OLDdocument.get_by_type(plot, 'metadata')
         self.options = options
         self.plot_file = plot
 
@@ -253,9 +253,9 @@ class LightingPlot:
         # Note this will not add any headings, only the title text themselves. Add headings
         # using CSS ::before selector in the external style document
         for t in literal_eval(self.options['titles']):
-            if t in document.get_parent_metadata_object(self.plot_file)['tags']:
+            if t in OLDdocument.get_parent_metadata_object(self.plot_file)['tags']:
                 element = ET.SubElement(div, 'p')
-                element.text = document.get_metadata(self.plot_file, t)
+                element.text = OLDdocument.get_metadata(self.plot_file, t)
                 element.set('xmlns', 'http://www.w3.org/1999/xhtml')
                 element.set('class', 'title-'+t)
 
@@ -392,7 +392,7 @@ class LightingPlot:
         root.append(plothelper.CentreLineComponent(canvas).plot_component)
         root.append(plothelper.PlasterLineComponent(canvas).plot_component)
         if self.options.getboolean('draw-structures'):
-            for structure in document.get_by_type(self.plot_file, 'structure'):
+            for structure in OLDdocument.get_by_type(self.plot_file, 'structure'):
                 root.append(plothelper.StructureComponent(canvas, structure).plot_component)
         # We have to iterate through the fixtures to create the component list, before adding anything
         # to the actual plot. This is to allow the hitbox plot to be created so that notation and other

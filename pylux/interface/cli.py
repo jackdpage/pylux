@@ -1,6 +1,6 @@
 from ast import literal_eval
 import urwid
-from pylux import document, interpreter
+from pylux import document
 from pylux.lib import autocomplete, printer, exception
 import sys
 
@@ -132,17 +132,12 @@ class ApplicationView:
 
 class Application:
 
-    def __init__(self, init_globals):
-        self.file = self.initialise_file(init_globals['FILE'])
-        self.config = init_globals['CONFIG']
+    def __init__(self, interpreter):
+        self.file = interpreter.file
+        self.config = interpreter.config
         self.cmd = CommandLine(self.config)
         self.view = ApplicationView(self.cmd)
         self.message_bus = MessageBus(self.view.history, self.view.dynamic_walker, self.config)
-
-    def initialise_file(self, f):
-        s = document.get_string_from_file(f)
-        d = document.get_deserialised_document_from_string(s)
-        return d
 
     def bind(self, command_interpreter, post_function):
         self.cmd.bind(command_interpreter, post_function)
@@ -150,13 +145,14 @@ class Application:
 
     def _generate_sheet_list(self, context):
         text_widgets = []
-        if context == 'All':
-            context_objects = self.file
+        if context in document.COMMAND_STR_MAP:
+            context_objects = self.file.get_by_type(
+                document.COMMAND_STR_MAP[context]
+            )
         else:
-            context_objects = document.get_by_type(self.file, context.lower())
-        for i in context_objects:
-            string = printer.get_generic_text_widget(i)
-            text_widgets.append(urwid.Text(string))
+            context_objects = []
+        for obj in context_objects:
+            text_widgets.append(urwid.Text(obj.get_text_widget()))
         return text_widgets
 
     def _generate_history_list(self):
@@ -177,7 +173,7 @@ class Application:
         self.view.update_sheet(self._generate_history_list())
 
 
-def main(init_globals):
+def main(interpreter):
 
     def post_command(command):
         split_command = command.split()
@@ -186,12 +182,12 @@ def main(init_globals):
         elif split_command == ['CommandHistory']:
             app.display_history()
         elif len(split_command) == 1:
-            command_interpreter.process_command(command)
+            interpreter.process_command(command)
         elif (split_command[0] == split_command[1] and len(split_command) == 2):
             app.update_context(split_command[0])
         else:
             app.message_bus.clear_output()
-            command_interpreter.process_command(command)
+            interpreter.process_command(command)
             app.update_view()
 
     def generate_palette():
@@ -201,14 +197,9 @@ def main(init_globals):
             palette.append((c, conf_options[c], 'default', 'bold'))
         return palette
 
-    app = Application(init_globals)
-    command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
-    for ext in literal_eval(app.config['interpreter']['default-extensions']):
-        try:
-            command_interpreter.register_extension(ext)
-        except (exception.DependencyError, ModuleNotFoundError):
-            print('One or more dependencies for {0} were missing. Aborting load'.format(ext))
-    app.bind(command_interpreter, post_command)
+    app = Application(interpreter)
+    interpreter.subscribe_client(app.message_bus)
+    app.bind(interpreter, post_command)
     palette = generate_palette()
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), palette)
     try:

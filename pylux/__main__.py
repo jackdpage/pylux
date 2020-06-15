@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ast import literal_eval
 import argparse
 import configparser
 import importlib
 import os.path
 import pkg_resources
-from pylux import document
-from pylux.lib import data
+from pylux import OLDdocument, document, interpreter
+from pylux.lib import data, exception
 
 
 def main():
@@ -35,13 +36,23 @@ def main():
     arg_parser.add_argument('-i', '--interface', default=config['main']['default-interface'])
     args = arg_parser.parse_args()
 
-    # If the specified file or autosave file doesn't exist, create a blank json document there
+    # If the specified file or autosave file doesn't exist, create a blank
+    # document there
     if not os.path.isfile(args.file):
-        document.write_to_file([], args.file)
-
+        print('Creating new file at '+args.file)
+        OLDdocument.write_to_file([], args.file)
     config['main']['load_file'] = args.file
-    init_globals = {'FILE': args.file, 'CONFIG': config}
-
+    print('Opening document at '+args.file)
+    file = document.Document(load_path=args.file)
+    print('Initialising command interpreter')
+    server = interpreter.Interpreter(file, config)
+    for extension in literal_eval(config['interpreter']['default-extensions']):
+        try:
+            server.register_extension(extension)
+            print('Enabled {0} extension'.format(extension))
+        except (exception.DependencyError, ModuleNotFoundError):
+            print('Could not enable {0} extension due to missing' 
+                  'dependencies'.format(extension))
     try:
         print('Launching {0} interface'.format(args.interface))
         try:
@@ -52,7 +63,7 @@ def main():
     except ModuleNotFoundError:
         print('Couldn\'t source {0} interface. Reverting to fallback interface...'.format(args.interface))
         interface_module = importlib.import_module('.fallback', package='pylux.interface')
-    interface_module.main(init_globals)
+    interface_module.main(server)
 
 
 if __name__ == '__main__':

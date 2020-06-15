@@ -3,7 +3,7 @@
 
 import math
 
-from pylux import document, reference
+from pylux import OLDdocument, reference
 
 
 def tag_fixture_colour(fixture):
@@ -37,7 +37,7 @@ def tag_fixture_patch(doc, fixture):
             elif func['offset'] < start_func['offset']:
                 start_func = func
         if start_func:
-            location = document.get_function_patch_location(doc, start_func)
+            location = OLDdocument.get_function_patch_location(doc, start_func)
             fixture['patch-start'] = location
 
 

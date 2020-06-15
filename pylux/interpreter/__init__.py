@@ -1,4 +1,4 @@
-from pylux import clihelper, document
+from pylux import clihelper, OLDdocument, document
 from pylux.lib import exception, data
 from importlib import import_module
 import os.path
@@ -37,8 +37,12 @@ class NoRefsCommand:
 
 
 class InterpreterExtension:
-    def __init__(self, interpreter):
+    def __init__(self, interpreter: 'Interpreter'):
         self.interpreter = interpreter
+        self.file = interpreter.file
+        self.post_feedback = interpreter.msg.post_feedback
+        self.post_output = interpreter.msg.post_output
+        self.config = interpreter.config
         self.commands = []
         self.register_commands()
 
@@ -50,15 +54,38 @@ class InterpreterExtension:
             self.interpreter.register_command(command)
 
 
+class MessageBus:
+    def __init__(self):
+        self.clients = []
+
+    def post_feedback(self, msg):
+        for client in self.clients:
+            client.post_feedback(msg)
+
+    def post_output(self, msg, **kwargs):
+        for client in self.clients:
+            client.post_output(msg, **kwargs)
+
+    def subscribe_client(self, client):
+        self.clients.append(client)
+
+
 class Interpreter:
-    def __init__(self, file, message_bus, config):
+    def __init__(self, file: 'document.Document', config):
         self.file = file
-        self.msg = message_bus
+        self.msg = MessageBus()
         self.config = config
         self.commands = []
         self.triggers = {}
+        self.extension = {}
         self.noref_triggers = {}
         self.register_commands()
+
+    def subscribe_client(self, client):
+        """Subscribe a client to the message bus of this interpreter instance.
+        The client class must have both a post_feedback and post_output
+        method in order to handle responses."""
+        self.msg.subscribe_client(client)
 
     def register_commands(self):
         self.register_command(NoRefsCommand(('File', 'Write'), self.file_write))
@@ -70,7 +97,7 @@ class Interpreter:
     def file_write(self):
         """Save changes to the default write location. If no write location has been
         set since opening the program, this will be the same as the load location."""
-        document.write_to_file(self.file, self.config['main']['load_file'])
+        self.file.write_file(self.config['main']['load_file'])
         self.msg.post_feedback('Saved to '+self.config['main']['load_file'])
 
     def file_writeto(self, location):
@@ -196,7 +223,9 @@ class Interpreter:
                 trigger = (obj, action)
                 command = self.triggers[trigger]
                 if command.check_refs:
-                    refs = clihelper.safe_resolve_dec_references_with_filters(self.file, obj.lower(), keywords[1])
+                    refs = clihelper.safe_resolve_dec_references_with_filters(
+                        self.file, document.COMMAND_STR_MAP[obj],
+                        keywords[1])
                     if not refs:
                         self.msg.post_feedback('Error: No valid objects in given range')
                         return
@@ -227,6 +256,13 @@ class Interpreter:
         # Otherwise, the command doesn't exist
         else:
             self.command_failed(posted_command)
+
+    def call_internal(self, trigger, *args):
+        """Call a command from another extension."""
+        if trigger in self.triggers:
+            self.triggers[trigger].function(*args)
+        elif trigger in self.noref_triggers:
+            self.noref_triggers[trigger].function(*args)
 
     def register_command(self, command):
         self.commands.append(command)

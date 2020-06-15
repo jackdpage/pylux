@@ -1,5 +1,5 @@
 from pylux.interpreter import RegularCommand, InterpreterExtension
-from pylux import document
+from pylux import OLDdocument
 import pygdtf
 from pylux.lib import data
 import uuid
@@ -27,7 +27,7 @@ class TemplateExtension(InterpreterExtension):
     def _fixture_completefrom_gdtf(self, refs, template_file):
         fixture_type = pygdtf.FixtureType(template_file)
         for r in refs:
-            fix = document.get_by_ref(self.interpreter.file, 'fixture', r)
+            fix = OLDdocument.get_by_ref(self.interpreter.file, 'fixture', r)
             if 'fixture-type' not in fix:
                 fix['fixture-type'] = fixture_type.name
             if 'manufacturer' not in fix:
@@ -53,16 +53,16 @@ class TemplateExtension(InterpreterExtension):
 
     def _fixture_completefrom_json(self, refs, template_file):
         for r in refs:
-            fix = document.get_by_ref(self.interpreter.file, 'fixture', r)
-            document.complete_fixture_from_json_template(fix, template_file)
+            fix = OLDdocument.get_by_ref(self.interpreter.file, 'fixture', r)
+            OLDdocument.complete_fixture_from_json_template(fix, template_file)
 
     def _fixture_createfrom_gdtf(self, refs, template_file):
         fixture_type = pygdtf.FixtureType(template_file)
         for r in refs:
-            if document.get_by_ref(self.interpreter.file, 'fixture', r):
+            if OLDdocument.get_by_ref(self.interpreter.file, 'fixture', r):
                 self.interpreter.msg.post_feedback([['Fixture ', str(r), ' already exists. Will not overwrite']])
                 continue
-            fix = document.insert_blank_fixture(self.interpreter.file, r)
+            fix = OLDdocument.insert_blank_fixture(self.interpreter.file, r)
             fix['fixture-type'] = fixture_type.name
             fix['manufacturer'] = fixture_type.manufacturer
             fix['power'] = sum([b.power_consumption for b in fixture_type.get_geometry_by_type('Beam')])
@@ -84,10 +84,10 @@ class TemplateExtension(InterpreterExtension):
 
     def _fixture_createfrom_json(self, refs, template_file):
         for r in refs:
-            if document.get_by_ref(self.interpreter.file, 'fixture', r):
+            if OLDdocument.get_by_ref(self.interpreter.file, 'fixture', r):
                 self.interpreter.msg.post_feedback([['Fixture ', str(r), ' already exists. Will not overwrite']])
                 continue
-            document.insert_fixture_from_json_template(self.interpreter.file, r, template_file)
+            OLDdocument.insert_fixture_from_json_template(self.interpreter.file, r, template_file)
 
     def fixture_createfrom(self, refs, template):
         template_file = self._get_template_file(template)

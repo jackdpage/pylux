@@ -1,5 +1,5 @@
 from pylux.interpreter import InterpreterExtension, RegularCommand, NoRefsCommand
-from pylux import document, clihelper
+from pylux import OLDdocument, clihelper
 from pylux.lib import tagger, data
 from jinja2 import Environment, FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError
@@ -26,13 +26,13 @@ class Report:
 
         template = self.environment.get_template(template)
 
-        cues = document.get_by_type(self.file, 'cue')
-        fixtures = document.get_by_type(self.file, 'fixture')
+        cues = OLDdocument.get_by_type(self.file, 'cue')
+        fixtures = OLDdocument.get_by_type(self.file, 'fixture')
         for fixture in fixtures:
             tagger.tag_fixture_all(self.file, fixture)
         fixtures = clihelper.refsort(fixtures)
         hung_fixtures = [i for i in fixtures if is_hung(i)]
-        metadata = document.get_parent_metadata_object(self.file)['tags']
+        metadata = OLDdocument.get_parent_metadata_object(self.file)['tags']
         # Render template
         self.content = template.render(cues=cues, fixtures=fixtures,
                                        metadata=metadata, hung=hung_fixtures,

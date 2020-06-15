@@ -1,4 +1,4 @@
-from pylux import interpreter, document
+from pylux import interpreter, OLDdocument
 from pylux.lib import exception
 from ast import literal_eval
 
@@ -36,8 +36,8 @@ class Application:
         self.message_bus = MessageBus(self.config)
 
     def initialise_file(self, f):
-        s = document.get_string_from_file(f)
-        d = document.get_deserialised_document_from_string(s)
+        s = OLDdocument.get_string_from_file(f)
+        d = OLDdocument.get_deserialised_document_from_string(s)
         return d
 
 
