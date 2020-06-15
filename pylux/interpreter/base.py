@@ -235,7 +235,7 @@ class BaseExtension(InterpreterExtension):
 
     def cue_setintens(self, refs, fix_refs, level):
         """Set the level of a fixture's Intens function in a cue."""
-        frefs = clihelper.safe_resolve_dec_references(self.file, 'fixture', fix_refs)
+        frefs = clihelper.safe_resolve_dec_references_with_filters(self.file, document.Fixture, fix_refs)
         for r in refs:
             cue = self.file.get_by_ref(document.Cue, r)
             for fref in frefs:
@@ -248,9 +248,9 @@ class BaseExtension(InterpreterExtension):
         """Clone a filter."""
         return self._base_clone(refs, document.Filter, dest)
 
-    def filter_create(self, refs, k, v):
+    def filter_create(self, refs, key, value):
         """Create a new filter with given parameters."""
-        return self._base_create(refs, document.Filter, k=k, v=v)
+        return self._base_create(refs, document.Filter, key=key, value=value)
 
     def filter_remove(self, refs):
         """Remove a filter."""
@@ -336,7 +336,7 @@ class BaseExtension(InterpreterExtension):
         """Append a fixture to a group list."""
         for r in refs:
             group = self.file.get_by_ref(document.Group, r)
-            for fref in clihelper.safe_resolve_dec_references(self.file, document.Fixture, frefs):
+            for fref in clihelper.safe_resolve_dec_references_with_filters(self.file, document.Fixture, frefs):
                 fix = self.file.get_by_ref(document.Fixture, fref)
                 group.append_fixture(fix)
 

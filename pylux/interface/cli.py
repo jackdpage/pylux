@@ -1,7 +1,6 @@
-from ast import literal_eval
 import urwid
 from pylux import document
-from pylux.lib import autocomplete, printer, exception
+from pylux.lib import autocomplete, exception
 import sys
 
 

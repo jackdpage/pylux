@@ -289,7 +289,7 @@ class Filter(TopLevelObject):
     required_attributes = ['key', 'value']
 
     def get_text_widget(self):
-        return [(self.file_node_str, self.ref), ' ', str(self.__getattribute__('key')),
+        return [(self.file_node_str, str(self.ref)), ' ', str(self.__getattribute__('key')),
                 '=', str(self.__getattribute__('value'))]
 
 

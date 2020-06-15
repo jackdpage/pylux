@@ -40,7 +40,8 @@ def main():
     # document there
     if not os.path.isfile(args.file):
         print('Creating new file at '+args.file)
-        OLDdocument.write_to_file([], args.file)
+        with open(args.file, 'w') as f:
+            f.write('[]')
     config['main']['load_file'] = args.file
     print('Opening document at '+args.file)
     file = document.Document(load_path=args.file)

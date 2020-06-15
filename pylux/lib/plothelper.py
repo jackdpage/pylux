@@ -227,10 +227,10 @@ class FixtureComponent:
     def _get_symbol_name(self):
         """Get the name of the symbol for this fixture. Will always be that given
         by the symbol tag, if it exists."""
-        if 'symbol' not in self.fixture:
+        if 'symbol' not in self.fixture.data:
             return self._options['fallback-symbol']
         else:
-            return self.fixture['symbol']
+            return self.fixture.data['symbol']
 
     def _get_raw_symbol(self):
         """Get the first top-level group from the symbol file for this fixture, ready
@@ -245,13 +245,13 @@ class FixtureComponent:
         by the colour tag, unless (as is default) colour-fixtures is disabled, in which
         case it will just be white."""
         if self._options.getboolean('colour-fixtures'):
-            return self.fixture['colour']
+            return self.fixture.data['colour']
         else:
             return 'White'
 
     def is_inverted(self):
         """Is the fixture inverted i.e. rotated more than 90deg"""
-        if -90 <= float(self.fixture['rotation']) <= 90 or 270 <= float(self.fixture['rotation']) <= 360:
+        if -90 <= float(self.fixture.data['rotation']) <= 90 or 270 <= float(self.fixture.data['rotation']) <= 360:
             return False
         else:
             return True
@@ -277,17 +277,17 @@ class FixtureComponent:
 
     def get_x_pos(self):
         """Get the actual point on the canvas that this fixture should be placed."""
-        return self._canvas.centre + float(self.fixture['posX']) * 1000 * self._canvas.rscale
+        return self._canvas.centre + float(self.fixture.data['posX']) * 1000 * self._canvas.rscale
 
     def get_y_pos(self):
         """Get the actual point on the canvas that this fixture should be placed."""
-        return self._canvas.plaster - float(self.fixture['posY']) * 1000 * self._canvas.rscale
+        return self._canvas.plaster - float(self.fixture.data['posY']) * 1000 * self._canvas.rscale
 
     def get_x_focus(self):
         """Get the actual point on the canvas where the fixture is focused. If there is no
         focus point, this will be the same as the fixture position."""
         if 'focusX' in self.fixture:
-            return self._canvas.centre + float(self.fixture['focusX']) * 1000 * self._canvas.rscale
+            return self._canvas.centre + float(self.fixture.data['focusX']) * 1000 * self._canvas.rscale
         else:
             return self.get_x_pos()
 
@@ -295,7 +295,7 @@ class FixtureComponent:
         """Get the actual point on the canvas where the fixture is focused. If there is no
         focus point, this will be the same as the fixture position."""
         if 'focusY' in self.fixture:
-            return self._canvas.plaster - float(self.fixture['focusY']) * 1000 * self._canvas.rscale
+            return self._canvas.plaster - float(self.fixture.data['focusY']) * 1000 * self._canvas.rscale
         else:
             return self.get_y_pos()
 
@@ -304,7 +304,7 @@ class FixtureComponent:
         container = ET.Element('g')
         container.set('transform',
                       'translate(' + str(self.get_x_pos()) + ' ' + str(self.get_y_pos()) + ') ' +
-                      'rotate(' + str(self.fixture['rotation']) + ')')
+                      'rotate(' + str(self.fixture.data['rotation']) + ')')
         container.append(self._get_rendered_symbol())
         return container
 
@@ -327,7 +327,7 @@ class FixtureComponent:
 
     def _get_hitbox(self):
         """Get hitbox object for this fixture."""
-        rotation = math.radians(float(self.fixture['rotation']))
+        rotation = math.radians(float(self.fixture.data['rotation']))
         n = self.get_symbol_handle_offset('north')[1] - 0.5 * float(self._canvas.options['line-weight-heavy'])
         e = self.get_symbol_handle_offset('east')[0] + 0.5 * float(self._canvas.options['line-weight-heavy'])
         s = self.get_symbol_handle_offset('south')[1] + 0.5 * float(self._canvas.options['line-weight-heavy'])
@@ -436,9 +436,9 @@ class BeamSpecularFilterComponent:
     def __init__(self, fixture_component, canvas):
         self._fixture_component = fixture_component
         self._canvas = canvas
-        self.result_id = 'specular-'+self._fixture_component.fixture['ref']
+        self.result_id = 'specular-'+self._fixture_component.fixture.data['ref']
         if self._canvas.options.getboolean('colour-beam-pools'):
-            self.colour = self._fixture_component.fixture['colour']
+            self.colour = self._fixture_component.fixture.data['colour']
         else:
             self.colour = 'White'
         self.plot_component = self._get_specular_component()
@@ -446,7 +446,7 @@ class BeamSpecularFilterComponent:
     def _get_specular_component(self):
         specular_component = ET.Element('feSpecularLighting', attrib={
             'lighting-color': self.colour,
-            'specularExponent': self._fixture_component.fixture.get('beam_focus',
+            'specularExponent': self._fixture_component.fixture.data.get('beam_focus',
                                                                     self._canvas.options['default-beam-focus']),
             'specularConstant': self._canvas.options['surface-reflectivity'],
             'result': self.result_id
@@ -457,7 +457,7 @@ class BeamSpecularFilterComponent:
             'z': '100',
             'pointsAtX': str(self._fixture_component.get_x_focus()),
             'pointsAtY': str(self._fixture_component.get_y_focus()),
-            'limitingConeAngle': str(self._fixture_component.fixture.get('beam_angle',
+            'limitingConeAngle': str(self._fixture_component.fixture.data.get('beam_angle',
                                                                          self._canvas.options['default-beam-angle']))
         }))
         return specular_component
@@ -511,19 +511,19 @@ class FixtureNotationBlockComponent:
         """Get the list of required notations in order from fixture outwards. In tuple
         form of shape, text. e.g. [(6, '23'), (0, '1')] Hexagon = 6, circle = 0, etc"""
         ordered = []
-        if 'dimmer' not in self.fixture_component.fixture and 'circuit' in self.fixture_component.fixture:
+        if 'dimmer' not in self.fixture_component.fixture.data and 'circuit' in self.fixture_component.fixture.data:
             if self.canvas.options.getboolean('show-circuit-number'):
-                ordered.append((6, self.fixture_component.fixture['circuit']))
-        if 'circuit' not in self.fixture_component.fixture and 'dimmer' in self.fixture_component.fixture:
+                ordered.append((6, self.fixture_component.fixture.data['circuit']))
+        if 'circuit' not in self.fixture_component.fixture.data and 'dimmer' in self.fixture_component.fixture.data:
             if self.canvas.options.getboolean('show-dimmer-number'):
-                ordered.append((6, self.fixture_component.fixture['dimmer']))
-        if 'dimmer' in self.fixture_component.fixture and 'circuit' in self.fixture_component.fixture:
+                ordered.append((6, self.fixture_component.fixture.data['dimmer']))
+        if 'dimmer' in self.fixture_component.fixture.data and 'circuit' in self.fixture_component.fixture.data:
             if self.canvas.options.getboolean('show-circuit-number'):
-                ordered.append((6, self.fixture_component.fixture['circuit']))
+                ordered.append((6, self.fixture_component.fixture.data['circuit']))
             if self.canvas.options.getboolean('show-dimmer-number'):
-                ordered.append((4, self.fixture_component.fixture['dimmer']))
+                ordered.append((4, self.fixture_component.fixture.data['dimmer']))
         if self.canvas.options.getboolean('show-channel-number'):
-            ordered.append((0, self.fixture_component.fixture['ref']))
+            ordered.append((0, str(self.fixture_component.fixture.ref)))
         return ordered
 
     def _rotate_point(self, p, r, c=(0, 0)):
@@ -545,7 +545,7 @@ class FixtureNotationBlockComponent:
         notations will line up, which looks a lot nicer. The exception is if a fixture is
         rotated exactly 90 degrees, in which case it is probably on a boom or similar, so the
         notation will also be rotated exactly 90 degrees."""
-        rotation = float(self.fixture_component.fixture['rotation'])
+        rotation = float(self.fixture_component.fixture.data['rotation'])
         if 90 < rotation < 270:
             r = 180
         elif rotation == 90:
@@ -562,7 +562,7 @@ class FixtureNotationBlockComponent:
         are calculated based on the fixture pointing in a zero direction, and then rotated.
         Therefore we want to make sure the origin we are starting from is the origin as if it
         had not been rotated."""
-        rotation = float(self.fixture_component.fixture['rotation'])
+        rotation = float(self.fixture_component.fixture.data['rotation'])
         if 90 < rotation < 270:
             r = 180
         elif rotation == 90:
@@ -743,8 +743,8 @@ class FixtureAdditionalTextComponent:
                      float(self._canvas.options['channel-notation-spacing'])),
             'class': 'notation-additional'
         })
-        if 'gel' in self._fixture_component.fixture:
-            text.text = self._fixture_component.fixture['gel']
+        if 'gel' in self._fixture_component.fixture.data:
+            text.text = self._fixture_component.fixture.data['gel']
         return text
 
 
@@ -871,14 +871,14 @@ class StructureComponent:
         self.plot_component = self._get_plot_component()
 
     def _get_plot_component(self):
-        if 'structure_type' not in self.structure:
+        if 'structure_type' not in self.structure.data:
             return ET.Element('g')
-        elif self.structure['structure_type'] in ['batten', 'architecture']:
-            if all(i in self.structure for i in ('startX', 'startY', 'endX', 'endY')):
-                start = self._canvas.get_coordinate((float(self.structure['startX']) * 1000,
-                                                     float(self.structure['startY']) * 1000))
-                end = self._canvas.get_coordinate((float(self.structure['endX']) * 1000,
-                                                   float(self.structure['endY']) * 1000))
+        elif self.structure.data['structure_type'] in ['batten', 'architecture']:
+            if all(i in self.structure.data for i in ('startX', 'startY', 'endX', 'endY')):
+                start = self._canvas.get_coordinate((float(self.structure.data['startX']) * 1000,
+                                                     float(self.structure.data['startY']) * 1000))
+                end = self._canvas.get_coordinate((float(self.structure.data['endX']) * 1000,
+                                                   float(self.structure.data['endY']) * 1000))
                 corrected_points = self._canvas.get_line_intersection(start, end)
                 polyline = ET.Element('polyline')
                 polyline.set('stroke', 'black')

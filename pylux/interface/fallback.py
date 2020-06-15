@@ -1,8 +1,3 @@
-from pylux import interpreter, OLDdocument
-from pylux.lib import exception
-from ast import literal_eval
-
-
 class MessageBus:
 
     def __init__(self, config):
@@ -28,31 +23,11 @@ class MessageBus:
         return s
 
 
-class Application:
+def main(interpreter):
 
-    def __init__(self, init_globals):
-        self.file = self.initialise_file(init_globals['FILE'])
-        self.config = init_globals['CONFIG']
-        self.message_bus = MessageBus(self.config)
+    msg_bus = MessageBus(interpreter.config)
+    interpreter.subscribe_client(msg_bus)
 
-    def initialise_file(self, f):
-        s = OLDdocument.get_string_from_file(f)
-        d = OLDdocument.get_deserialised_document_from_string(s)
-        return d
-
-
-def main(init_globals):
-
-    def post_command(cmd):
-        command_interpreter.process_command(cmd)
-
-    app = Application(init_globals)
-    command_interpreter = interpreter.Interpreter(app.file, app.message_bus, app.config)
-    for ext in literal_eval(app.config['interpreter']['default-extensions']):
-        try:
-            command_interpreter.register_extension(ext)
-        except (exception.DependencyError, ModuleNotFoundError):
-            print('One or more dependencies for {0} were missing. Aborting load'.format(ext))
     while True:
         cmd = input('[pylux] ')
-        post_command(cmd)
+        interpreter.process_command(cmd)
