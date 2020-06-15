@@ -1,489 +1,657 @@
-# Pylux is a program for the management of lighting documentation
-# Copyright 2015 Jack Page
-#
-# Pylux is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Pylux is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-import decimal
-import itertools
+from decimal import Decimal
 import json
-import uuid
-import math
+from typing import List
+from uuid import uuid4
+from pylux.lib import exception
 from copy import deepcopy
-from pylux.lib import constant, exception
 
 
-PALETTE_ABBRS = {'IP': 'intensitypalette', 'CP': 'colourpalette', 'BP': 'beampalette',
-                 'FP': 'focuspalette', 'AP': 'allpalette', 'PR': 'allpalette'}
-
-# File operations. These functions load JSON documents from files and
-# deserialise into strings which can be used by object retrieval functions.
-
-def get_string_from_file(fp):
-    '''Load a file into a string.'''
-
-    with open(fp, 'r') as f:
-        s = f.read()
-
-    return s
+UNLABELLED_STRING = '[Unlabelled]'
+DIMMER_PARAM_NAME = 'Dimmer'
 
 
-def get_deserialised_document_from_string(s):
-    '''Deserialise a JSON document into a list.'''
+class Document:
 
-    return json.loads(s)
+    def __init__(self, load_path=None):
+        self._content = []
+        self.metadata = {}
+        if load_path:
+            self.load_file(load_path)
 
+    def load_file(self, path):
+        """Load a JSON document from a path."""
+        with open(path, 'r') as f:
+            s = f.read()
+        raw = json.loads(s)
+        for obj in raw:
+            if 'type' not in obj:
+                continue
+            obj_type = obj.pop('type')
+            if obj_type in FILE_NODE_STR_MAP:
+                self._content.append(
+                    FILE_NODE_STR_MAP[obj_type](json_object=obj))
+            elif obj_type == 'metadata':
+                self.metadata = deepcopy(obj['tags'])
+        for group in self.get_by_type(Group):
+            for n, fix in enumerate(group.fixtures):
+                if type(fix) == str:
+                    group.fixtures[n] = self.get_by_uuid(fix)
 
-def write_to_file(doc, fp):
-    '''Encode a document into a JSON file.'''
+    def write_file(self, path):
+        """Write a JSON document to a path."""
+        json_document = [i.json() for i in self._content]
+        json_document.append({'type': 'metadata', 'tags': deepcopy(self.metadata)})
+        with open(path, 'w') as f:
+            json.dump(json_document, f)
 
-    with open(fp, 'w') as f:
-        json.dump(doc, f)
+    def insert_object(self, obj):
+        """Add an object to the internal content list."""
+        self._content.append(obj)
 
+    def remove_object(self, obj):
+        """Remove an object from the internal content list."""
+        self._content.remove(obj)
 
-# Object retrieval functions. These functions search a deserialised documents
-# and return objects based on the given parameters.
-def get_by_uuid(doc, uuid):
-    '''Return object with given UUID.'''
+    def get_by_type(self, obj_type):
+        """Get an iterator of all objects of a given type."""
+        for obj in self._content:
+            if type(obj) == obj_type:
+                yield obj
 
-    for obj in doc:
-        if 'uuid' in obj:
-            if obj['uuid'] == uuid:
+    def get_by_ref(self, obj_type, ref: Decimal):
+        """Get the object of a given type with a given reference."""
+        for obj in self.get_by_type(obj_type):
+            if obj.ref == Decimal(ref):
                 return obj
 
+    def get_by_uuid(self, uuid):
+        """Get the object with the given unique identifier."""
+        for obj in self._content:
+            if obj.uuid == uuid:
+                return obj
 
-def get_by_key(doc, k):
-    '''Return objects which have a key in their dict.'''
+    def duplicate_object(self, src: 'TopLevelObject', dest_ref: Decimal):
+        """Duplicate a source object with a new reference."""
+        obj_type = type(src)
+        if self.get_by_ref(obj_type, dest_ref):
+            raise exception.ObjectAlreadyExistsError(obj_type, dest_ref)
+        new_obj = src.get_copy()
+        new_obj.ref = dest_ref
+        self._content.append(new_obj)
 
-    matched = []
-
-    for obj in doc:
-        if k in obj:
-            matched.append(obj)
-
-    return matched
-
-
-def get_by_value(doc, k, v):
-    '''Return objects which have a key matching a value.'''
-
-    matched = []
-
-    for obj in get_by_key(doc, k):
-        if str(obj[k]) == str(v):
-            matched.append(obj)
-
-    return matched
-
-
-def get_by_type(doc, type):
-    '''Return objects of a given type.'''
-
-    return get_by_value(doc, 'type', type)
-
-
-def get_by_ref(doc, type, ref):
-    """Return an object of a given type and ref."""
-
-    for obj in get_by_type(doc, type):
-        if decimal.Decimal(obj['ref']).normalize() == decimal.Decimal(ref).normalize():
-            return obj
-    return False
-
-
-def insert_blank_object(doc, obj_type, ref, **kwargs):
-    """Insert a blank object of a type. Add the default blank object featuring only
-    object type, ref and uuid. Then add any fields from the object type definition in
-    lib.constant. If the values of any of these new keys were passed as kwargs to the
-    insert_blank_object function, *and* are of the correct type (or can be converted
-    to the correct type, then set the values of the keys to those kwargs passed. If
-    no relevant kwarg was passed, just use the default value given in the object
-    definition (usually an empty list, or dict)."""
-    if str(ref) == '0':
-        ref = autoref(doc, obj_type[0])
-    new_obj = {
-        'type': obj_type[0],
-        'ref': str(ref),
-        'uuid': str(uuid.uuid4())
-    }
-    for field, default_val in obj_type[2].items():
-        if field in kwargs:
-            if type(kwargs[field]) == type(field):
-                new_obj[field] = kwargs[field]
-            else:
-                new_obj[field] = deepcopy(default_val)
-        else:
-            new_obj[field] = deepcopy(default_val)
-    doc.append(new_obj)
-
-    return new_obj
-
-
-def insert_duplicate_object(doc, obj_type, src_obj, dest):
-    """Copy an object to another, giving it a new UUID on the way."""
-    dest_potential_clash = get_by_ref(doc, src_obj['type'], dest)
-    if dest_potential_clash:
-        raise exception.ObjectAlreadyExistsError(obj_type, dest)
-
-    new_obj = deepcopy(src_obj)
-    new_obj['ref'] = dest
-    new_obj['uuid'] = str(uuid.uuid4())
-    doc.append(new_obj)
-
-    return new_obj
-
-
-def get_metadata(doc):
-    '''Return all metadata objects.'''
-
-    return get_by_type(doc, 'metadata')
-
-
-def remove_by_uuid(doc, uuid):
-    '''Remove an object with a matching UUID.'''
-    doc.remove(get_by_uuid(doc, uuid))
-
-
-def remove_by_ref(doc, type, ref):
-    """Remove an object with a specific ref."""
-    doc.remove(get_by_ref(doc, type, ref))
-
-
-def get_function_by_uuid(doc, uuid):
-    '''Get a function by its UUID.'''
-
-    for f in get_by_type(doc, 'fixture'):
-        if 'personality' in f:
-            for func in f['personality']:
-                if func['uuid'] == uuid:
+    def get_function_by_uuid(self, uuid: str):
+        """Get a function object given its unique identifier."""
+        for fix in self.get_by_type(Fixture):
+            for func in fix.functions:
+                if func.uuid == uuid:
                     return func
 
+    def get_function_parent(self, func: 'FixtureFunction'):
+        """Get the fixture that a function belongs to."""
+        for fix in self.get_by_type(Fixture):
+            for func_i in fix.functions:
+                if func.uuid == func_i.uuid:
+                    return fix
 
-def get_function_parent(doc, func):
-    '''Get the associated fixture of a function.'''
+    def get_function_patch(self, func: 'FixtureFunction'):
+        """Get the registry and address number of a functions patch."""
+        for reg in self.get_by_type(Registry):
+            addr = reg.get_function_patch(func)
+            if addr:
+                return reg, addr
 
-    for f in get_by_type(doc, 'fixture'):
-        if 'personality' in f:
-            if func in f['personality']:
-                return f
+    def unpatch_fixture_from_all(self, fixture: 'Fixture'):
+        """Unpatch a fixture from all registries."""
+        for reg in self.get_by_type(Registry):
+            reg.unpatch_fixture(fixture)
 
-
-def get_occupied_addresses(reg):
-    """Get a list of occupied addresses in a registry"""
-    return sorted([int(d) for d in reg['table'].keys()])
-
-
-def get_available_addresses(reg):
-    """Get available addresses in a registry."""
-    all = [i for i in range(1, 513)]
-    occupied = get_occupied_addresses(reg)
-    available = [i for i in all if i not in occupied]
-    return sorted(available)
-
-
-def get_start_address(reg, n):
-    """Get start address in a registry given a required length."""
-    available = get_available_addresses(reg)
-    for addr in available:
-        if set([i for i in range(addr, addr+n)]).issubset(available):
-            return addr
+    def patch_fixture(self, fixture: 'Fixture', universe: int, address: int):
+        """Patch a fixture to a universe and address, automatically creating
+        the registry if it does not already exist."""
+        reg = self.get_by_ref(Registry, Decimal(universe))
+        if not reg:
+            self.insert_object(Registry(ref=Decimal(universe)))
+            reg = self.get_by_ref(Registry, Decimal(universe))
+        reg.patch_fixture(fixture, address)
 
 
-def safe_address_fixture_by_ref(doc, fix_ref, univ, addr):
-    """Register the functions of a fixture in a specified registry, beginning from a specified address. Register
-        the functions in the order of their offset value. Alternatively, provide with address zero to
-        pick an automatic starting address. Note that by default functions will overflow into the next registry if a
-        registry is filled before all functions are registered. If registries with the specified references do not
-        exist, new ones will be created. Registries are assumed to start at zero, in ArtNet style.
-        Alternatively to providing a universe/address pair, give universe zero and any address to
-        calculate the appropriate universe."""
-    reg = get_by_ref(doc, 'registry', univ)
-    while not reg:
-        insert_blank_registry(doc, str(univ))
-        reg = get_by_ref(doc, 'registry', univ)
-    fixture = get_by_ref(doc, 'fixture', fix_ref)
-    n = len(fixture['personality'])
-    if n > 0:
-        if addr == 0:
-            addr = get_start_address(reg, n)
-        for func in fixture['personality']:
-            if addr > 512:
-                univ += 1
-                reg = get_by_ref(doc, 'registry', univ)
-                while not reg:
-                    insert_blank_registry(doc, univ)
-                    reg = get_by_ref(doc, 'registry', univ)
-                addr = addr % 512
-            reg['table'][addr] = func['uuid']
-            addr += 1
+class TopLevelObject:
+    """Base class for all generic top-level object types. All standard
+    types should extend this class. The only exceptions are objects which
+    do not have the common object structure, for example metadata."""
+
+    # The representations of the object in the JSON file and on the user
+    # facing command line, respectively.
+    file_node_str = None
+    command_str = None
+
+    # Top-level attributes used by the object. Does not include the
+    # arbitrary data dictionary. Attribute name used by the class should
+    # be the same as the node name used in the file. These can only be
+    # basic string style attributes. Anything more advanced will need to
+    # be defined separately.
+    required_attributes = []
+
+    def __init__(self, uuid: str = None, ref: Decimal = None,
+                 label: str = None, json_object: dict = None, **kwargs):
+        """
+        Create a new object, either using data provided in the
+        parameters, or in the form of a JSON object, from which the
+        object will be created. This super init function should be
+        called *after* any object-specific attributes are defined in
+        the subclass, otherwise the JSON may be read before attributes
+        have been defined.
+        :param uuid: unique identifier of the object
+        :param ref: decimal reference number
+        :param label: human-facing label/name of the object
+        :param json_object: a JSON dict from which the object can be
+        created
+        """
+        if not uuid:
+            self.uuid = str(uuid4())
+        else:
+            self.uuid = uuid
+        self.ref = ref
+        self.label = label
+        for k in self.required_attributes:
+            self.__setattr__(k, kwargs.get(k, None))
+        if json_object:
+            self._read_json(json_object)
+
+    def _read_json(self, json_object):
+        """
+        Fill the object data using information from a JSON object. Call
+        this super function to apply the standard object attributes
+        before adding object-specific attributes in the subclass.
+        :param json_object: JSON dict as passed from __init__
+        """
+        self.uuid = json_object.get('uuid')
+        self.ref = Decimal(json_object.get('ref'))
+        self.label = json_object.get('label', None)
+        for k in self.required_attributes:
+            self.__setattr__(k, json_object.get(k, None))
+
+    def json(self):
+        """Create a dict/list JSON-style format which can be serialised
+        by the JSON parser for writing to disk."""
+        json_object = {'type': self.file_node_str, 'uuid': self.uuid, 'ref': str(self.ref)}
+        if self.label:
+            json_object['label'] = self.label
+        for k in self.required_attributes:
+            if self.__getattribute__(k):
+                json_object[k] = self.__getattribute__(k)
+        return json_object
+
+    def get_text_widget(self):
+        """
+        Provides the text widget for the object in standard printed form
+        with no additional processing. The default method returns just
+        the ref, formatted according to file_node_str, and the label,
+        if present.
+        :return: list of strings and tuples in the defined form
+        """
+        if not self.label:
+            label = UNLABELLED_STRING
+        else:
+            label = self.label
+        return [(self.file_node_str, str(self.ref)), ' ', label]
+
+    def get_copy(self):
+        """Return a copy of this object, with changes to features which
+        are required to stay unique."""
+        new_instance = deepcopy(self)
+        new_instance.uuid = str(uuid4())
+        return new_instance
 
 
-def unpatch_fixture_by_ref(doc, fix_ref):
-    fix = get_by_ref(doc, 'fixture', fix_ref)
-    func_ids = [func['uuid'] for func in fix['personality']]
-    for reg in get_by_type(doc, 'registry'):
-        for d in deepcopy(reg['table']):
-            if reg['table'][d] in func_ids:
-                del reg['table'][d]
+class ArbitraryDataObject(TopLevelObject):
+    """A special type of top level object which also has an arbitrary
+    data dictionary."""
+
+    omitted_data_tags = ['type', 'ref', 'uuid', 'label']
+
+    def __init__(self, data: dict = None, *args, **kwargs):
+        if not data:
+            self.data = {}
+        else:
+            self.data = data
+        super().__init__(*args, **kwargs)
+
+    def _read_json(self, json_object):
+        super()._read_json(json_object)
+        for k, v in json_object.items():
+            if k not in self.omitted_data_tags:
+                self.data[k] = v
+
+    def json(self):
+        """Create a dict/list JSON-style format which can be serialised
+        by the JSON parser for writing to disk."""
+        json_object = super().json()
+        for k, v in self.data.items():
+            json_object[k] = v
+        return json_object
 
 
-def insert_duplicate_fixture_by_ref(doc, src_ref, dest_ref):
-    dest = deepcopy(get_by_ref(doc, 'fixture', src_ref))
-    dest['uuid'] = str(uuid.uuid4())
-    dest['ref'] = dest_ref
-    if 'personality' in dest:
-        for func in dest['personality']:
-            func['uuid'] = str(uuid.uuid4())
-    doc.append(dest)
+class Cue(ArbitraryDataObject):
+
+    file_node_str = 'cue'
+    command_str = 'Cue'
+    omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
+        ['cue_list', 'levels']
+    required_attributes = ['cue_list']
+
+    def __init__(self, levels: List['FunctionLevel'] = None, *args, **kwargs):
+        if not levels:
+            self.levels = []
+        else:
+            self.levels = levels
+        super().__init__(*args, **kwargs)
+
+    def _read_json(self, json_object):
+        super()._read_json(json_object)
+        for func, val in json_object['levels'].items():
+            self.levels.append(FunctionLevel(func, val))
+
+    def json(self):
+        json_object = super().json()
+        levels = {}
+        for l in self.levels:
+            levels[l.function] = l.value
+        json_object['levels'] = levels
+        return json_object
+
+    def get_text_widget(self):
+        if not self.label:
+            label = UNLABELLED_STRING
+        else:
+            label = self.label
+        return [(self.file_node_str, str(self.ref)), ' ', label, ' (',
+                str(len(self.levels)), ' levels)']
 
 
-def fill_missing_function_uuids(fix):
-    """Add new UUIDs to the functions of a fixture where they are missing."""
-    if 'personality' in fix:
-        for func in fix['personality']:
-            if 'uuid' not in func:
-                func['uuid'] = str(uuid.uuid4())
+class FunctionLevel:
+
+    def __init__(self, function: str = None, value: str = None):
+        self.function = function
+        self.value = value
 
 
-def find_fixture_intens(fix):
-    if 'personality' in fix:
-        for func in fix['personality']:
-            if func['param'] == 'Dimmer':
+class CueList:
+
+    def __init__(self, ref: Decimal = None):
+        self.ref = ref
+
+
+class Filter(TopLevelObject):
+
+    file_node_str = 'filter'
+    command_str = 'Filter'
+    required_attributes = ['key', 'value']
+
+    def get_text_widget(self):
+        return [(self.file_node_str, str(self.ref)), ' ', str(self.__getattribute__('key')),
+                '=', str(self.__getattribute__('value'))]
+
+
+class Fixture(ArbitraryDataObject):
+
+    file_node_str = 'fixture'
+    command_str = 'Fixture'
+    omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
+        ['personality']
+
+    def __init__(self, functions: List['FixtureFunction'] = None,
+                 *args, **kwargs):
+        if not functions:
+            self.functions = []
+        else:
+            self.functions = functions
+        super().__init__(*args, **kwargs)
+
+    def _read_json(self, json_object):
+        super()._read_json(json_object)
+        for func in json_object.get('personality'):
+            self.functions.append(FixtureFunction(
+                func.get('param'), func.get('offset'), func.get('size', 1),
+                func.get('uuid')
+            ))
+
+    def json(self):
+        json_object = super().json()
+        personality = []
+        for func in self.functions:
+            if not func.offset:
+                offset = 0
+                size = 0
+            else:
+                offset = func.offset[0]
+                size = len(func.offset)
+            personality.append({'param': func.parameter, 'offset': offset,
+                                'size': size, 'uuid': func.uuid})
+        json_object['personality'] = personality
+        return json_object
+
+    def get_text_widget(self):
+        fixture_type = self.data.get('fixture-type', 'n/a')
+        if not self.label:
+            return [('fixture', str(self.ref)), ' ', fixture_type]
+        else:
+            return [('fixture', str(self.ref)), ' ', fixture_type, ' - ',
+                    self.label]
+
+    def get_copy(self):
+        new_instance = deepcopy(self)
+        new_instance.uuid = str(uuid4())
+        for func in new_instance.functions:
+            func.uuid = str(uuid4())
+        return new_instance
+
+    def get_dimmer_function(self):
+        """Return the function, if any, that corresponds to the dimmer."""
+        return self.get_function(DIMMER_PARAM_NAME)
+
+    def physical_functions(self):
+        """Return a list of functions that are not virtual."""
+        return [i for i in self.functions if i.offset]
+
+    def dmx_size(self):
+        return sum([len(i.offset) for i in self.physical_functions()])
+
+    def get_function(self, param):
+        """Get a function by parameter name. There is no requirement that
+        parameter names are unique, so it can't be guaranteed that this is
+        the only function that exists with that parameter name, however,
+        for most use cases it will be sufficient."""
+        for func in self.functions:
+            if func.parameter == param:
                 return func
-    return None
 
 
-def insert_blank_fixture(doc, ref):
-    return insert_blank_object(doc, constant.FIXTURE_TYPE, ref)
+class FixtureFunction:
+
+    def __init__(self, parameter: str = None, offset: int = None,
+                 size=1, uuid=None):
+        """
+        A single parameter of a fixture. This should be representative
+        of an 8 or 16-bit DMX channel. For fixtures which have multiple
+        logical functions on a single DMX channel, provide a more
+        general parameter name or choose the dominant parameter for
+        that channel.
+        :param parameter: the general function of this parameter,
+        following standard GDTF conventions
+        :param offset: the starting offset of this parameter in the
+        DMX profile of the fixture. Omit or set to zero if this is a
+        virtual parameter that does not actually use a DMX channel.
+        :param size: the number of DMX channels occupied by this
+        parameter. Default is 1 for 8-bit parameters. 2 indicates
+        a 16-bit parameter. It is assumed that greater and lesser
+        bits will be patched consecutively.
+        :param uuid: Provide a UUID if it needs to be defined
+        explicitly, otherwise one will be generated automatically.
+        """
+        if uuid:
+            self.uuid = uuid
+        else:
+            self.uuid = str(uuid4())
+        self.parameter = parameter
+        if not offset:
+            self.offset = None
+        else:
+            self.offset = [offset + n for n in range(0, size)]
+
+    def get_text_widget(self):
+        if self.offset:
+            return [('function', ','.join([str(i) for i in self.offset])), ' ',
+                    self.parameter]
+        else:
+            return [('function', 'X'), ' ', self.parameter]
 
 
-def insert_fixture_from_json_template(doc, ref, template_file):
-    fixture = insert_blank_fixture(doc, ref)
-    with open(template_file) as f:
-        template = json.load(f)
-        for k, v in template.items():
-            fixture[k] = v
-    if 'personality' in fixture:
-        for function in fixture['personality']:
-            function['uuid'] = str(uuid.uuid4())
+class Group(TopLevelObject):
+
+    file_node_str = 'group'
+    command_str = 'Group'
+
+    def __init__(self, fixtures: List['Fixture'] = None, *args, **kwargs):
+        if not fixtures:
+            self.fixtures = []
+        else:
+            self.fixtures = fixtures
+        super().__init__(*args, **kwargs)
+
+    def _read_json(self, json_object):
+        super()._read_json(json_object)
+        for fix in json_object['fixtures']:
+            self.fixtures.append(fix)
+
+    def json(self):
+        json_object = super().json()
+        json_object['fixtures'] = [i.uuid for i in self.fixtures]
+        return json_object
+
+    def get_text_widget(self):
+        if not self.label:
+            label = UNLABELLED_STRING
+        else:
+            label = self.label
+        return [(self.file_node_str, str(self.ref)), ' ', label, ' (',
+                str(len(self.fixtures)), ' fixtures)']
+
+    def append_fixture(self, fixture: 'Fixture'):
+        """Add a fixture to the end of the group listing."""
+        self.fixtures.append(fixture)
 
 
-def complete_fixture_from_json_template(fix, template_file):
-    with open(template_file) as f:
-        template = json.load(f)
-        if 'personality' in template and 'personality' not in fix:
-            fix['personality'] = template['personality']
-            for func in fix['personality']:
-                func['uuid'] = str(uuid.uuid4())
-        for k in template:
-            if k not in fix:
-                fix[k] = template[k]
+class Palette(TopLevelObject):
+
+    palette_prefix = ''
+
+    def __init__(self, levels: List['FunctionLevel'] = None, *args, **kwargs):
+        if not levels:
+            self.levels = []
+        else:
+            self.levels = levels
+        super().__init__(*args, **kwargs)
+
+    def _read_json(self, json_object):
+        super()._read_json(json_object)
+        for func, val in json_object['levels'].items():
+            self.levels.append(FunctionLevel(func, val))
+
+    def json(self):
+        json_object = super().json()
+        levels = {}
+        for l in self.levels:
+            levels[l.function] = l.value
+        json_object['levels'] = levels
+        return json_object
+
+    def get_text_widget(self):
+        if not self.label:
+            label = UNLABELLED_STRING
+        else:
+            label = self.label
+        return [(self.file_node_str, self.palette_prefix + str(self.ref)), ' ',
+                label, ' (', str(len(self.levels)), ' levels)']
+
+    def get_function_level(self, func):
+        for l in self.levels:
+            if func.uuid == l.function:
+                return l.value
 
 
-def update_fixture_from_json_template(fix, template_file):
-    with open(template_file) as f:
-        template = json.load(f)
-        for k, v in template.items():
-            if k != 'personality':
-                fix[k] = v
+class AllPalette(Palette):
+
+    file_node_str = 'allpalette'
+    command_str = 'AllPalette'
+    palette_prefix = 'PR'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-def insert_blank_group(doc, ref):
-    return insert_blank_object(doc, constant.GROUP_TYPE, ref)
+class BeamPalette(Palette):
+
+    file_node_str = 'beampalette'
+    command_str = 'BeamPalette'
+    palette_prefix = 'BP'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-def group_append_fixture_by_ref(doc, group, fix_ref):
-    fix = get_by_ref(doc, 'fixture', fix_ref)
-    if fix:
-        group['fixtures'].append(fix['uuid'])
+class ColourPalette(Palette):
+
+    file_node_str = 'colourpalette'
+    command_str = 'ColourPalette'
+    palette_prefix = 'CP'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-def insert_blank_registry(doc, ref):
-    registry = {
-        'type': 'registry',
-        'ref': str(ref),
-        'uuid': str(uuid.uuid4()),
-        'table': {}
+class FocusPalette(Palette):
 
-    }
-    doc.append(registry)
-    return registry
+    file_node_str = 'focuspalette'
+    command_str = 'FocusPalette'
+    palette_prefix = 'FP'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-def insert_blank_cue(doc, ref):
-    return insert_blank_object(doc, constant.CUE_TYPE, ref)
+class IntensityPalette(Palette):
+
+    file_node_str = 'intensitypalette'
+    command_str = 'IntensityPalette'
+    palette_prefix = 'IP'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-def set_cue_fixture_level(cue, fix, level):
-    """Set the level of a fixture in a cue. Automatically decides on the function by finding the
-    Intens function."""
-    intens = find_fixture_intens(fix)
-    cue['levels'][intens['uuid']] = level
+class Registry(TopLevelObject):
+
+    file_node_str = 'registry'
+    command_str = 'Registry'
+
+    def __init__(self, table: dict = None, *args, **kwargs):
+        if not table:
+            self.table = {}
+        else:
+            self.table = table
+        super().__init__(*args, **kwargs)
+
+    def _read_json(self, json_object):
+        super()._read_json(json_object)
+        for k, v in json_object.get('table', {}).items():
+            self.table[int(k)] = v
+
+    def json(self):
+        json_object = super().json()
+        json_object['table'] = deepcopy(self.table)
+        return json_object
+
+    def get_text_widget(self):
+        return ['Universe ', (self.file_node_str, str(self.ref)), ' - ',
+                str(len(self.table)), ' occupied']
+
+    def get_occupied(self):
+        """Return a list of occupied addresses."""
+        return sorted([int(d) for d in self.table.keys()])
+
+    def get_available(self):
+        """Return a list of available addresses in the DMX512 space."""
+        all_addrs = [i for i in range(1, 513)]
+        occupied = self.get_occupied()
+        available = [i for i in all_addrs if i not in occupied]
+        return sorted(available)
+
+    def get_start_address(self, n):
+        """Get the earliest available start address for a fixture
+        requiring n channels."""
+        available = self.get_available()
+        for addr in available:
+            if set([i for i in range(addr, addr + n)]).issubset(available):
+                return addr
+        raise exception.InsufficientAvailableChannels(self, n)
+
+    def is_valid_start(self, start, n):
+        """Given a start address and n required channels, will the
+        patch fit?"""
+        available = self.get_available()
+        if set(range(start, start + n)).issubset(available):
+            return True
+
+    def get_function_patch(self, func: 'FixtureFunction'):
+        """Get the address number of a function in the registry table,
+        if it exists there."""
+        for addr, uuid in self.table.items():
+            if uuid == func.uuid:
+                return addr
+
+    def get_fixture_patch(self, fix: 'Fixture'):
+        """Get an iterator of the patch locations of any functions
+        patched in this registry of a given fixture."""
+        func_uuids = [func.uuid for func in fix.functions]
+        for addr, uuid in self.table.items():
+            if uuid in func_uuids:
+                yield addr
+
+    def unpatch_function(self, func: 'FixtureFunction'):
+        """Remove a function from the registry table, if it is
+        patched there."""
+        addr = self.get_function_patch(func)
+        if addr:
+            del self.table[addr]
+
+    def patch_fixture(self, fixture: 'Fixture', addr: int = None):
+        """Patch all channels of a fixture from a given start address,
+        or provide no start address or zero to patch automatically."""
+        if not addr:
+            addr = self.get_start_address(fixture.dmx_size())
+        if not self.is_valid_start(addr, fixture.dmx_size()):
+            raise exception.InsufficientAvailableChannels(self, fixture.dmx_size())
+        for func in fixture.physical_functions():
+            for i in range(0, len(func.offset)):
+                self.table[addr + i] = func.uuid
+            addr += len(func.offset)
+
+    def unpatch_fixture(self, fixture: 'Fixture'):
+        """Unpatch all channels of a fixture which appear in this
+        registry."""
+        patch_addrs = [i for i in self.get_fixture_patch(fixture)]
+        for addr in patch_addrs:
+            del self.table[addr]
 
 
-def set_cue_fixture_level_by_fixture_ref(doc, cue, fix_ref, level):
-    """Set cue fixture level as in set_cue_fixture_level, except accept a fixture reference rather than
-    fixture object."""
-    fix = get_by_ref(doc, 'fixture', fix_ref)
-    set_cue_fixture_level(cue, fix, level)
+class Structure(ArbitraryDataObject):
+
+    file_node_str = 'structure'
+    command_str = 'Structure'
+    omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
+        ['structure_type']
+
+    def __init__(self, structure_type: str = None, *args, **kwargs):
+        super().__init__(data={'structure_type': structure_type},
+                         *args, **kwargs)
+
+    def get_text_widget(self):
+        if not self.label:
+            label = UNLABELLED_STRING
+        else:
+            label = self.label
+        structure_type = self.data.get('structure_type', 'no type')
+        if not structure_type:
+            structure_type = 'no type'
+        return [(self.file_node_str, str(self.ref)), ' ', label, ' (',
+                structure_type, ')']
 
 
-def set_cue_function_level(doc, cue, func, level):
-    """Set the level of a function, in a cue."""
-    fix = get_function_parent(doc, func)
-    # Check to see if the function is a 16 bit function by checking for
-    # functions with the (16b) suffix with the same name
-    fine_func = get_by_value(fix['personality'], 'param', func['param'] + ' (16b)')
-    if fine_func:
-        # Logic to determine 16bit values
-        try:
-            upper_bit = math.floor(int(level) / 256)
-            lower_bit = int(level) % 256
-        except ValueError:
-            upper_bit = level
-            lower_bit = level
-        cue['levels'][func['uuid']] = str(upper_bit)
-        cue['levels'][fine_func[0]['uuid']] = str(lower_bit)
-    else:
-        cue['levels'][func['uuid']] = level
-
-
-def insert_blank_intensity_palette(doc, ref):
-    return insert_blank_object(doc, constant.INTENSITY_PALETTE_TYPE, ref)
-
-
-def insert_blank_focus_palette(doc, ref):
-    return insert_blank_object(doc, constant.FOCUS_PALETTE_TYPE, ref)
-
-
-def insert_blank_colour_palette(doc, ref):
-    return insert_blank_object(doc, constant.COLOUR_PALETTE_TYPE, ref)
-
-
-def insert_blank_beam_palette(doc, ref):
-    return insert_blank_object(doc, constant.BEAM_PALETTE_TYPE, ref)
-
-
-def insert_blank_all_palette(doc, ref):
-    return insert_blank_object(doc, constant.ALL_PALETTE_TYPE, ref)
-
-
-def set_palette_function_level(doc, palette, func, level):
-    """Set the level of a function, in a palette."""
-    fix = get_function_parent(doc, func)
-    # Check to see if the function is a 16 bit function by checking for
-    # functions with the (16b) suffix with the same name
-    fine_func = get_by_value(fix['personality'], 'param', func['param'] + ' (16b)')
-    if fine_func:
-        # Logic to determine 16bit values
-        try:
-            upper_bit = math.floor(int(level) / 256)
-            lower_bit = int(level) % 256
-        except ValueError:
-            upper_bit = level
-            lower_bit = level
-        palette['levels'][func['uuid']] = str(upper_bit)
-        palette['levels'][fine_func[0]['uuid']] = str(lower_bit)
-    else:
-        palette['levels'][func['uuid']] = level
-
-
-def get_palette_by_cue_string(doc, cue_string):
-    """From the string in a cue level (eg FP1), get the corresponding palette object"""
-    if len(cue_string) < 2:
-        return
-    if cue_string[0:2] in PALETTE_ABBRS:
-        return get_by_ref(doc, PALETTE_ABBRS[cue_string[0:2]], cue_string[2:])
-
-
-def get_palette_raw_level(function, palette):
-    """Find the raw value for a function within a certain palette."""
-    if function.get('uuid') in palette['levels']:
-        return palette['levels'][function.get('uuid')]
-    else:
-        return
-
-
-def get_function_patch_location(doc, func):
-    """Finds a function in all registries and returns registry, address tuple."""
-    locations = []
-    for reg in get_by_type(doc, 'registry'):
-        for d in reg['table']:
-            if reg['table'][d] == func['uuid']:
-                return reg['ref'], d
-
-
-def insert_filter_with_params(doc, ref, k, v):
-    """Create a new filter with the given parameters."""
-    return insert_blank_object(doc, constant.FILTER_TYPE, ref, k=k, v=v)
-
-
-def autoref(doc, type):
-    """Return an available reference number for a given type."""
-    used_refs = []
-    for obj in get_by_type(doc, type):
-        used_refs.append(obj['ref'])
-
-    for n in itertools.count(start=1):
-        if str(n) not in used_refs:
-            return str(n)
-
-
-def create_parent_metadata_object(doc):
-    doc.append(
-        {'type': 'metadata',
-         'tags': {}}
-    )
-
-
-def parent_metadata_object_exists(doc):
-    if len(get_by_type(doc, 'metadata')) > 0:
-        return True
-    else:
-        return False
-
-
-def get_parent_metadata_object(doc):
-    try:
-        metadata = get_by_type(doc, 'metadata')[0]
-    except IndexError:
-        create_parent_metadata_object(doc)
-        metadata = get_by_type(doc, 'metadata')[0]
-    finally:
-        return metadata
-
-
-def remove_metadata(doc, k):
-    if parent_metadata_object_exists(doc):
-        obj = get_parent_metadata_object(doc)
-        if k in obj['tags']:
-            del obj['tags'][k]
-
-
-def set_metadata(doc, k, v):
-    """Set metadata value"""
-    if not parent_metadata_object_exists(doc):
-        create_parent_metadata_object(doc)
-    get_parent_metadata_object(doc)['tags'][k] = v
-
-
-def get_metadata(doc, k):
-    """Get a metadata value if it exists, else return None"""
-    if not parent_metadata_object_exists(doc):
-        return None
-    metadata_object = get_parent_metadata_object(doc)
-    if k not in metadata_object['tags']:
-        return None
-    else:
-        return metadata_object['tags'][k]
+ALL_TYPES = [Cue, Fixture, Filter, Group, AllPalette, BeamPalette,
+             ColourPalette, FocusPalette, IntensityPalette, Registry,
+             Structure]
+COMMAND_STR_MAP = {obj.command_str: obj for obj in ALL_TYPES}
+FILE_NODE_STR_MAP = {obj.file_node_str: obj for obj in ALL_TYPES}
+PALETTE_PREFIXES = {obj.palette_prefix: obj for obj in ALL_TYPES if
+                    obj.__base__ == Palette}

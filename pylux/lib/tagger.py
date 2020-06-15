@@ -3,42 +3,35 @@
 
 import math
 
-from pylux import document, reference
+from pylux import reference
 
 
 def tag_fixture_colour(fixture):
-    if 'gel' in fixture:
+    if 'gel' in fixture.data:
         try:
-            fixture['colour'] = reference.gel_colours[fixture['gel']]
+            fixture.data['colour'] = reference.gel_colours[fixture.data['gel']]
         except KeyError:
-            fixture['colour'] = 'White'
+            fixture.data['colour'] = 'White'
     else:
-        fixture['colour'] = 'White'
+        fixture.data['colour'] = 'White'
 
 
 def tag_fixture_rotation(fixture):
     # If we can't calculate the rotation (e.g. a moving head would not have any focus values) then set the rotation
     # to zero to have the fixture point in its default orientation. Unless the rotation tag already exists, in which
     # case leave it as-is in case it was added manually.
-    if 'posX' in fixture and 'posY' in fixture and 'focusX' in fixture and 'focusY' in fixture:
-        pos = [float(fixture['posX']), float(fixture['posY'])]
-        focus = [float(fixture['focusX']), float(fixture['focusY'])]
-        fixture['rotation'] = 90 - math.degrees(math.atan2(focus[1] - pos[1], focus[0] - pos[0]))
-    elif 'rotation' not in fixture:
-        fixture['rotation'] = 0
+    if 'posX' in fixture.data and 'posY' in fixture.data and 'focusX' in fixture.data and 'focusY' in fixture.data:
+        pos = [float(fixture.data['posX']), float(fixture.data['posY'])]
+        focus = [float(fixture.data['focusX']), float(fixture.data['focusY'])]
+        fixture.data['rotation'] = 90 - math.degrees(math.atan2(focus[1] - pos[1], focus[0] - pos[0]))
+    elif 'rotation' not in fixture.data:
+        fixture.data['rotation'] = 0
 
 
 def tag_fixture_patch(doc, fixture):
-    if 'personality' in fixture:
-        start_func = None
-        for func in fixture['personality']:
-            if not start_func:
-                start_func = func
-            elif func['offset'] < start_func['offset']:
-                start_func = func
-        if start_func:
-            location = document.get_function_patch_location(doc, start_func)
-            fixture['patch-start'] = location
+    if len(fixture.functions):
+        patch = doc.get_function_patch(fixture.functions[0])
+        fixture.data['patch_start'] = patch
 
 
 def tag_fixture_all(doc, fixture):

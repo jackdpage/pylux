@@ -18,6 +18,7 @@
 from pylux.lib import printer
 from pylux import document
 import decimal
+from decimal import Decimal
 import re
 
 
@@ -40,7 +41,7 @@ def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
       given type that satisfy filter 2, and excluding objects 2 through 4
       (including all objects with decimal references in this range)"""
 
-    obj_list = document.get_by_type(doc, obj_type)
+    obj_list = doc.get_by_type(obj_type)
     ranges = []
     points = []
     groups = []
@@ -54,7 +55,7 @@ def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
     for fr in re.findall(filter_re, user_input):
         for r in fr[1].split(','):
             if '>' in r:
-                ranges.append((fr[0], decimal.Decimal(r.split('>')[0]), decimal.Decimal(r.split('>')[1])))
+                ranges.append((fr[0], Decimal(r.split('>')[0]), Decimal(r.split('>')[1])))
             elif r == '*':
                 catchalls.append(fr[0])
             elif '@' in r:
@@ -77,93 +78,64 @@ def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
                 pass
     # Turn the groups into a list of fixture refs, but only if the type is fixture.
     # Filters applied to groups are also checked at this point.
-    if obj_type == 'fixture':
+    if obj_type is document.Fixture:
         for g in groups:
             if g[0]:
-                filt = document.get_by_ref(doc, 'filter', g[0])
+                filt = doc.get_by_ref(document.Filter, Decimal(g[0]))
             else:
                 filt = None
-            group = document.get_by_ref(doc, 'group', g[1])
-            for fix_uuid in group['fixtures']:
-                fix = document.get_by_uuid(doc, fix_uuid)
+            group = doc.get_by_ref(document.Group, Decimal(g[1]))
+            for fix in group.fixtures:
                 if filt:
                     try:
-                        if fix[filt['k']] == filt['v']:
-                            group_members.append(decimal.Decimal(fix['ref']))
-                    except KeyError:
+                        if fix.data[filt.key] == filt.value:
+                            group_members.append(decimal.Decimal(fix.ref))
+                    except KeyError or AttributeError:
                         pass
                 else:
-                    group_members.append(decimal.Decimal(fix['ref']))
+                    group_members.append(decimal.Decimal(fix.ref))
     # That's all the prep done, now check which of the objects in our all objects
     # list satisfies the ranges and points we've created.
     for obj in obj_list:
-        ref = decimal.Decimal(obj['ref'])
+        ref = decimal.Decimal(obj.ref)
         if 0 in catchalls:
             calculated_refs.append(ref)
             continue
         elif len(catchalls):
             for i in catchalls:
                 if i:
-                    filt = document.get_by_ref(doc, 'filter', i)
+                    filt = doc.get_by_ref(document.Filter, Decimal(i))
                     try:
-                        if obj[filt['k']] == filt['v']:
+                        if obj.data[filt.key] == filt.value:
                             calculated_refs.append(ref)
                             continue
-                    except KeyError:
+                    except KeyError or AttributeError:
                         pass
         if ref in group_members:
             calculated_refs.append(ref)
             continue
         for r in ranges:
             if r[0]:
-                filt = document.get_by_ref(doc, 'filter', r[0])
+                filt = doc.get_by_ref(document.Filter, Decimal(r[0]))
                 try:
-                    if r[1] <= ref <= r[2] and obj[filt['k']] == filt['v']:
+                    if r[1] <= ref <= r[2] and obj.data[filt.key] == filt.value:
                         calculated_refs.append(ref)
                         break
-                except KeyError:
+                except KeyError or AttributeError:
                     pass
             elif r[1] <= ref <= r[2]:
                 calculated_refs.append(ref)
                 break
         for p in points:
             if p[0]:
-                filt = document.get_by_ref(doc, 'filter', p[0])
+                filt = doc.get_by_ref(document.Filter, Decimal(p[0]))
                 try:
-                    if p[1] == ref and obj[filt['k']] == filt['v']:
+                    if p[1] == ref and obj.data[filt.key] == filt.value:
                         calculated_refs.append(ref)
                         break
-                except KeyError:
+                except KeyError or AttributeError:
                     pass
             elif p[1] == ref:
-                calculated_refs.append(ref)
-                break
-
-    return calculated_refs
-
-
-def safe_resolve_dec_references(doc, type, user_input):
-    """Parse decimal reference input.
-
-    Takes the user input string as a list of comma-separated values, the values
-    being either individual references or ranges of references represented by a
-    colon. Resloves this collection of references into a list of valid
-    string representations of decimals. Checks that each of these references
-    actually represents an object in the show file, and returns the resulting
-    list."""
-    calculated_refs = []
-    split_input = user_input.split(',')
-    ranges = [(decimal.Decimal(i.split('>')[0]), decimal.Decimal(i.split('>')[1])) for i in split_input if '>' in i]
-    points = [decimal.Decimal(i) for i in split_input if i.isdigit()]
-    obj_list = document.get_by_type(doc, type)
-    for obj in obj_list:
-        ref = decimal.Decimal(obj['ref'])
-        for r in ranges:
-            if r[0] <= ref <= r[1]:
-                calculated_refs.append(ref)
-                break
-        for p in points:
-            if p == ref:
                 calculated_refs.append(ref)
                 break
 
@@ -178,12 +150,6 @@ def resolve_references(user_input, precision=1):
     return objects. Parse comma separated values such as a,b,c 
     and greater-than sign separated ranges such as a>b, or a combination of
     the two such as a,b>c,d>e,f.
-
-    Args:
-        user_input: the input string that the user entered.
-
-    Returns:
-        A list containing a list of integers.
     """
     reference_list = []
     if len(user_input) > 0:
@@ -205,6 +171,7 @@ def resolve_dec_references(user_input):
     """Decimal version of the above."""
     return resolve_references(user_input, precision=DECIMAL_PRECISION)
 
+
 def refsort(objs):
     """Sort a list of objects by their reference number"""
-    return sorted(objs, key=lambda i: decimal.Decimal(i['ref']))
+    return sorted(objs, key=lambda i: decimal.Decimal(i.ref))

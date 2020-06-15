@@ -22,20 +22,18 @@ class Report:
             options: dict of options
         """
         def is_hung(f):
-            return True if 'posX' in f and 'posY' in f else False
+            return True if 'posX' in f.data and 'posY' in f.data else False
 
         template = self.environment.get_template(template)
 
-        cues = document.get_by_type(self.file, 'cue')
-        fixtures = document.get_by_type(self.file, 'fixture')
+        fixtures = [i for i in self.file.get_by_type(document.Fixture)]
         for fixture in fixtures:
             tagger.tag_fixture_all(self.file, fixture)
         fixtures = clihelper.refsort(fixtures)
         hung_fixtures = [i for i in fixtures if is_hung(i)]
-        metadata = document.get_parent_metadata_object(self.file)['tags']
         # Render template
-        self.content = template.render(cues=cues, fixtures=fixtures,
-                                       metadata=metadata, hung=hung_fixtures,
+        self.content = template.render(cues=self.file.get_by_type(document.Cue), fixtures=fixtures,
+                                       metadata=self.file.metadata, hung=hung_fixtures,
                                        options=options)
 
 
@@ -58,7 +56,7 @@ class ReportExtension(InterpreterExtension):
                     option_dict[option.split('=')[0]] = option.split('=')[1]
             return option_dict
 
-        self.report = Report(self.interpreter.file)
+        self.report = Report(self.file)
         if template:
             try:
                 self.report.generate(template, get_options(options))
