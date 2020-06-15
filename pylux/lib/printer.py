@@ -21,6 +21,8 @@ def get_pretty_level_string(level, doc=None, show_labels=False, raw_data=False, 
         else:
             display_str = level
         return palette_type.file_node_str, display_str
+    if level[0] == 'H':
+        return str(int(level.split('H')[1], 16))
     else:
         return level
 

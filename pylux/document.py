@@ -320,8 +320,14 @@ class Fixture(ArbitraryDataObject):
         json_object = super().json()
         personality = []
         for func in self.functions:
-            personality.append({'param': func.parameter, 'offset': func.offset[0],
-                                'size': len(func.offset), 'uuid': func.uuid})
+            if not func.offset:
+                offset = 0
+                size = 0
+            else:
+                offset = func.offset[0]
+                size = len(func.offset)
+            personality.append({'param': func.parameter, 'offset': offset,
+                                'size': size, 'uuid': func.uuid})
         json_object['personality'] = personality
         return json_object
 
