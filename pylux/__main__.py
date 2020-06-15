@@ -21,7 +21,7 @@ import configparser
 import importlib
 import os.path
 import pkg_resources
-from pylux import OLDdocument, document, interpreter
+from pylux import document, interpreter
 from pylux.lib import data, exception
 
 

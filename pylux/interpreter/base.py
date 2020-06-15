@@ -291,21 +291,13 @@ class BaseExtension(InterpreterExtension):
     def fixture_patch(self, refs, univ, addr=None):
         """Patch the functions of a fixture in a registry. Omit address 
         to patch automatically from first available address."""
-        reg = self.file.get_by_ref(document.Registry, Decimal(univ))
         try:
             addr = int(addr)
         except TypeError:
             pass
-        if not reg:
-            self.registry_create([Decimal(univ)])
-            self.file.get_by_ref(document.Registry, Decimal(univ))
         for r in refs:
             fix = self.file.get_by_ref(document.Fixture, r)
-            try:
-                reg.patch_fixture(fix, addr)
-            except exception.InsufficientAvailableChannels:
-                self.post_feedback(exception.ERROR_MSG_UNIVERSE_SPACE.format(str(univ)))
-                return
+            self.file.patch_fixture(fix, int(univ), addr)
             if addr:
                 addr += fix.dmx_size()
 

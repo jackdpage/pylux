@@ -3,7 +3,7 @@
 
 import math
 
-from pylux import OLDdocument, reference
+from pylux import reference
 
 
 def tag_fixture_colour(fixture):

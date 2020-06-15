@@ -1,4 +1,4 @@
-from pylux import clihelper, OLDdocument, document
+from pylux import clihelper, document
 from pylux.lib import exception, data
 from importlib import import_module
 import os.path
