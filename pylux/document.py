@@ -342,9 +342,7 @@ class Fixture(ArbitraryDataObject):
 
     def get_dimmer_function(self):
         """Return the function, if any, that corresponds to the dimmer."""
-        for func in self.functions:
-            if func.parameter == DIMMER_PARAM_NAME:
-                return func
+        return self.get_function(DIMMER_PARAM_NAME)
 
     def physical_functions(self):
         """Return a list of functions that are not virtual."""
@@ -352,6 +350,15 @@ class Fixture(ArbitraryDataObject):
 
     def dmx_size(self):
         return sum([len(i.offset) for i in self.physical_functions()])
+
+    def get_function(self, param):
+        """Get a function by parameter name. There is no requirement that
+        parameter names are unique, so it can't be guaranteed that this is
+        the only function that exists with that parameter name, however,
+        for most use cases it will be sufficient."""
+        for func in self.functions:
+            if func.parameter == param:
+                return func
 
 
 class FixtureFunction:

@@ -4,7 +4,8 @@ class MessageBus:
         self.config = config
 
     def post_feedback(self, lines):
-        pass
+        for l in lines:
+            print(self.get_pretty_line(l))
 
     def post_output(self, lines, **kwargs):
         for l in lines:

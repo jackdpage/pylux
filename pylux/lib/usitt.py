@@ -20,15 +20,15 @@ def next_in_block(current_line, block):
 class AsciiFile:
 
     def __init__(self, fp=None):
-        self.parameters = []
-        self.personalities = []
-        self.patch = []
-        self.cue_lists = []
-        self.intensity_palettes = []
-        self.focus_palettes = []
-        self.color_palettes = []
-        self.beam_palettes = []
-        self.groups = []
+        self.parameters: List['Parameter'] = []
+        self.personalities: List['Personality'] = []
+        self.patch: List['PatchEntry'] = []
+        self.cue_lists: List['CueList'] = []
+        self.intensity_palettes: List['IntensityPalette'] = []
+        self.focus_palettes: List['FocusPalette'] = []
+        self.color_palettes: List['ColorPalette'] = []
+        self.beam_palettes: List['BeamPalette'] = []
+        self.groups: List['Group'] = []
         if fp:
             with open(fp, 'r') as f:
                 self._raw = f.readlines()
@@ -124,6 +124,11 @@ class AsciiFile:
                         continue
                     if block_line[0] == '$$Footprint':
                         pers.footprint = int(block_line[1])
+                        continue
+                    if block_line[0] == '$$VirtualInt':
+                        pers.channels.append(PersonalityChannel(
+                            param=self.intens_parameter(), virtual=True
+                        ))
                         continue
                     if block_line[0] == '$$PersChan':
                         # This must be the start of a new channel, so add the
@@ -351,6 +356,23 @@ class AsciiFile:
                 # actually exist in the patch section.
                 if self.get_chan(cid):
                     group.chans.append(self.get_chan(cid))
+        # And palettes, yawn...
+        for ip in self.intensity_palettes:
+            for param in ip.params:
+                param.chan = self.get_chan(param.chan_id)
+                param.param = self.get_parameter(param.param_id)
+        for fp in self.focus_palettes:
+            for param in fp.params:
+                param.chan = self.get_chan(param.chan_id)
+                param.param = self.get_parameter(param.param_id)
+        for cp in self.color_palettes:
+            for param in cp.params:
+                param.chan = self.get_chan(param.chan_id)
+                param.param = self.get_parameter(param.param_id)
+        for bp in self.beam_palettes:
+            for param in bp.params:
+                param.chan = self.get_chan(param.chan_id)
+                param.param = self.get_parameter(param.param_id)
 
     def next(self, current_line):
         """Given the current line, fetch the next line in the document."""
@@ -376,6 +398,11 @@ class AsciiFile:
     def get_parameter(self, ref: int):
         for param in self.parameters:
             if param.id == ref:
+                return param
+
+    def intens_parameter(self):
+        for param in self.parameters:
+            if param.long_name == 'Intens':
                 return param
 
     def get_personality(self, ref: int):
@@ -458,7 +485,8 @@ class PersonalityChannel:
 
     def __init__(self, param: 'Parameter' = None, param_size: int = None,
                  offset_msb: int = None, offset_lsb: int = None, home: int = None,
-                 snap: bool = None, slots: List['PersonalitySlot'] = None):
+                 snap: bool = None, slots: List['PersonalitySlot'] = None,
+                 virtual: bool = False):
         self.param = param
         self.param_size = param_size
         self.offset = (offset_msb, offset_lsb)
@@ -468,6 +496,7 @@ class PersonalityChannel:
             self.slots = []
         else:
             self.slots = slots
+        self.virtual = virtual
 
 
 class PersonalitySlot:
@@ -520,7 +549,7 @@ class PatchEntry:
 
 class CueList:
 
-    def __init__(self, num: int = None, cues: list = None, label: str = None):
+    def __init__(self, num: int = None, cues: List['Cue'] = None, label: str = None):
         self.id = num
         self.label = label
         if not cues:
@@ -584,7 +613,7 @@ class ChanLevel:
     def __init__(self, chan_ref: int, level):
         self.chan_id = chan_ref
         self.level = level
-        self.chan = None
+        self.chan: 'PatchEntry' = None
 
 
 class ChanMove(ChanLevel):
@@ -597,8 +626,8 @@ class CueParam:
         self.chan_id = chan_ref
         self.param_id = param_ref
         self.level = level
-        self.chan = None
-        self.param = None
+        self.chan: 'PatchEntry' = None
+        self.param: 'Parameter' = None
 
 
 class EffectChan:

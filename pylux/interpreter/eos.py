@@ -29,7 +29,11 @@ class EosExtension(InterpreterExtension):
                     param_name = reference.EOS_GDTF_MAP[func.param.long_name]
                 else:
                     param_name = func.param.long_name
-                functions.append(document.FixtureFunction(param_name, func.offset[0], func.param_size))
+                if func.virtual:
+                    offset = None
+                else:
+                    offset = func.offset[0]
+                functions.append(document.FixtureFunction(param_name, offset, func.param_size))
             if self.config['ascii'].getboolean('substitute-delimiters'):
                 fixture_type = eos_fix.pers_name.replace('_', ' ')
             else:
@@ -57,6 +61,85 @@ class EosExtension(InterpreterExtension):
             if eos_group.label:
                 new_group.label = eos_group.label
             self.file.insert_object(new_group)
+
+        def add_palette(palette_type, ascii_palette):
+            new_palette = palette_type(ref=Decimal(ascii_palette.id), label=ascii_palette.label)
+            for eos_param in ascii_palette.params:
+                try:
+                    fix = self.file.get_by_ref(document.Fixture, Decimal(ascii_file.sortable_chan(eos_param.chan)))
+                except AttributeError:
+                    self.post_feedback(exception.ERROR_MSG_UNPATCHED_FIXTURE.format(
+                        str(eos_param.chan_id), new_palette.command_str, str(new_palette.ref)))
+                    continue
+                func_uuid = fix.get_function(
+                    reference.EOS_GDTF_MAP.get(eos_param.param.long_name, eos_param.param.long_name)).uuid
+                new_palette.levels.append(document.FunctionLevel(func_uuid, eos_param.level))
+            self.file.insert_object(new_palette)
+
+        for ip in ascii_file.intensity_palettes:
+            add_palette(document.IntensityPalette, ip)
+        for fp in ascii_file.focus_palettes:
+            add_palette(document.FocusPalette, fp)
+        for cp in ascii_file.color_palettes:
+            add_palette(document.ColourPalette, cp)
+        for bp in ascii_file.beam_palettes:
+            add_palette(document.BeamPalette, bp)
+
+        for cue_list in ascii_file.cue_lists:
+            for ascii_cue in cue_list.cues:
+                new_cue = document.Cue(ref=Decimal(ascii_cue.id), label=ascii_cue.label,
+                                       cue_list=int(cue_list.id))
+                # Scanning moves, tracked and params are all very similar, there
+                # is a lot of repetition here
+                for eos_move in ascii_cue.moves:
+                    try:
+                        fix = self.file.get_by_ref(document.Fixture, Decimal(ascii_file.sortable_chan(eos_move.chan)))
+                    except AttributeError:
+                        self.post_feedback(exception.ERROR_MSG_UNPATCHED_FIXTURE.format(
+                            str(eos_move.chan_id), new_cue.command_str, str(new_cue.ref)))
+                        continue
+                    func_uuid = fix.get_dimmer_function().uuid
+                    new_cue.levels.append(document.FunctionLevel(func_uuid, eos_move.level))
+                for eos_chan in ascii_cue.tracked:
+                    try:
+                        fix = self.file.get_by_ref(document.Fixture, Decimal(ascii_file.sortable_chan(eos_chan.chan)))
+                    except AttributeError:
+                        self.post_feedback(exception.ERROR_MSG_UNPATCHED_FIXTURE.format(
+                            str(eos_chan.chan_id), new_cue.command_str, str(new_cue.ref)))
+                        continue
+                    func_uuid = fix.get_dimmer_function().uuid
+                    # We may have already added this so-called tracked value in the
+                    # moves section. It seems to be a bit random whether they are
+                    # in one section, the other or both, so we really do need to
+                    # check the entirety of each. It doesn't really matter which of
+                    # the move or track values takes precedence; they are both the
+                    # same every time.
+                    for level in new_cue.levels:
+                        if level.function == func_uuid:
+                            new_cue.levels.remove(level)
+                            break
+                    new_cue.levels.append(document.FunctionLevel(func_uuid, eos_chan.level))
+                for eos_param in ascii_cue.params:
+                    try:
+                        fix = self.file.get_by_ref(document.Fixture, Decimal(ascii_file.sortable_chan(eos_param.chan)))
+                    except AttributeError:
+                        self.post_feedback(exception.ERROR_MSG_UNPATCHED_FIXTURE.format(
+                            str(eos_param.chan_id), new_cue.command_str, str(new_cue.ref)))
+                        continue
+                    func_name = reference.EOS_GDTF_MAP.get(eos_param.param.long_name, eos_param.param.long_name)
+                    func_uuid = fix.get_function(func_name).uuid
+                    # Param values which refer to the Intensity parameter will have already
+                    # been inserted from either the moves or chans section, so that copy
+                    # needs to be removed when we add the param value. (Param values
+                    # are preferred to the moves or chans values as they can include
+                    # referenced values whereas the others cannot)
+                    if func_name == document.DIMMER_PARAM_NAME:
+                        for level in new_cue.levels:
+                            if level.function == func_uuid:
+                                new_cue.levels.remove(level)
+                                break
+                    new_cue.levels.append(document.FunctionLevel(func_uuid, eos_param.level))
+                self.file.insert_object(new_cue)
 
 
 def register_extension(interpreter):
