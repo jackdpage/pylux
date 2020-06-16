@@ -3,9 +3,8 @@ class MessageBus:
     def __init__(self, config):
         self.config = config
 
-    def post_feedback(self, lines):
-        for l in lines:
-            print(self.get_pretty_line(l))
+    def post_feedback(self, line):
+        print(self.get_pretty_line(line))
 
     def post_output(self, lines, **kwargs):
         for l in lines:

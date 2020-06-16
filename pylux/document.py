@@ -114,6 +114,28 @@ class Document:
             reg = self.get_by_ref(Registry, Decimal(universe))
         reg.patch_fixture(fixture, address)
 
+    def get_raw_cue_level(self, cue: 'Cue', function: 'FixtureFunction'):
+        """Get the raw level of a function in a cue, taking into account
+        hex encoding and palette references."""
+        level = cue.function_level(function)
+        if level is None:
+            return None
+        try:
+            return int(level)
+        except ValueError:
+            pass
+        if level[0] == 'H':
+            try:
+                return int(level.split('H')[1], 16)
+            except ValueError:
+                pass
+        if level[0:2] in PALETTE_PREFIXES:
+            palette_type = PALETTE_PREFIXES[level[0:2]]
+            palette = self.get_by_ref(palette_type, Decimal(level[2:]))
+            raw = int(palette.get_function_level(function))
+            if raw is not None:
+                return raw
+
 
 class TopLevelObject:
     """Base class for all generic top-level object types. All standard
@@ -267,6 +289,12 @@ class Cue(ArbitraryDataObject):
             label = self.label
         return [(self.file_node_str, str(self.ref)), ' ', label, ' (',
                 str(len(self.levels)), ' levels)']
+
+    def function_level(self, function: 'FixtureFunction'):
+        """Get the value of a function in this cue if applicable."""
+        for level in self.levels:
+            if level.function == function.uuid:
+                return level.value
 
 
 class FunctionLevel:
@@ -535,26 +563,37 @@ class Registry(TopLevelObject):
     file_node_str = 'registry'
     command_str = 'Registry'
 
-    def __init__(self, table: dict = None, *args, **kwargs):
-        if not table:
-            self.table = {}
+    def __init__(self, entries: List['PatchEntry'] = None, *args, **kwargs):
+        if not entries:
+            self.entries: List['PatchEntry'] = []
         else:
-            self.table = table
+            self.entries = entries
+        self.table = {}
+        self._update_table()
         super().__init__(*args, **kwargs)
 
     def _read_json(self, json_object):
         super()._read_json(json_object)
-        for k, v in json_object.get('table', {}).items():
-            self.table[int(k)] = v
+        for uuid, addrs in json_object.get('entries', {}).items():
+            self.entries.append(PatchEntry(uuid, [int(i) for i in addrs]))
+        self._update_table()
 
     def json(self):
         json_object = super().json()
-        json_object['table'] = deepcopy(self.table)
+        entries = {}
+        for pe in self.entries:
+            entries[pe.function] = pe.addresses
+        json_object['entries'] = entries
         return json_object
 
     def get_text_widget(self):
         return ['Universe ', (self.file_node_str, str(self.ref)), ' - ',
                 str(len(self.table)), ' occupied']
+
+    def _update_table(self):
+        for pe in self.entries:
+            for addr in pe.addresses:
+                self.table[addr] = pe.function
 
     def get_occupied(self):
         """Return a list of occupied addresses."""
@@ -586,9 +625,9 @@ class Registry(TopLevelObject):
     def get_function_patch(self, func: 'FixtureFunction'):
         """Get the address number of a function in the registry table,
         if it exists there."""
-        for addr, uuid in self.table.items():
-            if uuid == func.uuid:
-                return addr
+        for pe in self.entries:
+            if pe.function == func.uuid:
+                return pe.addresses
 
     def get_fixture_patch(self, fix: 'Fixture'):
         """Get an iterator of the patch locations of any functions
@@ -601,9 +640,10 @@ class Registry(TopLevelObject):
     def unpatch_function(self, func: 'FixtureFunction'):
         """Remove a function from the registry table, if it is
         patched there."""
-        addr = self.get_function_patch(func)
-        if addr:
-            del self.table[addr]
+        for pe in self.entries:
+            if pe.function == func.uuid:
+                self.entries.remove(pe)
+        self._update_table()
 
     def patch_fixture(self, fixture: 'Fixture', addr: int = None):
         """Patch all channels of a fixture from a given start address,
@@ -613,16 +653,24 @@ class Registry(TopLevelObject):
         if not self.is_valid_start(addr, fixture.dmx_size()):
             raise exception.InsufficientAvailableChannels(self, fixture.dmx_size())
         for func in fixture.physical_functions():
-            for i in range(0, len(func.offset)):
-                self.table[addr + i] = func.uuid
-            addr += len(func.offset)
+            self.entries.append(PatchEntry(func.uuid, [addr + i - 1 for i in func.offset]))
+        self._update_table()
 
     def unpatch_fixture(self, fixture: 'Fixture'):
         """Unpatch all channels of a fixture which appear in this
         registry."""
-        patch_addrs = [i for i in self.get_fixture_patch(fixture)]
-        for addr in patch_addrs:
-            del self.table[addr]
+        func_ids = [i.uuid for i in fixture.functions]
+        for pe in self.entries:
+            if pe.function in func_ids:
+                self.entries.remove(pe)
+        self._update_table()
+
+
+class PatchEntry:
+
+    def __init__(self, function: str, addresses: List[int]):
+        self.addresses = addresses
+        self.function = function
 
 
 class Structure(ArbitraryDataObject):
