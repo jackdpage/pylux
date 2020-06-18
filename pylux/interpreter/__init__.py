@@ -5,6 +5,51 @@ import os.path
 import inspect
 
 
+class Noun:
+    CUE = 'Cue'
+    FILE = 'File'
+    FILTER = 'Filter'
+    FIXTURE = 'Fixture'
+    GROUP = 'Group'
+    META = 'Metadata'
+    ALL_PALETTE = 'AllPalette'
+    INTENSITY_PALETTE = 'IntensityPalette'
+    FOCUS_PALETTE = 'FocusPalette'
+    COLOUR_PALETTE = 'ColourPalette'
+    BEAM_PALETTE = 'BeamPalette'
+    PLOT = 'Plot'
+    PROGRAM = 'Program'
+    REGISTRY = 'Registry'
+    REPORT = 'Report'
+    STRUCTURE = 'Structure'
+
+
+class Verb:
+    ABOUT = 'About'
+    APPEND = 'Append'
+    CLONE = 'CopyTo'
+    CREATE = 'Create'
+    CREATE_FROM = 'CreateFrom'
+    COMPLETE_FROM = 'CompleteFrom'
+    DISPLAY = 'Display'
+    HELP = 'Help'
+    IMPORT = 'Import'
+    LABEL = 'Label'
+    FAN = 'Fan'
+    OUTPUT = 'Output'
+    OUTPUT_STOP = 'StopOutput'
+    PATCH = 'Patch'
+    QUERY = 'Query'
+    REMOVE = 'Remove'
+    SET = 'Set'
+    UNPATCH = 'Unpatch'
+    WRITE = 'Write'
+    WRITE_TO = 'WriteTo'
+    WRITE_EXIT = 'WriteAndQuit'
+    EXIT = 'Quit'
+    RELOAD_CONFIG = 'ReloadConfig'
+
+
 class RegularCommand:
     def __init__(self, syntax, function, check_refs=True):
         self.trigger = syntax
@@ -14,7 +59,7 @@ class RegularCommand:
         if function.__code__.co_argcount > 2:
             self.parameters = [i for i in function.__code__.co_varnames[2:function.__code__.co_argcount] if i]
             self.opt_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is not v.empty]
-            self.req_params = [i for i in self.parameters if i not in self.opt_params]
+            self.req_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is v.empty]
         else:
             self.parameters = []
             self.opt_params = []
@@ -26,6 +71,7 @@ class NoRefsCommand:
         self.trigger = syntax
         self.function = function
         # This is the same as the RegularCommand, except we are expecting one fewer arguments due to the lack of refs
+        parameters = inspect.signature(function).parameters
         if function.__code__.co_argcount > 1:
             self.parameters = [i for i in function.__code__.co_varnames[1:function.__code__.co_argcount] if i]
             self.opt_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is not v.empty]
@@ -88,11 +134,11 @@ class Interpreter:
         self.msg.subscribe_client(client)
 
     def register_commands(self):
-        self.register_command(NoRefsCommand(('File', 'Write'), self.file_write))
-        self.register_command(NoRefsCommand(('File', 'WriteTo'), self.file_writeto))
-        self.register_command(NoRefsCommand(('Program', 'Quit'), self.program_abort))
-        self.register_command(NoRefsCommand(('Program', 'WriteAndQuit'), self.program_exit))
-        self.register_command(NoRefsCommand(('Program', 'ReloadConfig'), self.reload_config))
+        self.register_command(NoRefsCommand((Noun.FILE, Verb.WRITE), self.file_write))
+        self.register_command(NoRefsCommand((Noun.FILE, Verb.WRITE_TO), self.file_writeto))
+        self.register_command(NoRefsCommand((Noun.PROGRAM, Verb.EXIT), self.program_abort))
+        self.register_command(NoRefsCommand((Noun.PROGRAM, Verb.WRITE_EXIT), self.program_exit))
+        self.register_command(NoRefsCommand((Noun.PROGRAM, Verb.RELOAD_CONFIG), self.reload_config))
 
     def file_write(self):
         """Save changes to the default write location. If no write location has been

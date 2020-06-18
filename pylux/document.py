@@ -3,6 +3,7 @@ import json
 from typing import List
 from uuid import uuid4
 from pylux.lib import exception
+from pylux.interpreter import Noun
 from copy import deepcopy
 
 
@@ -145,7 +146,7 @@ class TopLevelObject:
     # The representations of the object in the JSON file and on the user
     # facing command line, respectively.
     file_node_str = None
-    command_str = None
+    noun = None
 
     # Top-level attributes used by the object. Does not include the
     # arbitrary data dictionary. Attribute name used by the class should
@@ -257,7 +258,7 @@ class ArbitraryDataObject(TopLevelObject):
 class Cue(ArbitraryDataObject):
 
     file_node_str = 'cue'
-    command_str = 'Cue'
+    noun = Noun.CUE
     omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
         ['cue_list', 'levels']
     required_attributes = ['cue_list']
@@ -313,7 +314,7 @@ class CueList:
 class Filter(TopLevelObject):
 
     file_node_str = 'filter'
-    command_str = 'Filter'
+    noun = Noun.FILTER
     required_attributes = ['key', 'value']
 
     def get_text_widget(self):
@@ -324,7 +325,7 @@ class Filter(TopLevelObject):
 class Fixture(ArbitraryDataObject):
 
     file_node_str = 'fixture'
-    command_str = 'Fixture'
+    noun = Noun.FIXTURE
     omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
         ['personality']
 
@@ -438,7 +439,7 @@ class FixtureFunction:
 class Group(TopLevelObject):
 
     file_node_str = 'group'
-    command_str = 'Group'
+    noun = Noun.GROUP
 
     def __init__(self, fixtures: List['Fixture'] = None, *args, **kwargs):
         if not fixtures:
@@ -511,7 +512,7 @@ class Palette(TopLevelObject):
 class AllPalette(Palette):
 
     file_node_str = 'allpalette'
-    command_str = 'AllPalette'
+    noun = Noun.ALL_PALETTE
     palette_prefix = 'PR'
 
     def __init__(self, *args, **kwargs):
@@ -521,7 +522,7 @@ class AllPalette(Palette):
 class BeamPalette(Palette):
 
     file_node_str = 'beampalette'
-    command_str = 'BeamPalette'
+    noun = Noun.BEAM_PALETTE
     palette_prefix = 'BP'
 
     def __init__(self, *args, **kwargs):
@@ -531,7 +532,7 @@ class BeamPalette(Palette):
 class ColourPalette(Palette):
 
     file_node_str = 'colourpalette'
-    command_str = 'ColourPalette'
+    noun = Noun.COLOUR_PALETTE
     palette_prefix = 'CP'
 
     def __init__(self, *args, **kwargs):
@@ -541,7 +542,7 @@ class ColourPalette(Palette):
 class FocusPalette(Palette):
 
     file_node_str = 'focuspalette'
-    command_str = 'FocusPalette'
+    noun = Noun.FOCUS_PALETTE
     palette_prefix = 'FP'
 
     def __init__(self, *args, **kwargs):
@@ -551,7 +552,7 @@ class FocusPalette(Palette):
 class IntensityPalette(Palette):
 
     file_node_str = 'intensitypalette'
-    command_str = 'IntensityPalette'
+    noun = Noun.INTENSITY_PALETTE
     palette_prefix = 'IP'
 
     def __init__(self, *args, **kwargs):
@@ -561,7 +562,7 @@ class IntensityPalette(Palette):
 class Registry(TopLevelObject):
 
     file_node_str = 'registry'
-    command_str = 'Registry'
+    noun = Noun.REGISTRY
 
     def __init__(self, entries: List['PatchEntry'] = None, *args, **kwargs):
         if not entries:
@@ -676,7 +677,7 @@ class PatchEntry:
 class Structure(ArbitraryDataObject):
 
     file_node_str = 'structure'
-    command_str = 'Structure'
+    noun = Noun.STRUCTURE
     omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
         ['structure_type']
 
@@ -699,7 +700,7 @@ class Structure(ArbitraryDataObject):
 ALL_TYPES = [Cue, Fixture, Filter, Group, AllPalette, BeamPalette,
              ColourPalette, FocusPalette, IntensityPalette, Registry,
              Structure]
-COMMAND_STR_MAP = {obj.command_str: obj for obj in ALL_TYPES}
+COMMAND_STR_MAP = {obj.noun: obj for obj in ALL_TYPES}
 FILE_NODE_STR_MAP = {obj.file_node_str: obj for obj in ALL_TYPES}
 PALETTE_PREFIXES = {obj.palette_prefix: obj for obj in ALL_TYPES if
                     obj.__base__ == Palette}

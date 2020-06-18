@@ -30,6 +30,10 @@ def main():
     print('This is Pylux, version '+pkg_resources.require('pylux')[0].version)
     
     config = configparser.ConfigParser()
+    # Set optionxform to str to maintain capitalisations in the config file, otherwise
+    # everything is converted to lowercase. We need to retain capitals for some
+    # cases such as the keys of the autocomplete options
+    config.optionxform = str
     config.read([os.path.join(data.LOCATIONS[i], 'config.ini') for i in reversed(data.PRIORITY)])
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-f', '--file', default=config['main']['default-file'])

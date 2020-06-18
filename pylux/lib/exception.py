@@ -7,7 +7,7 @@ ERROR_MSG_UNPATCHED_FIXTURE = 'Fixture {0} has a value in {1} {2} but doesn\'t a
 class ObjectAlreadyExistsError(Exception):
     def __init__(self, obj_type, ref):
         super(ObjectAlreadyExistsError, self).__init__()
-        self.obj_type = obj_type.command_str
+        self.obj_type = obj_type.noun
         self.ref = ref
 
 

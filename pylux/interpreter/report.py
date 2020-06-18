@@ -1,4 +1,4 @@
-from pylux.interpreter import InterpreterExtension, RegularCommand, NoRefsCommand
+from pylux.interpreter import InterpreterExtension, RegularCommand, NoRefsCommand, Noun, Verb
 from pylux import document, clihelper
 from pylux.lib import tagger, data
 from jinja2 import Environment, FileSystemLoader
@@ -44,8 +44,8 @@ class ReportExtension(InterpreterExtension):
         self.report = None
 
     def register_commands(self):
-        self.commands.append(NoRefsCommand(('Report', 'Create'), self.report_create))
-        self.commands.append(NoRefsCommand(('Report', 'Write'), self.report_write))
+        self.commands.append(NoRefsCommand((Noun.REPORT, Verb.CREATE), self.report_create))
+        self.commands.append(NoRefsCommand((Noun.REPORT, Verb.WRITE), self.report_write))
 
     def report_create(self, template, options=''):
 

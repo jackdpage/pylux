@@ -1,5 +1,5 @@
 from ast import literal_eval
-from pylux.interpreter import RegularCommand, InterpreterExtension, NoRefsCommand
+from pylux.interpreter import RegularCommand, InterpreterExtension, NoRefsCommand, Noun, Verb
 from pylux import clihelper, document
 from pylux.lib import printer, exception
 import decimal
@@ -9,80 +9,79 @@ from decimal import Decimal
 class BaseExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(RegularCommand(('Cue', 'About'), self.cue_about))
-        self.commands.append(RegularCommand(('Cue', 'CopyTo'), self.cue_clone))
-        self.commands.append(RegularCommand(('Cue', 'Create'), self.cue_create, check_refs=False))
-        self.commands.append(RegularCommand(('Cue', 'Display'), self.cue_display))
-        self.commands.append(RegularCommand(('Cue', 'Label'), self.cue_label))
-        self.commands.append(RegularCommand(('Cue', 'Query'), self.cue_query))
-        self.commands.append(RegularCommand(('Cue', 'Remove'), self.cue_remove))
-        self.commands.append(RegularCommand(('Cue', 'Set'), self.cue_set))
-        self.commands.append(RegularCommand(('Cue', 'SetIntens'), self.cue_setintens))
-        self.commands.append(RegularCommand(('Filter', 'CopyTo'), self.filter_clone))
-        self.commands.append(RegularCommand(('Filter', 'Create'), self.filter_create, check_refs=False))
-        self.commands.append(RegularCommand(('Filter', 'Remove'), self.filter_remove))
-        self.commands.append(RegularCommand(('Fixture', 'About'), self.fixture_about))
-        self.commands.append(RegularCommand(('Fixture', 'Create'), self.fixture_create, check_refs=False))
-        self.commands.append(RegularCommand(('Fixture', 'CopyTo'), self.fixture_clone))
-        self.commands.append(RegularCommand(('Fixture', 'Display'), self.fixture_display))
-        self.commands.append(RegularCommand(('Fixture', 'Fan'), self.fixture_fan))
-        self.commands.append(RegularCommand(('Fixture', 'Patch'), self.fixture_patch))
-        self.commands.append(RegularCommand(('Fixture', 'Remove'), self.fixture_remove))
-        self.commands.append(RegularCommand(('Fixture', 'Set'), self.fixture_set))
-        self.commands.append(RegularCommand(('Fixture', 'Unpatch'), self.fixture_unpatch))
-        self.commands.append(RegularCommand(('Group', 'About'), self.group_about))
-        self.commands.append(RegularCommand(('Group', 'Append'), self.group_append_fixture))
-        self.commands.append(RegularCommand(('Group', 'CopyTo'), self.group_clone))
-        self.commands.append(RegularCommand(('Group', 'Create'), self.group_create, check_refs=False))
-        self.commands.append(RegularCommand(('Group', 'Display'), self.group_display))
-        self.commands.append(RegularCommand(('Group', 'Query'), self.group_query))
-        self.commands.append(RegularCommand(('Group', 'Remove'), self.group_remove))
-        self.commands.append(RegularCommand(('Group', 'Label'), self.group_label))
-        self.commands.append(NoRefsCommand(('Metadata', 'About'), self.metadata_about))
-        self.commands.append(NoRefsCommand(('Metadata', 'Set'), self.metadata_set))
-        self.commands.append(RegularCommand(('AllPalette', 'About'), self.palette_all_about))
-        self.commands.append(RegularCommand(('AllPalette', 'CopyTo'), self.palette_all_clone))
-        self.commands.append(RegularCommand(('AllPalette', 'Create'), self.palette_all_create, check_refs=False))
-        self.commands.append(RegularCommand(('AllPalette', 'Display'), self.palette_all_display))
-        self.commands.append(RegularCommand(('AllPalette', 'Remove'), self.palette_all_remove))
-        self.commands.append(RegularCommand(('AllPalette', 'Label'), self.palette_all_label))
-        self.commands.append(RegularCommand(('BeamPalette', 'About'), self.palette_beam_about))
-        self.commands.append(RegularCommand(('BeamPalette', 'CopyTo'), self.palette_beam_clone))
-        self.commands.append(RegularCommand(('BeamPalette', 'Create'), self.palette_beam_create, check_refs=False))
-        self.commands.append(RegularCommand(('BeamPalette', 'Display'), self.palette_beam_display))
-        self.commands.append(RegularCommand(('BeamPalette', 'Remove'), self.palette_beam_remove))
-        self.commands.append(RegularCommand(('BeamPalette', 'Label'), self.palette_beam_label))
-        self.commands.append(RegularCommand(('ColourPalette', 'About'), self.palette_colour_about))
-        self.commands.append(RegularCommand(('ColourPalette', 'CopyTo'), self.palette_colour_clone))
-        self.commands.append(RegularCommand(('ColourPalette', 'Create'), self.palette_colour_create, check_refs=False))
-        self.commands.append(RegularCommand(('ColourPalette', 'Display'), self.palette_colour_display))
-        self.commands.append(RegularCommand(('ColourPalette', 'Remove'), self.palette_colour_remove))
-        self.commands.append(RegularCommand(('ColourPalette', 'Label'), self.palette_colour_label))
-        self.commands.append(RegularCommand(('FocusPalette', 'About'), self.palette_focus_about))
-        self.commands.append(RegularCommand(('FocusPalette', 'CopyTo'), self.palette_focus_clone))
-        self.commands.append(RegularCommand(('FocusPalette', 'Create'), self.palette_focus_create, check_refs=False))
-        self.commands.append(RegularCommand(('FocusPalette', 'Display'), self.palette_focus_display))
-        self.commands.append(RegularCommand(('FocusPalette', 'Remove'), self.palette_focus_remove))
-        self.commands.append(RegularCommand(('FocusPalette', 'Label'), self.palette_focus_label))
-        self.commands.append(RegularCommand(('IntensityPalette', 'About'), self.palette_intensity_about))
-        self.commands.append(RegularCommand(('IntensityPalette', 'CopyTo'), self.palette_intensity_clone))
-        self.commands.append(RegularCommand(('IntensityPalette', 'Create'), self.palette_intensity_create, check_refs=False))
-        self.commands.append(RegularCommand(('IntensityPalette', 'Display'), self.palette_intensity_display))
-        self.commands.append(RegularCommand(('IntensityPalette', 'Remove'), self.palette_intensity_remove))
-        self.commands.append(RegularCommand(('IntensityPalette', 'Label'), self.palette_intensity_label))
-        self.commands.append(RegularCommand(('Registry', 'About'), self.registry_about))
-        self.commands.append(RegularCommand(('Registry', 'Create'), self.registry_create, check_refs=False))
-        self.commands.append(RegularCommand(('Registry', 'Display'), self.registry_display))
-        self.commands.append(RegularCommand(('Registry', 'Query'), self.registry_query))
-        self.commands.append(RegularCommand(('Registry', 'Remove'), self.registry_remove))
-        self.commands.append(RegularCommand(('Structure', 'About'), self.structure_about))
-        self.commands.append(RegularCommand(('Structure', 'Create'), self.structure_create, check_refs=False))
-        self.commands.append(RegularCommand(('Structure', 'CopyTo'), self.structure_clone))
-        self.commands.append(RegularCommand(('Structure', 'Display'), self.structure_display))
-        self.commands.append(RegularCommand(('Structure', 'Fan'), self.structure_fan))
-        self.commands.append(RegularCommand(('Structure', 'Label'), self.structure_label))
-        self.commands.append(RegularCommand(('Structure', 'Set'), self.structure_set))
-        self.commands.append(RegularCommand(('Structure', 'Remove'), self.structure_remove))
+        self.commands.append(RegularCommand((Noun.CUE, Verb.ABOUT), self.cue_about))
+        self.commands.append(RegularCommand((Noun.CUE, Verb.CLONE), self.cue_clone))
+        self.commands.append(RegularCommand((Noun.CUE, Verb.CREATE), self.cue_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.CUE, Verb.DISPLAY), self.cue_display))
+        self.commands.append(RegularCommand((Noun.CUE, Verb.LABEL), self.cue_label))
+        self.commands.append(RegularCommand((Noun.CUE, Verb.QUERY), self.cue_query))
+        self.commands.append(RegularCommand((Noun.CUE, Verb.REMOVE), self.cue_remove))
+        self.commands.append(RegularCommand((Noun.CUE, Verb.SET), self.cue_set))
+        self.commands.append(RegularCommand((Noun.FILTER, Verb.CLONE), self.filter_clone))
+        self.commands.append(RegularCommand((Noun.FILTER, Verb.CREATE), self.filter_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.FILTER, Verb.REMOVE), self.filter_remove))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.ABOUT), self.fixture_about))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.CREATE), self.fixture_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.CLONE), self.fixture_clone))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.DISPLAY), self.fixture_display))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.FAN), self.fixture_fan))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.PATCH), self.fixture_patch))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.REMOVE), self.fixture_remove))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.SET), self.fixture_set))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.UNPATCH), self.fixture_unpatch))
+        self.commands.append(RegularCommand((Noun.GROUP, Verb.ABOUT), self.group_about))
+        self.commands.append(RegularCommand((Noun.GROUP, Verb.APPEND), self.group_append_fixture))
+        self.commands.append(RegularCommand((Noun.GROUP, Verb.CLONE), self.group_clone))
+        self.commands.append(RegularCommand((Noun.GROUP, Verb.CREATE), self.group_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.GROUP, Verb.DISPLAY), self.group_display))
+        self.commands.append(RegularCommand((Noun.GROUP, Verb.QUERY), self.group_query))
+        self.commands.append(RegularCommand((Noun.GROUP, Verb.REMOVE), self.group_remove))
+        self.commands.append(RegularCommand((Noun.GROUP, Verb.LABEL), self.group_label))
+        self.commands.append(NoRefsCommand((Noun.META, Verb.ABOUT), self.metadata_about))
+        self.commands.append(NoRefsCommand((Noun.META, Verb.SET), self.metadata_set))
+        self.commands.append(RegularCommand((Noun.ALL_PALETTE, Verb.ABOUT), self.palette_all_about))
+        self.commands.append(RegularCommand((Noun.ALL_PALETTE, Verb.CLONE), self.palette_all_clone))
+        self.commands.append(RegularCommand((Noun.ALL_PALETTE, Verb.CREATE), self.palette_all_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.ALL_PALETTE, Verb.DISPLAY), self.palette_all_display))
+        self.commands.append(RegularCommand((Noun.ALL_PALETTE, Verb.REMOVE), self.palette_all_remove))
+        self.commands.append(RegularCommand((Noun.ALL_PALETTE, Verb.LABEL), self.palette_all_label))
+        self.commands.append(RegularCommand((Noun.BEAM_PALETTE, Verb.ABOUT), self.palette_beam_about))
+        self.commands.append(RegularCommand((Noun.BEAM_PALETTE, Verb.CLONE), self.palette_beam_clone))
+        self.commands.append(RegularCommand((Noun.BEAM_PALETTE, Verb.CREATE), self.palette_beam_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.BEAM_PALETTE, Verb.DISPLAY), self.palette_beam_display))
+        self.commands.append(RegularCommand((Noun.BEAM_PALETTE, Verb.REMOVE), self.palette_beam_remove))
+        self.commands.append(RegularCommand((Noun.BEAM_PALETTE, Verb.LABEL), self.palette_beam_label))
+        self.commands.append(RegularCommand((Noun.COLOUR_PALETTE, Verb.ABOUT), self.palette_colour_about))
+        self.commands.append(RegularCommand((Noun.COLOUR_PALETTE, Verb.CLONE), self.palette_colour_clone))
+        self.commands.append(RegularCommand((Noun.COLOUR_PALETTE, Verb.CREATE), self.palette_colour_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.COLOUR_PALETTE, Verb.DISPLAY), self.palette_colour_display))
+        self.commands.append(RegularCommand((Noun.COLOUR_PALETTE, Verb.REMOVE), self.palette_colour_remove))
+        self.commands.append(RegularCommand((Noun.COLOUR_PALETTE, Verb.LABEL), self.palette_colour_label))
+        self.commands.append(RegularCommand((Noun.FOCUS_PALETTE, Verb.ABOUT), self.palette_focus_about))
+        self.commands.append(RegularCommand((Noun.FOCUS_PALETTE, Verb.CLONE), self.palette_focus_clone))
+        self.commands.append(RegularCommand((Noun.FOCUS_PALETTE, Verb.CREATE), self.palette_focus_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.FOCUS_PALETTE, Verb.DISPLAY), self.palette_focus_display))
+        self.commands.append(RegularCommand((Noun.FOCUS_PALETTE, Verb.REMOVE), self.palette_focus_remove))
+        self.commands.append(RegularCommand((Noun.FOCUS_PALETTE, Verb.LABEL), self.palette_focus_label))
+        self.commands.append(RegularCommand((Noun.INTENSITY_PALETTE, Verb.ABOUT), self.palette_intensity_about))
+        self.commands.append(RegularCommand((Noun.INTENSITY_PALETTE, Verb.CLONE), self.palette_intensity_clone))
+        self.commands.append(RegularCommand((Noun.INTENSITY_PALETTE, Verb.CREATE), self.palette_intensity_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.INTENSITY_PALETTE, Verb.DISPLAY), self.palette_intensity_display))
+        self.commands.append(RegularCommand((Noun.INTENSITY_PALETTE, Verb.REMOVE), self.palette_intensity_remove))
+        self.commands.append(RegularCommand((Noun.INTENSITY_PALETTE, Verb.LABEL), self.palette_intensity_label))
+        self.commands.append(RegularCommand((Noun.REGISTRY, Verb.ABOUT), self.registry_about))
+        self.commands.append(RegularCommand((Noun.REGISTRY, Verb.CREATE), self.registry_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.REGISTRY, Verb.DISPLAY), self.registry_display))
+        self.commands.append(RegularCommand((Noun.REGISTRY, Verb.QUERY), self.registry_query))
+        self.commands.append(RegularCommand((Noun.REGISTRY, Verb.REMOVE), self.registry_remove))
+        self.commands.append(RegularCommand((Noun.STRUCTURE, Verb.ABOUT), self.structure_about))
+        self.commands.append(RegularCommand((Noun.STRUCTURE, Verb.CREATE), self.structure_create, check_refs=False))
+        self.commands.append(RegularCommand((Noun.STRUCTURE, Verb.CLONE), self.structure_clone))
+        self.commands.append(RegularCommand((Noun.STRUCTURE, Verb.DISPLAY), self.structure_display))
+        self.commands.append(RegularCommand((Noun.STRUCTURE, Verb.FAN), self.structure_fan))
+        self.commands.append(RegularCommand((Noun.STRUCTURE, Verb.LABEL), self.structure_label))
+        self.commands.append(RegularCommand((Noun.STRUCTURE, Verb.SET), self.structure_set))
+        self.commands.append(RegularCommand((Noun.STRUCTURE, Verb.REMOVE), self.structure_remove))
 
     def _base_about(self, refs, obj_type):
         for r in refs:
@@ -140,7 +139,7 @@ class BaseExtension(InterpreterExtension):
     def _base_fan(self, refs, obj_type, k, v_0, v_n):
         """Apply values to object key linearly from v_0 to v_n."""
         if obj_type.__base__ is not document.ArbitraryDataObject:
-            self.post_feedback([obj_type.command_str + ' does not support arbitrary data tags'])
+            self.post_feedback([obj_type.noun + ' does not support arbitrary data tags'])
             return
         try:
             v_0 = float(v_0)
@@ -167,7 +166,7 @@ class BaseExtension(InterpreterExtension):
         for r in refs:
             obj = self.file.get_by_ref(obj_type, r)
             if not hasattr(obj, 'levels'):
-                self.post_feedback([obj_type.command_str + ' does not support levels query'])
+                self.post_feedback([obj_type.noun + ' does not support levels query'])
                 continue
             self.post_output([obj.get_text_widget()])
             for level in obj.levels:
@@ -191,7 +190,7 @@ class BaseExtension(InterpreterExtension):
         """Set an arbitrary data tag to a value."""
         if obj_type.__base__ is not document.ArbitraryDataObject:
             self.post_feedback([
-                obj_type.command_str + ' does not support arbitrary data tags'
+                obj_type.noun + ' does not support arbitrary data tags'
             ])
             return
         if not v:
@@ -232,17 +231,6 @@ class BaseExtension(InterpreterExtension):
     def cue_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a cue."""
         return self._base_set(refs, document.Cue, k, v)
-
-    def cue_setintens(self, refs, fix_refs, level):
-        """Set the level of a fixture's Intens function in a cue."""
-        frefs = clihelper.safe_resolve_dec_references_with_filters(self.file, document.Fixture, fix_refs)
-        for r in refs:
-            cue = self.file.get_by_ref(document.Cue, r)
-            for fref in frefs:
-                fix = self.file.get_by_ref(document.Fixture, fref)
-                intens_func = fix.get_dimmer_function()
-                if intens_func:
-                    cue.levels[intens_func['uuid']] = level
 
     def filter_clone(self, refs, dest):
         """Clone a filter."""

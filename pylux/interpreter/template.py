@@ -1,4 +1,4 @@
-from pylux.interpreter import RegularCommand, InterpreterExtension
+from pylux.interpreter import RegularCommand, InterpreterExtension, Verb, Noun
 from pylux import document
 import pygdtf
 from pylux.lib import data, exception
@@ -10,8 +10,8 @@ from decimal import Decimal
 class TemplateExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(RegularCommand(('Fixture', 'CompleteFrom'), self.fixture_completefrom))
-        self.commands.append(RegularCommand(('Fixture', 'CreateFrom'), self.fixture_createfrom, check_refs=False))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.COMPLETE_FROM), self.fixture_completefrom))
+        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.CREATE_FROM), self.fixture_createfrom, check_refs=False))
 
     def _get_template_file(self, template):
         template_file = data.get_data(os.path.join('fixture', template + '.gdtf'))
@@ -47,7 +47,7 @@ class TemplateExtension(InterpreterExtension):
         for r in refs:
             if self.file.get_by_ref(document.Fixture, r):
                 self.interpreter.msg.post_feedback(exception.ERROR_MSG_EXISTING_OBJECT.format(
-                    document.Fixture.command_str, str(r)))
+                    document.Fixture.noun, str(r)))
                 continue
             self.file.insert_object(document.Fixture(ref=Decimal(r)))
             self.fixture_completefrom([Decimal(r)], template)

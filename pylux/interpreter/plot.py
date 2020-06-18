@@ -1,4 +1,4 @@
-from pylux.interpreter import InterpreterExtension, NoRefsCommand
+from pylux.interpreter import InterpreterExtension, NoRefsCommand, Verb, Noun
 from pylux import document, reference, clihelper
 from pylux.lib import data, tagger, plothelper
 import xml.etree.ElementTree as ET
@@ -434,10 +434,10 @@ class PlotExtension(InterpreterExtension):
         self.plot = None
 
     def register_commands(self):
-        self.commands.append(NoRefsCommand(('Plot', 'About'), self.plot_about))
-        self.commands.append(NoRefsCommand(('Plot', 'Create'), self.plot_create))
-        self.commands.append(NoRefsCommand(('Plot', 'Set'), self.plot_set))
-        self.commands.append(NoRefsCommand(('Plot', 'Write'), self.plot_write))
+        self.commands.append(NoRefsCommand((Noun.PLOT, Verb.ABOUT), self.plot_about))
+        self.commands.append(NoRefsCommand((Noun.PLOT, Verb.CREATE), self.plot_create))
+        self.commands.append(NoRefsCommand((Noun.PLOT, Verb.SET), self.plot_set))
+        self.commands.append(NoRefsCommand((Noun.PLOT, Verb.WRITE), self.plot_write))
 
     def plot_create(self):
         self.plot = LightingPlot(self.interpreter.file, self.options)

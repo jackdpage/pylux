@@ -1,11 +1,22 @@
 from pylux.lib.constant import CONTEXT_KEYS
+from pylux.interpreter import Noun, Verb
 
 
 class Keymapper:
 
     def __init__(self, interpreter, config):
         self.interpreter = interpreter
-        self.keys = config['autocomplete']
+        self.keys = {}
+        for k, v in config['autocomplete'].items():
+            if k.startswith('Noun.'):
+                kw = k.split('.')[1]
+                if kw in Noun.__dict__:
+                    self.keys[Noun.__dict__[kw]] = v
+            elif k.startswith('Verb.'):
+                kw = k.split('.')[1]
+                if kw in Verb.__dict__:
+                    self.keys[Verb.__dict__[kw]] = v
+
         self.enabled = True
 
     def _generate_keymap(self, tuple_list, pre='', post=' '):

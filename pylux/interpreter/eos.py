@@ -1,5 +1,4 @@
-import math
-from pylux.interpreter import InterpreterExtension, NoRefsCommand
+from pylux.interpreter import InterpreterExtension, NoRefsCommand, Noun, Verb
 from pylux import document
 from pylux import reference
 from pylux.lib import usitt, exception
@@ -9,7 +8,7 @@ from decimal import Decimal
 class EosExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(NoRefsCommand(('File', 'ImportAscii'), self.file_importascii))
+        self.commands.append(NoRefsCommand((Noun.FILE, Verb.IMPORT), self.file_importascii))
 
     def file_importascii(self, file, flag=None):
         if flag == 'overwrite':
@@ -69,7 +68,7 @@ class EosExtension(InterpreterExtension):
                     fix = self.file.get_by_ref(document.Fixture, Decimal(ascii_file.sortable_chan(eos_param.chan)))
                 except AttributeError:
                     self.post_feedback(exception.ERROR_MSG_UNPATCHED_FIXTURE.format(
-                        str(eos_param.chan_id), new_palette.command_str, str(new_palette.ref)))
+                        str(eos_param.chan_id), new_palette.noun, str(new_palette.ref)))
                     continue
                 func_uuid = fix.get_function(
                     reference.EOS_GDTF_MAP.get(eos_param.param.long_name, eos_param.param.long_name)).uuid
@@ -96,7 +95,7 @@ class EosExtension(InterpreterExtension):
                         fix = self.file.get_by_ref(document.Fixture, Decimal(ascii_file.sortable_chan(eos_move.chan)))
                     except AttributeError:
                         self.post_feedback(exception.ERROR_MSG_UNPATCHED_FIXTURE.format(
-                            str(eos_move.chan_id), new_cue.command_str, str(new_cue.ref)))
+                            str(eos_move.chan_id), new_cue.noun, str(new_cue.ref)))
                         continue
                     func_uuid = fix.get_dimmer_function().uuid
                     new_cue.levels.append(document.FunctionLevel(func_uuid, eos_move.level))
@@ -105,7 +104,7 @@ class EosExtension(InterpreterExtension):
                         fix = self.file.get_by_ref(document.Fixture, Decimal(ascii_file.sortable_chan(eos_chan.chan)))
                     except AttributeError:
                         self.post_feedback(exception.ERROR_MSG_UNPATCHED_FIXTURE.format(
-                            str(eos_chan.chan_id), new_cue.command_str, str(new_cue.ref)))
+                            str(eos_chan.chan_id), new_cue.noun, str(new_cue.ref)))
                         continue
                     func_uuid = fix.get_dimmer_function().uuid
                     # We may have already added this so-called tracked value in the
@@ -124,7 +123,7 @@ class EosExtension(InterpreterExtension):
                         fix = self.file.get_by_ref(document.Fixture, Decimal(ascii_file.sortable_chan(eos_param.chan)))
                     except AttributeError:
                         self.post_feedback(exception.ERROR_MSG_UNPATCHED_FIXTURE.format(
-                            str(eos_param.chan_id), new_cue.command_str, str(new_cue.ref)))
+                            str(eos_param.chan_id), new_cue.noun, str(new_cue.ref)))
                         continue
                     func_name = reference.EOS_GDTF_MAP.get(eos_param.param.long_name, eos_param.param.long_name)
                     func_uuid = fix.get_function(func_name).uuid
