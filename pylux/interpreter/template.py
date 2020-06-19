@@ -32,13 +32,16 @@ class TemplateExtension(InterpreterExtension):
             if 'manufacturer' not in fix.data:
                 fix.data['manufacturer'] = fixture_type.manufacturer
             if 'power' not in fix.data:
-                fix.data['power'] = sum([b.power_consumption for b in fixture_type.get_geometry_by_type('Beam')])
+                fix.data['power'] = sum([b.power_consumption for b in fixture_type.get_geometry_by_type(pygdtf.GeometryBeam)])
             for dmx_chan in fixture_type.dmx_modes[0].dmx_channels:
-                if dmx_chan.offset:
-                    fix.functions.append(document.FixtureFunction(
-                        parameter=str(dmx_chan.logical_channels[0].attribute),
-                        offset=dmx_chan.offset[0], size=len(dmx_chan.offset)
-                    ))
+                if dmx_chan.offset == 'None':
+                    offset = None
+                else:
+                    offset = dmx_chan.offset[0]
+                fix.functions.append(document.FixtureFunction(
+                    parameter=str(dmx_chan.logical_channels[0].attribute),
+                    offset=offset, size=len(dmx_chan.offset)
+                ))
 
     def fixture_createfrom(self, refs, template):
         template_file = self._get_template_file(template)

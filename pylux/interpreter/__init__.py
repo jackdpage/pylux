@@ -57,9 +57,11 @@ class RegularCommand:
         self.check_refs = check_refs
         # Parmeters are any function vars after the first one (refs) up to the number of arguments
         if function.__code__.co_argcount > 2:
-            self.parameters = [i for i in function.__code__.co_varnames[2:function.__code__.co_argcount] if i]
-            self.opt_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is not v.empty]
-            self.req_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is v.empty]
+            self.parameters = [i for i in function.__code__.co_varnames[2:function.__code__.co_argcount] if i != 'refs']
+            self.opt_params = [k for k, v in inspect.signature(function).parameters.items()
+                               if v.default is not v.empty and k != 'refs']
+            self.req_params = [k for k, v in inspect.signature(function).parameters.items()
+                               if v.default is v.empty and k != 'refs']
         else:
             self.parameters = []
             self.opt_params = []
