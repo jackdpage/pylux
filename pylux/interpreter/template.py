@@ -36,7 +36,7 @@ class TemplateExtension(InterpreterExtension):
             for dmx_chan in fixture_type.dmx_modes[0].dmx_channels:
                 if dmx_chan.offset:
                     fix.functions.append(document.FixtureFunction(
-                        parameter=dmx_chan.logical_channels[0].attribute,
+                        parameter=str(dmx_chan.logical_channels[0].attribute),
                         offset=dmx_chan.offset[0], size=len(dmx_chan.offset)
                     ))
 
