@@ -31,8 +31,8 @@ class EosExtension(InterpreterExtension):
                 if func.virtual:
                     offset = None
                 else:
-                    offset = func.offset[0]
-                functions.append(document.FixtureFunction(param_name, offset, func.param_size))
+                    offset = func.offset
+                functions.append(document.FixtureFunction(param_name, offset))
             if self.config['ascii'].getboolean('substitute-delimiters'):
                 fixture_type = eos_fix.pers_name.replace('_', ' ')
             else:

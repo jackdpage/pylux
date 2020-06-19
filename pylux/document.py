@@ -340,23 +340,25 @@ class Fixture(ArbitraryDataObject):
     def _read_json(self, json_object):
         super()._read_json(json_object)
         for func in json_object.get('personality'):
-            self.functions.append(FixtureFunction(
-                func.get('param'), func.get('offset'), func.get('size', 1),
-                func.get('uuid')
-            ))
+            # A virtual parameter (one with no actual DMX offset) is stored internally
+            # as None. However it is stored in the file as '0'. Physical offsets
+            # are stored as 'n,m,...' for each required offset
+            if func.get('offset') == '0':
+                offset = None
+            else:
+                offset = [int(i) for i in func.get('offset').split(',')]
+            self.functions.append(FixtureFunction(func.get('param'), offset, func.get('uuid')))
 
     def json(self):
         json_object = super().json()
         personality = []
         for func in self.functions:
             if not func.offset:
-                offset = 0
-                size = 0
+                offset = [0]
             else:
-                offset = func.offset[0]
-                size = len(func.offset)
-            personality.append({'param': func.parameter, 'offset': offset,
-                                'size': size, 'uuid': func.uuid})
+                offset = func.offset
+            personality.append({'param': func.parameter, 'offset': ','.join([str(i) for i in offset]),
+                                'uuid': func.uuid})
         json_object['personality'] = personality
         return json_object
 
@@ -398,8 +400,7 @@ class Fixture(ArbitraryDataObject):
 
 class FixtureFunction:
 
-    def __init__(self, parameter: str = None, offset: int = None,
-                 size=1, uuid=None):
+    def __init__(self, parameter: str = None, offset: List[int] = None, uuid=None):
         """
         A single parameter of a fixture. This should be representative
         of an 8 or 16-bit DMX channel. For fixtures which have multiple
@@ -423,10 +424,7 @@ class FixtureFunction:
         else:
             self.uuid = str(uuid4())
         self.parameter = parameter
-        if not offset:
-            self.offset = None
-        else:
-            self.offset = [offset + n for n in range(0, size)]
+        self.offset = offset
 
     def get_text_widget(self):
         if self.offset:
