@@ -61,7 +61,7 @@ class ReportExtension(InterpreterExtension):
             try:
                 self.report.generate(template, get_options(options))
             except TemplateSyntaxError:
-                self.interpreter.msg.post_feedback(['Error: Report template not configured properly'])
+                self.post_feedback(['Error: Report template not configured properly'])
 
     def report_write(self, path):
         if self.report:

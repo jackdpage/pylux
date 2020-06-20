@@ -102,8 +102,12 @@ class BaseExtension(InterpreterExtension):
         destinations as determined by resolve_references. If range source and single destination, copy the first in
         the source to the destination point, then increment at the same intervals from the source and destination."""
         dest_refs = clihelper.resolve_references(dest)
+        # Clone cannot support more than one source object and more than one
+        # destination object at the same time
         if len(refs) > 1 and len(dest_refs) > 1:
             self.post_feedback(exception.ERROR_MSG_OVERLAPPING_RANGE)
+        # If there is one source object and one or more destination object,
+        # duplicates are made at whole number intervals in the destination range
         elif len(refs) == 1 and len(dest_refs) >= 1:
             src_obj = self.file.get_by_ref(obj_type, refs[0])
             for dest_ref in dest_refs:
@@ -111,11 +115,17 @@ class BaseExtension(InterpreterExtension):
                     self.file.duplicate_object(src_obj, dest_ref)
                 except exception.ObjectAlreadyExistsError as e:
                     self.post_feedback(exception.ERROR_MSG_EXISTING_OBJECT.format(e.obj_type, e.ref))
+        # If there are multiple source objects and only one destination object,
+        # the first source object is duplicated at the destination ref. Then, for
+        # each following source object, the destination ref is incremented by the
+        # same amount as the difference between the current and previous source
+        # objects. For example, if the sources are 1,2,5,7 and the given
+        # destination is 9, the used destinations will be 9,10,13,15
         elif len(refs) > 1 and len(dest_refs) == 1:
             for r in refs:
-                dest_ref = str(decimal.Decimal(dest_refs[0])
-                               + decimal.Decimal(r)
-                               - decimal.Decimal(refs[0]))
+                dest_ref = decimal.Decimal(dest_refs[0]) + decimal.Decimal(r) - decimal.Decimal(refs[0])
+                # Unlike for a single-source clone command, this requires us to
+                # fetch a new source object on every iteration
                 src_obj = self.file.get_by_ref(obj_type, r)
                 try:
                     self.file.duplicate_object(src_obj, dest_ref)
@@ -139,14 +149,13 @@ class BaseExtension(InterpreterExtension):
     def _base_fan(self, refs, obj_type, k, v_0, v_n):
         """Apply values to object key linearly from v_0 to v_n."""
         if obj_type.__base__ is not document.ArbitraryDataObject:
-            self.post_feedback([obj_type.noun + ' does not support arbitrary data tags'])
+            self.post_feedback(exception.ERROR_MSG_UNSUPPORTED_DATA.format(obj_type.noun))
             return
         try:
             v_0 = float(v_0)
             v_n = float(v_n)
         except ValueError:
-            self.post_feedback(
-                'Values could not be applied. Fan requires numerical start and end values.')
+            self.post_feedback(exception.ERROR_MSG_FAN_VALUES)
             return
         v_i = v_0
         incr = (v_n - v_0) / (len(refs) - 1)
@@ -189,9 +198,7 @@ class BaseExtension(InterpreterExtension):
     def _base_set(self, refs, obj_type, k, v=None):
         """Set an arbitrary data tag to a value."""
         if obj_type.__base__ is not document.ArbitraryDataObject:
-            self.post_feedback([
-                obj_type.noun + ' does not support arbitrary data tags'
-            ])
+            self.post_feedback(exception.ERROR_MSG_UNSUPPORTED_DATA.format(obj_type.noun))
             return
         if not v:
             for r in refs:
@@ -247,13 +254,8 @@ class BaseExtension(InterpreterExtension):
     def fixture_about(self, refs):
         """Display data tags and DMX functions of a fixture."""
         for r in refs:
+            self._base_about([r], document.Fixture)
             fix = self.file.get_by_ref(document.Fixture, r)
-            self.post_output([fix.get_text_widget()])
-            self.post_output([str(len(fix.data))+' Data Tags:'])
-            ignored_tags = literal_eval(self.interpreter.config['cli']['ignore-about-tags'])
-            self.post_output(
-                [str(k)+': '+str(v) for k, v in sorted(fix.data.items()) if
-                 k not in ignored_tags], indentation=1)
             if not fix.functions:
                 continue
             self.post_output([[str(len(fix.functions)), ' DMX Functions:']])

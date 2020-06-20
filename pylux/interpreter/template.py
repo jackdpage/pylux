@@ -16,7 +16,7 @@ class TemplateExtension(InterpreterExtension):
     def _get_template_file(self, template):
         template_file = data.get_data(os.path.join('fixture', template + '.gdtf'))
         if not template_file:
-            self.interpreter.msg.post_feedback(['Template {0} does not exist'.format(template)])
+            self.post_feedback(['Template {0} does not exist'.format(template)])
             return None
         return pathlib.Path(template_file)
 
@@ -50,7 +50,7 @@ class TemplateExtension(InterpreterExtension):
             return
         for r in refs:
             if self.file.get_by_ref(document.Fixture, r):
-                self.interpreter.msg.post_feedback(exception.ERROR_MSG_EXISTING_OBJECT.format(
+                self.post_feedback(exception.ERROR_MSG_EXISTING_OBJECT.format(
                     document.Fixture.noun, str(r)))
                 continue
             self.file.insert_object(document.Fixture(ref=Decimal(r)))

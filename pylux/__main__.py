@@ -56,17 +56,13 @@ def main():
             server.register_extension(extension)
             print('Enabled {0} extension'.format(extension))
         except (exception.DependencyError, ModuleNotFoundError):
-            print('Could not enable {0} extension due to missing' 
+            print('Could not enable {0} extension due to missing ' 
                   'dependencies'.format(extension))
     try:
+        interface_module = importlib.import_module('.'+args.interface, package='pylux.interface')
         print('Launching {0} interface'.format(args.interface))
-        try:
-            interface_module = importlib.import_module('.'+args.interface, package='pylux.interface')
-        except ModuleNotFoundError:
-            print('One or more dependencies for {0} were missing. Reverting to fallback interface...'.format(args.interface))
-            interface_module = importlib.import_module('.fallback', package='pylux.interface')
     except ModuleNotFoundError:
-        print('Couldn\'t source {0} interface. Reverting to fallback interface...'.format(args.interface))
+        print('Could not load {0} interface. Reverting to fallback'.format(args.interface))
         interface_module = importlib.import_module('.fallback', package='pylux.interface')
     interface_module.main(server)
 

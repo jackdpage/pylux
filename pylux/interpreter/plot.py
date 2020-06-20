@@ -455,7 +455,7 @@ class PlotExtension(InterpreterExtension):
         self.options[k] = v
 
     def plot_about(self):
-        self.interpreter.msg.post_output([k + ': ' + self.options[k] for k in self.options])
+        self.post_output([k + ': ' + self.options[k] for k in self.options])
 
 
 def register_extension(interpreter):
