@@ -164,7 +164,7 @@ def resolve_references(user_input, precision=1):
             else:
                 reference_list.append(decimal.Decimal(input_item))
         reference_list.sort()
-    return [str(i) for i in reference_list]
+    return reference_list
 
 
 def resolve_dec_references(user_input):
