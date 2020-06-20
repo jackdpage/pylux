@@ -132,12 +132,16 @@ class BaseExtension(InterpreterExtension):
                 except exception.ObjectAlreadyExistsError as e:
                     self.post_feedback(exception.ERROR_MSG_EXISTING_OBJECT.format(e.obj_type, e.ref))
 
-    def _base_create(self, refs, obj_type, **kwargs):
+    def _base_create(self, refs, obj_type, allow_autoref=True, **kwargs):
         """Create new objects."""
         for r in refs:
             if self.file.get_by_ref(obj_type, r):
-                self.post_feedback(exception.ERROR_MSG_EXISTING_OBJECT.format(obj_type, str(r)))
+                self.post_feedback(exception.ERROR_MSG_EXISTING_OBJECT.format(obj_type.noun, str(r)))
                 continue
+            # If ref is zero, use automatically assigned ref. If autoref is not
+            # allowed, then an object will be created at ref zero
+            if r == 0 and allow_autoref:
+                r = self.file.next_ref(obj_type)
             self.file.insert_object(obj_type(ref=Decimal(r), **kwargs))
 
     def _base_display(self, refs, obj_type):
@@ -505,7 +509,7 @@ class BaseExtension(InterpreterExtension):
 
     def registry_create(self, refs):
         """Insert a blank registry."""
-        return self._base_create(refs, document.Registry)
+        return self._base_create(refs, document.Registry, allow_autoref=False)
 
     def registry_display(self, refs):
         """Display a single-line summary of a registry."""

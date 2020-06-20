@@ -1,3 +1,4 @@
+import itertools
 from decimal import Decimal
 import json
 from typing import List
@@ -46,7 +47,7 @@ class Document:
             json.dump(json_document, f)
 
     def insert_object(self, obj):
-        """Add an object to the internal content list."""
+        """Add an object to the internal content list. """
         self._content.append(obj)
 
     def remove_object(self, obj):
@@ -64,6 +65,13 @@ class Document:
         for obj in self.get_by_type(obj_type):
             if obj.ref == Decimal(ref):
                 return obj
+
+    def next_ref(self, obj_type):
+        """Get the next available whole-number reference for an object type."""
+        used = [obj.ref for obj in self.get_by_type(obj_type)]
+        for i in itertools.count(start=1):
+            if Decimal(i) not in used:
+                return Decimal(i)
 
     def get_by_uuid(self, uuid):
         """Get the object with the given unique identifier."""

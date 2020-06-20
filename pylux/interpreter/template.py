@@ -49,6 +49,9 @@ class TemplateExtension(InterpreterExtension):
         if not template_file:
             return
         for r in refs:
+            # If ref is zero, use automatically assigned ref
+            if r == 0:
+                r = self.file.next_ref(document.Fixture)
             if self.file.get_by_ref(document.Fixture, r):
                 self.post_feedback(exception.ERROR_MSG_EXISTING_OBJECT.format(
                     document.Fixture.noun, str(r)))
