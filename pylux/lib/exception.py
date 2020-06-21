@@ -4,6 +4,7 @@ ERROR_MSG_UNIVERSE_SPACE = 'Insufficient space in universe {0}. Cannot patch fix
 ERROR_MSG_UNPATCHED_FIXTURE = 'Fixture {0} has a value in {1} {2} but doesn\'t appear in the patch. It will be ignored'
 ERROR_MSG_FAN_VALUES = 'Values could not be applied. Fan requires numeric start and end values'
 ERROR_MSG_UNSUPPORTED_DATA = '{0} does not support arbitrary data tags'
+ERROR_MSG_NO_FILE = 'Could not find a file at {0}'
 
 
 class ObjectAlreadyExistsError(Exception):

@@ -489,7 +489,10 @@ class PersonalityChannel:
                  virtual: bool = False):
         self.param = param
         self.param_size = param_size
-        self.offset = (offset_msb, offset_lsb)
+        if offset_lsb:
+            self.offset = [offset_msb, offset_lsb]
+        else:
+            self.offset = [offset_msb]
         self.home = home
         self.snap = snap
         if not slots:

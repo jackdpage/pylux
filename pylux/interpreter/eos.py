@@ -15,8 +15,11 @@ class EosExtension(InterpreterExtension):
             overwrite = True
         else:
             overwrite = False
-        ascii_file = usitt.AsciiFile(file)
-
+        try:
+            ascii_file = usitt.AsciiFile(file)
+        except FileNotFoundError:
+            self.post_feedback(exception.ERROR_MSG_NO_FILE.format(file))
+            return
         for eos_fix in ascii_file.patch:
             ref = Decimal(ascii_file.sortable_chan(eos_fix))
             if self.file.get_by_ref(document.Fixture, ref) and not overwrite:
