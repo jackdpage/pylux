@@ -1,4 +1,4 @@
-from pylux.lib.constant import CONTEXT_KEYS
+from pylux.document import COMMAND_STR_MAP
 from pylux.interpreter import Noun, Verb
 
 
@@ -38,7 +38,7 @@ class Keymapper:
         # Double-type an object type to switch context to that
         if n == 1:
             k1 = fragment.split()[0]
-            if k1 in CONTEXT_KEYS:
+            if k1 in COMMAND_STR_MAP:
                 relevant_keys.append((k1, self.keys[k1]))
 
         # We need to add on a pre-space to the keyword if it is appearing after the
