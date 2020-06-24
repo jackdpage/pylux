@@ -198,13 +198,33 @@ class Interpreter:
                 keywords.append(t[1])
         return keywords
 
-    def get_expected_input(self, partial_command):
+    def _get_completed_noun(self, partial_noun):
+        """Given the start of a valid noun, return the list of completed nouns
+        it could be."""
+        potential = []
+        # At the moment, the best way of getting a list of all potential
+        # nouns is to look for items in the Noun dict with str values.
+        # This is going to change because this is an awful method
+        for noun in [i for i in Noun.__dict__.values() if type(i) == str]:
+            if noun.startswith(partial_noun):
+                potential.append(noun.lstrip(partial_noun))
+        return potential
+
+    def get_expected_input(self, partial_command, check_partial=False):
         """Return a list of expected next keywords based on a partial command and the registered commands."""
-        n = len(partial_command.split())
+        keywords = partial_command.split()
+        n = len(keywords)
         if n == 0:
             return self._get_init_keywords()
         elif n == 1:
-            return self._get_noref_keyword_2(partial_command.split()[0])
+            # This checks if the the first keyword is an entire valid noun, or just
+            # a partial one. In the case of a valid noun, we can send the verb list
+            # for NoRef commands. For a partial noun, we can send the potential
+            # complete nouns
+            if keywords[0] in [i for i in Noun.__dict__.values() if type(i) == str]:
+                return self._get_noref_keyword_2(keywords[0])
+            elif check_partial:
+                return self._get_completed_noun(keywords[0])
         elif n == 2:
             return self._get_ref_keyword_2(partial_command.split()[0])
         else:
