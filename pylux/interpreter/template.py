@@ -1,7 +1,8 @@
-from pylux.interpreter import RegularCommand, InterpreterExtension, Verb, Noun
+from pylux.interpreter import RegularCommand, InterpreterExtension
 from pylux import document
 import pygdtf
 from pylux.lib import data, exception
+import pylux.lib.keyword as kw
 import pathlib
 import os.path
 from decimal import Decimal
@@ -10,8 +11,8 @@ from decimal import Decimal
 class TemplateExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.COMPLETE_FROM), self.fixture_completefrom))
-        self.commands.append(RegularCommand((Noun.FIXTURE, Verb.CREATE_FROM), self.fixture_createfrom, check_refs=False))
+        self.commands.append(RegularCommand((kw.FIXTURE, kw.COMPLETE_FROM), self.fixture_completefrom))
+        self.commands.append(RegularCommand((kw.FIXTURE, kw.CREATE_FROM), self.fixture_createfrom, check_refs=False))
 
     def _get_template_file(self, template):
         template_file = data.get_data(os.path.join('fixture', template + '.gdtf'))

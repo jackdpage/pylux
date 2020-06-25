@@ -1,5 +1,6 @@
-from pylux.interpreter import InterpreterExtension, RegularCommand, NoRefsCommand, Verb, Noun
+from pylux.interpreter import InterpreterExtension, RegularCommand, NoRefsCommand
 from pylux import document, clihelper
+import pylux.lib.keyword as kw
 import sacn
 import time
 
@@ -34,8 +35,8 @@ class SacnExtension(InterpreterExtension):
         self.sender = sacn.sACNsender(source_name=self.config['sacn']['source-name'])
 
     def register_commands(self):
-        self.commands.append(RegularCommand((Noun.CUE, Verb.OUTPUT), self.output_cue))
-        self.commands.append(NoRefsCommand((Noun.CUE, Verb.OUTPUT_STOP), self.stop_output))
+        self.commands.append(RegularCommand((kw.CUE, kw.OUTPUT), self.output_cue))
+        self.commands.append(NoRefsCommand((kw.CUE, kw.OUTPUT_STOP), self.stop_output))
 
     def output_cue(self, refs):
         if len(refs) > 1:

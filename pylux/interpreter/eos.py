@@ -1,14 +1,15 @@
-from pylux.interpreter import InterpreterExtension, NoRefsCommand, Noun, Verb
+from pylux.interpreter import InterpreterExtension, NoRefsCommand
 from pylux import document
 from pylux import reference
 from pylux.lib import usitt, exception
+import pylux.lib.keyword as kw
 from decimal import Decimal
 
 
 class EosExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(NoRefsCommand((Noun.FILE, Verb.IMPORT), self.file_importascii))
+        self.commands.append(NoRefsCommand((kw.FILE, kw.IMPORT), self.file_importascii))
 
     def file_importascii(self, file, flag=None):
         if flag == 'overwrite':

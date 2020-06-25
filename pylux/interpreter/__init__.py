@@ -3,51 +3,7 @@ from pylux.lib import exception, data
 from importlib import import_module
 import os.path
 import inspect
-
-
-class Noun:
-    CUE = 'Cue'
-    FILE = 'File'
-    FILTER = 'Filter'
-    FIXTURE = 'Fixture'
-    GROUP = 'Group'
-    META = 'Metadata'
-    ALL_PALETTE = 'AllPalette'
-    INTENSITY_PALETTE = 'IntensityPalette'
-    FOCUS_PALETTE = 'FocusPalette'
-    COLOUR_PALETTE = 'ColourPalette'
-    BEAM_PALETTE = 'BeamPalette'
-    PLOT = 'Plot'
-    PROGRAM = 'Program'
-    REGISTRY = 'Registry'
-    REPORT = 'Report'
-    STRUCTURE = 'Structure'
-
-
-class Verb:
-    ABOUT = 'About'
-    APPEND = 'Append'
-    CLONE = 'CopyTo'
-    CREATE = 'Create'
-    CREATE_FROM = 'CreateFrom'
-    COMPLETE_FROM = 'CompleteFrom'
-    DISPLAY = 'Display'
-    HELP = 'Help'
-    IMPORT = 'Import'
-    LABEL = 'Label'
-    FAN = 'Fan'
-    OUTPUT = 'Output'
-    OUTPUT_STOP = 'StopOutput'
-    PATCH = 'Patch'
-    QUERY = 'Query'
-    REMOVE = 'Remove'
-    SET = 'Set'
-    UNPATCH = 'Unpatch'
-    WRITE = 'Write'
-    WRITE_TO = 'WriteTo'
-    WRITE_EXIT = 'WriteAndQuit'
-    EXIT = 'Quit'
-    RELOAD_CONFIG = 'ReloadConfig'
+import pylux.lib.keyword as kw
 
 
 class RegularCommand:
@@ -136,11 +92,11 @@ class Interpreter:
         self.msg.subscribe_client(client)
 
     def register_commands(self):
-        self.register_command(NoRefsCommand((Noun.FILE, Verb.WRITE), self.file_write))
-        self.register_command(NoRefsCommand((Noun.FILE, Verb.WRITE_TO), self.file_writeto))
-        self.register_command(NoRefsCommand((Noun.PROGRAM, Verb.EXIT), self.program_abort))
-        self.register_command(NoRefsCommand((Noun.PROGRAM, Verb.WRITE_EXIT), self.program_exit))
-        self.register_command(NoRefsCommand((Noun.PROGRAM, Verb.RELOAD_CONFIG), self.reload_config))
+        self.register_command(NoRefsCommand((kw.FILE, kw.WRITE), self.file_write))
+        self.register_command(NoRefsCommand((kw.FILE, kw.WRITE_TO), self.file_writeto))
+        self.register_command(NoRefsCommand((kw.PROGRAM, kw.EXIT), self.program_abort))
+        self.register_command(NoRefsCommand((kw.PROGRAM, kw.WRITE_EXIT), self.program_exit))
+        self.register_command(NoRefsCommand((kw.PROGRAM, kw.RELOAD_CONFIG), self.reload_config))
 
     def file_write(self):
         """Save changes to the default write location. If no write location has been
@@ -205,7 +161,7 @@ class Interpreter:
         # At the moment, the best way of getting a list of all potential
         # nouns is to look for items in the Noun dict with str values.
         # This is going to change because this is an awful method
-        for noun in [i for i in Noun.__dict__.values() if type(i) == str]:
+        for noun in kw.NOUNS:
             if noun.startswith(partial_noun):
                 potential.append(noun.lstrip(partial_noun))
         return potential
@@ -221,7 +177,7 @@ class Interpreter:
             # a partial one. In the case of a valid noun, we can send the verb list
             # for NoRef commands. For a partial noun, we can send the potential
             # complete nouns
-            if keywords[0] in [i for i in Noun.__dict__.values() if type(i) == str]:
+            if keywords[0] in kw.NOUNS:
                 return self._get_noref_keyword_2(keywords[0])
             elif check_partial:
                 return self._get_completed_noun(keywords[0])

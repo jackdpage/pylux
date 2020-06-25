@@ -1,5 +1,5 @@
 from pylux.document import COMMAND_STR_MAP
-from pylux.interpreter import Noun, Verb
+import pylux.lib.keyword as kw
 
 
 class Keymapper:
@@ -8,14 +8,8 @@ class Keymapper:
         self.interpreter = interpreter
         self.keys = {}
         for k, v in config['autocomplete'].items():
-            if k.startswith('Noun.'):
-                kw = k.split('.')[1]
-                if kw in Noun.__dict__:
-                    self.keys[Noun.__dict__[kw]] = v
-            elif k.startswith('Verb.'):
-                kw = k.split('.')[1]
-                if kw in Verb.__dict__:
-                    self.keys[Verb.__dict__[kw]] = v
+            if k in kw.__dict__:
+                self.keys[kw.__dict__[k]] = v
 
         self.enabled = True
 

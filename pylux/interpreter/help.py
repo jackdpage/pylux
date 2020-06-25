@@ -1,11 +1,12 @@
-from pylux.interpreter import InterpreterExtension, NoRefsCommand, Noun, Verb
+from pylux.interpreter import InterpreterExtension, NoRefsCommand
+import pylux.lib.keyword as kw
 import inspect
 
 
 class HelpExtension(InterpreterExtension):
 
     def register_commands(self):
-        self.commands.append(NoRefsCommand((Noun.PROGRAM, Verb.HELP), self.help_command))
+        self.commands.append(NoRefsCommand((kw.PROGRAM, kw.HELP), self.help_command))
 
     def help_command(self, command_name=None):
         """Get the usage and synopsis for a command. Omit command_name to retrieve a list of all available commands."""

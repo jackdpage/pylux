@@ -1,10 +1,11 @@
-from pylux.interpreter import InterpreterExtension, NoRefsCommand, Verb, Noun
+from pylux.interpreter import InterpreterExtension, NoRefsCommand
 from pylux import document, reference, clihelper
 from pylux.lib import data, tagger, plothelper
 import xml.etree.ElementTree as ET
 import os
 from ast import literal_eval
 import decimal
+import pylux.lib.keyword as kw
 
 
 class LightingPlot:
@@ -434,10 +435,10 @@ class PlotExtension(InterpreterExtension):
         self.plot = None
 
     def register_commands(self):
-        self.commands.append(NoRefsCommand((Noun.PLOT, Verb.ABOUT), self.plot_about))
-        self.commands.append(NoRefsCommand((Noun.PLOT, Verb.CREATE), self.plot_create))
-        self.commands.append(NoRefsCommand((Noun.PLOT, Verb.SET), self.plot_set))
-        self.commands.append(NoRefsCommand((Noun.PLOT, Verb.WRITE), self.plot_write))
+        self.commands.append(NoRefsCommand((kw.PLOT, kw.ABOUT), self.plot_about))
+        self.commands.append(NoRefsCommand((kw.PLOT, kw.CREATE), self.plot_create))
+        self.commands.append(NoRefsCommand((kw.PLOT, kw.SET), self.plot_set))
+        self.commands.append(NoRefsCommand((kw.PLOT, kw.WRITE), self.plot_write))
 
     def plot_create(self):
         self.plot = LightingPlot(self.interpreter.file, self.options)
