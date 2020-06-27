@@ -4,7 +4,7 @@ import json
 from typing import List
 from uuid import uuid4
 from pylux.lib import exception
-from pylux.interpreter import Noun
+import pylux.lib.keyword as kw
 from copy import deepcopy
 
 
@@ -266,7 +266,7 @@ class ArbitraryDataObject(TopLevelObject):
 class Cue(ArbitraryDataObject):
 
     file_node_str = 'cue'
-    noun = Noun.CUE
+    noun = kw.CUE
     omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
         ['cue_list', 'levels']
     required_attributes = ['cue_list']
@@ -322,7 +322,7 @@ class CueList:
 class Filter(TopLevelObject):
 
     file_node_str = 'filter'
-    noun = Noun.FILTER
+    noun = kw.FILTER
     required_attributes = ['key', 'value']
 
     def get_text_widget(self):
@@ -333,7 +333,7 @@ class Filter(TopLevelObject):
 class Fixture(ArbitraryDataObject):
 
     file_node_str = 'fixture'
-    noun = Noun.FIXTURE
+    noun = kw.FIXTURE
     omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
         ['personality']
 
@@ -445,7 +445,7 @@ class FixtureFunction:
 class Group(TopLevelObject):
 
     file_node_str = 'group'
-    noun = Noun.GROUP
+    noun = kw.GROUP
 
     def __init__(self, fixtures: List['Fixture'] = None, *args, **kwargs):
         if not fixtures:
@@ -518,7 +518,7 @@ class Palette(TopLevelObject):
 class AllPalette(Palette):
 
     file_node_str = 'allpalette'
-    noun = Noun.ALL_PALETTE
+    noun = kw.ALL_PALETTE
     palette_prefix = 'PR'
 
     def __init__(self, *args, **kwargs):
@@ -528,7 +528,7 @@ class AllPalette(Palette):
 class BeamPalette(Palette):
 
     file_node_str = 'beampalette'
-    noun = Noun.BEAM_PALETTE
+    noun = kw.BEAM_PALETTE
     palette_prefix = 'BP'
 
     def __init__(self, *args, **kwargs):
@@ -538,7 +538,7 @@ class BeamPalette(Palette):
 class ColourPalette(Palette):
 
     file_node_str = 'colourpalette'
-    noun = Noun.COLOUR_PALETTE
+    noun = kw.COLOUR_PALETTE
     palette_prefix = 'CP'
 
     def __init__(self, *args, **kwargs):
@@ -548,7 +548,7 @@ class ColourPalette(Palette):
 class FocusPalette(Palette):
 
     file_node_str = 'focuspalette'
-    noun = Noun.FOCUS_PALETTE
+    noun = kw.FOCUS_PALETTE
     palette_prefix = 'FP'
 
     def __init__(self, *args, **kwargs):
@@ -558,7 +558,7 @@ class FocusPalette(Palette):
 class IntensityPalette(Palette):
 
     file_node_str = 'intensitypalette'
-    noun = Noun.INTENSITY_PALETTE
+    noun = kw.INTENSITY_PALETTE
     palette_prefix = 'IP'
 
     def __init__(self, *args, **kwargs):
@@ -568,7 +568,7 @@ class IntensityPalette(Palette):
 class Registry(TopLevelObject):
 
     file_node_str = 'registry'
-    noun = Noun.REGISTRY
+    noun = kw.REGISTRY
 
     def __init__(self, entries: List['PatchEntry'] = None, *args, **kwargs):
         if not entries:
@@ -683,7 +683,7 @@ class PatchEntry:
 class Structure(ArbitraryDataObject):
 
     file_node_str = 'structure'
-    noun = Noun.STRUCTURE
+    noun = kw.STRUCTURE
     omitted_data_tags = ArbitraryDataObject.omitted_data_tags + \
         ['structure_type']
 
