@@ -404,7 +404,7 @@ class LightingPlot:
                 fixture_components.append(plothelper.FixtureComponent(fixture, canvas))
         for fixture_component in fixture_components:
             if self.options.getboolean('visualise-output') and \
-                    decimal.Decimal(fixture_component.fixture.data['ref']) in visualised_fixtures:
+                    decimal.Decimal(fixture_component.fixture.ref) in visualised_fixtures:
                 canvas.lighting_filter.add_filter(fixture_component)
             if self.options.getboolean('show-beams'):
                 root.append(plothelper.FixtureBeamComponent(fixture_component, canvas).plot_component)

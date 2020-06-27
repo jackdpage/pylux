@@ -286,7 +286,7 @@ class FixtureComponent:
     def get_x_focus(self):
         """Get the actual point on the canvas where the fixture is focused. If there is no
         focus point, this will be the same as the fixture position."""
-        if 'focusX' in self.fixture:
+        if 'focusX' in self.fixture.data:
             return self._canvas.centre + float(self.fixture.data['focusX']) * 1000 * self._canvas.rscale
         else:
             return self.get_x_pos()
@@ -294,7 +294,7 @@ class FixtureComponent:
     def get_y_focus(self):
         """Get the actual point on the canvas where the fixture is focused. If there is no
         focus point, this will be the same as the fixture position."""
-        if 'focusY' in self.fixture:
+        if 'focusY' in self.fixture.data:
             return self._canvas.plaster - float(self.fixture.data['focusY']) * 1000 * self._canvas.rscale
         else:
             return self.get_y_pos()
@@ -436,7 +436,7 @@ class BeamSpecularFilterComponent:
     def __init__(self, fixture_component, canvas):
         self._fixture_component = fixture_component
         self._canvas = canvas
-        self.result_id = 'specular-'+self._fixture_component.fixture.data['ref']
+        self.result_id = 'specular-'+str(self._fixture_component.fixture.ref)
         if self._canvas.options.getboolean('colour-beam-pools'):
             self.colour = self._fixture_component.fixture.data['colour']
         else:
