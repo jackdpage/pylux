@@ -82,40 +82,81 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
         Accepts a comma-separated condition list as condition_string"""
         _conditions = []
         for condition in condition_string.split(','):
-            if '>' in condition:
+            if not condition:
+                continue
+            if condition == '*':
+                _conditions.append(RefCatch([]))
+            elif '>' in condition:
                 r_min = condition.split('>')[0]
                 r_max = condition.split('>')[1]
-                if '/' in r_min and obj_type is not document.Cue:
-                    raise exception.ReferenceSyntaxError('Slash symbol should be used for cue identifiers only')
-                # If the / symbol is the min value, we take that as the cue list to
-                # use and create a new filter for that. If the / symbol is also in the
-                # max value, we need to check that it has specified the same cue list
-                # as we cannot return a range across cue lists. If there is not / symbol
-                # in the max value, assume that the max is using the same cue list
-                # as the min. If no cue list number has been provided through the slash
-                # syntax, we assume cue list 1 and make a filter for that instead.
-                if '/' in r_min and obj_type is document.Cue:
-                    cue_list_filter = document.Filter(key='cue_list', value=r_min.split('/')[0])
-                    r_min = r_min.split('/')[1]
-                    if '/' in r_max:
-                        if r_max.split('/')[0] != r_min.split('/')[0]:
-                            raise exception.ReferenceSyntaxError('Cannot specify a range spanning multiple cue lists')
-                        r_max = r_max.split('/')[1]
-                elif obj_type is document.Cue:
-                    cue_list_filter = document.Filter(key='cue_list', value='1')
+                # There are three main conditions we need to account for with a
+                # range condition:
+                #  - there exists both a min and max. In which case we need to check
+                #    (if this is a cue) that the cue list given for the min and max
+                #    values matches. If no cue list is given for max, it is assumed
+                #    to be the same as the min. If no cue list is given for min, it
+                #    is assumed to be 1. Also in this case, we just convert the min
+                #    and max values to decimal and put them straight in the RefRange
+                #  - there exists a min and not a max. In which case the cue list is
+                #    taken from the min value, or defaulted to 1. We convert the min
+                #    value to a decimal but pass None as the max value to RefRange.
+                #  - there exists a max and not a min. This is basically the same as
+                #    the previous case
+                #  - If there is neither a max or a min (i.e. the user has just typed
+                #    a > character, then we raise a Syntax Error.
+                if r_min and r_max:
+                    if '/' in r_min and obj_type is not document.Cue:
+                        raise exception.ReferenceSyntaxError('Slash symbol should be used for cue identifiers only')
+                    elif obj_type is document.Cue:
+                        if '/' in r_min:
+                            active_cue_list = r_min.split('/')[0]
+                            r_min = Decimal(r_min.split('/')[1])
+                        else:
+                            active_cue_list = '1'
+                            r_min = Decimal(r_min)
+                        cue_list_filter = document.Filter(key='cue_list', value=active_cue_list)
+                        if '/' in r_max:
+                            if r_max.split('/')[0] != active_cue_list:
+                                raise exception.ReferenceSyntaxError('Cannot specify a range spanning multiple cue lists')
+                            r_max = Decimal(r_max.split('/')[1])
+                        else:
+                            r_max = Decimal(r_max)
+                    else:
+                        cue_list_filter = None
+                elif r_min and not r_max:
+                    if '/' in r_min and obj_type is not document.Cue:
+                        raise exception.ReferenceSyntaxError('Slash symbol should be used for cue identifiers only')
+                    elif obj_type is document.Cue:
+                        if '/' in r_min:
+                            active_cue_list = r_min.split('/')[0]
+                            r_min = Decimal(r_min.split('/')[1])
+                        else:
+                            active_cue_list = '1'
+                            r_min = Decimal(r_min)
+                        cue_list_filter = document.Filter(key='cue_list', value=active_cue_list)
+                    else:
+                        cue_list_filter = None
+                        r_min = Decimal(r_min)
+                    r_max = None
+                elif r_max and not r_min:
+                    if '/' in r_max and obj_type is not document.Cue:
+                        raise exception.ReferenceSyntaxError('Slash symbol should be used for cue identifiers only')
+                    elif obj_type is document.Cue:
+                        if '/' in r_max:
+                            active_cue_list = r_max.split('/')[0]
+                            r_max = Decimal(r_max.split('/')[1])
+                        else:
+                            active_cue_list = '1'
+                            r_max = Decimal(r_max)
+                        cue_list_filter = document.Filter(key='cue_list', value=active_cue_list)
+                    else:
+                        cue_list_filter = None
+                        r_max = Decimal(r_max)
+                    r_min = None
                 else:
-                    cue_list_filter = None
-                try:
-                    r_min = decimal.Decimal(r_min)
-                except decimal.InvalidOperation:
-                    raise exception.ReferenceSyntaxError('Could not convert ' + r_min + ' to decimal')
-                try:
-                    r_max = decimal.Decimal(r_max)
-                except decimal.InvalidOperation:
-                    raise exception.ReferenceSyntaxError('Could not convert ' + r_max + ' to decimal')
+                    raise exception.ReferenceSyntaxError('Invalid range syntax')
+
                 _conditions.append(RefRange([cue_list_filter], r_min, r_max))
-            elif condition == '*':
-                _conditions.append(RefCatch([]))
             # If the object type isn't Fixture, groups cannot be used. Instead
             # of throwing a syntax error, we will just quietly ignore them
             # and carry on.
@@ -130,10 +171,7 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
                     cue_list_filter = document.Filter(key='cue_list', value='1')
                 else:
                     cue_list_filter = None
-                try:
-                    condition = decimal.Decimal(condition)
-                except decimal.InvalidOperation:
-                    raise exception.ReferenceSyntaxError('Could not convert '+condition+' to decimal')
+                condition = decimal.Decimal(condition)
                 _conditions.append(RefPoint([cue_list_filter], condition))
         return _conditions
 
@@ -146,15 +184,21 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
     for fr in re.findall(filter_re, user_input):
         filter_obj = doc.get_by_ref(document.Filter, Decimal(fr[0]))
         if not filter_obj:
-            raise exception.ReferenceSyntaxError('Could not find filter '+fr[0])
-        for c in _resolve_condition(fr[1]):
-            c.filters.append(filter_obj)
-            conditions.append(c)
+            raise exception.ReferenceSyntaxError('Could not find Filter '+fr[0])
+        try:
+            for c in _resolve_condition(fr[1]):
+                c.filters.append(filter_obj)
+                conditions.append(c)
+        except decimal.InvalidOperation:
+            raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
 
     # Remove all the filtered ranges from the input, and then search through
     # normally for the remainder
-    for c in _resolve_condition(re.sub(filter_re, '', user_input)):
-        conditions.append(c)
+    try:
+        for c in _resolve_condition(re.sub(filter_re, '', user_input)):
+            conditions.append(c)
+    except decimal.InvalidOperation:
+        raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
 
     # Now we have all the conditions neatly organised in a list, we just
     # iterate over the object list we got earlier and check which objects
@@ -176,8 +220,17 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
             if _passes_all_filters(c.filters, test) and ref == c.point:
                 return True
         for c in [x for x in conditions if type(x) == RefRange]:
-            if _passes_all_filters(c.filters, test) and c.min <= ref <= c.max:
-                return True
+            # A value of None for max indicates that we should only test
+            # for above the min value and similarly for the other way round
+            if c.max and c.min:
+                if _passes_all_filters(c.filters, test) and c.min <= ref <= c.max:
+                    return True
+            elif c.min and not c.max:
+                if _passes_all_filters(c.filters, test) and c.min <= ref:
+                    return True
+            elif c.max and not c.min:
+                if _passes_all_filters(c.filters, test) and ref <= c.max:
+                    return True
         for c in [x for x in conditions if type(x) == RefGroup]:
             if _passes_all_filters(c.filters, test) and test in c.group.fixtures:
                 return True

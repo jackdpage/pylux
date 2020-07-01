@@ -208,7 +208,7 @@ class BaseExtension(InterpreterExtension):
 
     def cue_about(self, cues):
         """Show stored intensity data for a cue."""
-        return self._base_levels_query(cues, nips=False)
+        return self._base_about(cues)
 
     def cue_clone(self, cues, dest):
         """Clone a cue."""
@@ -226,9 +226,15 @@ class BaseExtension(InterpreterExtension):
         """Label a cue."""
         return self._base_label(cues, label)
 
-    def cue_query(self, cues):
-        """Show stored intensity and non-intensity data for a cue."""
-        return self._base_levels_query(cues)
+    def cue_query(self, cues, flags=None):
+        """Show stored level data for a cue. Add flag n to only show
+        intensity parameter data."""
+        if not flags:
+            return self._base_levels_query(cues)
+        if 'n' in flags:
+            return self._base_levels_query(cues, nips=False)
+        else:
+            return self._base_levels_query(cues)
 
     def cue_remove(self, cues):
         """Remove a cue."""

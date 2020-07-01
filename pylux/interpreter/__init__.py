@@ -247,7 +247,11 @@ class Interpreter:
                 # If the check_refs flag is false, the refs argument is a list of
                 # Decimals matched in the given range.
                 if command.check_refs:
-                    refs = clihelper.match_objects(keywords[1], self.file, document.COMMAND_STR_MAP[obj])
+                    try:
+                        refs = clihelper.match_objects(keywords[1], self.file, document.COMMAND_STR_MAP[obj])
+                    except exception.ReferenceSyntaxError as e:
+                        self.msg.post_feedback('Syntax error: '+e.message)
+                        return
                     if not refs:
                         self.msg.post_feedback('Error: No valid objects in given range')
                         return
