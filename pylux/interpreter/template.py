@@ -21,13 +21,12 @@ class TemplateExtension(InterpreterExtension):
             return None
         return pathlib.Path(template_file)
 
-    def fixture_completefrom(self, refs, template):
+    def fixture_completefrom(self, fixtures, template):
         template_file = self._get_template_file(template)
         if not template_file:
             return
         fixture_type = pygdtf.FixtureType(template_file)
-        for r in refs:
-            fix = self.file.get_by_ref(document.Fixture, Decimal(r))
+        for fix in fixtures:
             if 'fixture-type' not in fix.data:
                 fix.data['fixture-type'] = fixture_type.name
             if 'manufacturer' not in fix.data:

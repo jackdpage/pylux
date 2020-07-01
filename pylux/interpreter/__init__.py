@@ -4,6 +4,7 @@ from importlib import import_module
 import os.path
 import inspect
 import pylux.lib.keyword as kw
+from collections import OrderedDict
 
 
 class RegularCommand:
@@ -11,17 +12,17 @@ class RegularCommand:
         self.trigger = syntax
         self.function = function
         self.check_refs = check_refs
-        # Parmeters are any function vars after the first one (refs) up to the number of arguments
-        if function.__code__.co_argcount > 2:
-            self.parameters = [i for i in function.__code__.co_varnames[2:function.__code__.co_argcount] if i != 'refs']
-            self.opt_params = [k for k, v in inspect.signature(function).parameters.items()
-                               if v.default is not v.empty and k != 'refs']
-            self.req_params = [k for k, v in inspect.signature(function).parameters.items()
-                               if v.default is v.empty and k != 'refs']
-        else:
-            self.parameters = []
-            self.opt_params = []
-            self.req_params = []
+        # Get the parameters of the function through live inspection and
+        # turn it into a static ordered dict. Then pop out the first entry
+        # (which will be refs, which is not considered a
+        # parameter for a RegularCommand. popitem(False) removes the first
+        # from the OrderedDict
+        parameters = OrderedDict(inspect.signature(function).parameters)
+
+        parameters.popitem(False)
+        self.parameters = [k for k, v in parameters.items()]
+        self.opt_params = [k for k, v in parameters.items() if v.default is not v.empty]
+        self.req_params = [k for k, v in parameters.items() if v.default is v.empty]
 
 
 class NoRefsCommand:
@@ -29,15 +30,10 @@ class NoRefsCommand:
         self.trigger = syntax
         self.function = function
         # This is the same as the RegularCommand, except we are expecting one fewer arguments due to the lack of refs
-        parameters = inspect.signature(function).parameters
-        if function.__code__.co_argcount > 1:
-            self.parameters = [i for i in function.__code__.co_varnames[1:function.__code__.co_argcount] if i]
-            self.opt_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is not v.empty]
-            self.req_params = [i for i in self.parameters if i not in self.opt_params]
-        else:
-            self.parameters = []
-            self.opt_params = []
-            self.req_params = []
+        parameters = OrderedDict(inspect.signature(function).parameters)
+        self.parameters = [k for k, v in parameters.items()]
+        self.opt_params = [k for k, v in parameters.items() if v.default is not v.empty]
+        self.req_params = [k for k, v in parameters.items() if v.default is v.empty]
 
 
 class InterpreterExtension:
@@ -246,10 +242,12 @@ class Interpreter:
                 action = keywords[2]
                 trigger = (obj, action)
                 command = self.triggers[trigger]
+                # If the check_refs flag is true, the refs argument (arg2) is a
+                # list of Python objects representing the matched document objects.
+                # If the check_refs flag is false, the refs argument is a list of
+                # Decimals matched in the given range.
                 if command.check_refs:
-                    refs = clihelper.safe_resolve_dec_references_with_filters(
-                        self.file, document.COMMAND_STR_MAP[obj],
-                        keywords[1])
+                    refs = clihelper.match_objects(keywords[1], self.file, document.COMMAND_STR_MAP[obj])
                     if not refs:
                         self.msg.post_feedback('Error: No valid objects in given range')
                         return

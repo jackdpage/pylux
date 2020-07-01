@@ -380,8 +380,8 @@ class LightingPlot:
         self.lighting_plot = self.get_empty_plot()
         canvas = plothelper.Canvas(self.options)
         root = self.lighting_plot.getroot()
-        visualised_fixtures = clihelper.safe_resolve_dec_references_with_filters(self.plot_file, document.Fixture,
-                                                                                 self.options['output-fixture-filter'])
+        visualised_fixtures = [x.ref for x in clihelper.match_objects(
+            self.options['output-fixture-filter'], self.plot_file, document.Fixture)]
         if self.options.getboolean('page-border'):
             root.append(plothelper.PageBorderComponent(canvas).plot_component)
         try:

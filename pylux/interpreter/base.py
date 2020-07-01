@@ -84,9 +84,8 @@ class BaseExtension(InterpreterExtension):
         self.commands.append(RegularCommand((kw.STRUCTURE, kw.SET), self.structure_set))
         self.commands.append(RegularCommand((kw.STRUCTURE, kw.REMOVE), self.structure_remove))
 
-    def _base_about(self, refs, obj_type):
-        for r in refs:
-            obj = self.file.get_by_ref(obj_type, r)
+    def _base_about(self, objs):
+        for obj in objs:
             self.post_output([obj.get_text_widget()])
             if not hasattr(obj, 'data'):
                 self.post_output(['No data dictionary present'])
@@ -97,7 +96,7 @@ class BaseExtension(InterpreterExtension):
                  literal_eval(self.interpreter.config['cli']['ignore-about-tags'])],
                 indentation=1)
 
-    def _base_clone(self, refs, obj_type, dest):
+    def _base_clone(self, objs, dest):
         """Copy range to single (expanded to range) or copy single to range. If given a single source and single
         destination, just copy the object. If single source and range of destinations, copy the source to all
         destinations as determined by resolve_references. If range source and single destination, copy the first in
@@ -105,12 +104,12 @@ class BaseExtension(InterpreterExtension):
         dest_refs = clihelper.resolve_references(dest)
         # Clone cannot support more than one source object and more than one
         # destination object at the same time
-        if len(refs) > 1 and len(dest_refs) > 1:
+        if len(objs) > 1 and len(dest_refs) > 1:
             self.post_feedback(exception.ERROR_MSG_OVERLAPPING_RANGE)
         # If there is one source object and one or more destination object,
         # duplicates are made at whole number intervals in the destination range
-        elif len(refs) == 1 and len(dest_refs) >= 1:
-            src_obj = self.file.get_by_ref(obj_type, refs[0])
+        elif len(objs) == 1 and len(dest_refs) >= 1:
+            src_obj = objs[0]
             for dest_ref in dest_refs:
                 try:
                     self.file.duplicate_object(src_obj, dest_ref)
@@ -122,12 +121,11 @@ class BaseExtension(InterpreterExtension):
         # same amount as the difference between the current and previous source
         # objects. For example, if the sources are 1,2,5,7 and the given
         # destination is 9, the used destinations will be 9,10,13,15
-        elif len(refs) > 1 and len(dest_refs) == 1:
-            for r in refs:
-                dest_ref = decimal.Decimal(dest_refs[0]) + decimal.Decimal(r) - decimal.Decimal(refs[0])
+        elif len(objs) > 1 and len(dest_refs) == 1:
+            for src_obj in objs:
+                dest_ref = decimal.Decimal(dest_refs[0]) + decimal.Decimal(src_obj.ref) - decimal.Decimal(objs[0].ref)
                 # Unlike for a single-source clone command, this requires us to
                 # fetch a new source object on every iteration
-                src_obj = self.file.get_by_ref(obj_type, r)
                 try:
                     self.file.duplicate_object(src_obj, dest_ref)
                 except exception.ObjectAlreadyExistsError as e:
@@ -145,17 +143,13 @@ class BaseExtension(InterpreterExtension):
                 r = self.file.next_ref(obj_type)
             self.file.insert_object(obj_type(ref=Decimal(r), **kwargs))
 
-    def _base_display(self, refs, obj_type):
+    def _base_display(self, objs):
         """Print a single-line summary of a range of objects."""
-        for r in refs:
-            obj = self.file.get_by_ref(obj_type, r)
+        for obj in objs:
             self.post_output([obj.get_text_widget()])
 
-    def _base_fan(self, refs, obj_type, k, v_0, v_n):
+    def _base_fan(self, objs, k, v_0, v_n):
         """Apply values to object key linearly from v_0 to v_n."""
-        if obj_type.__base__ is not document.ArbitraryDataObject:
-            self.post_feedback(exception.ERROR_MSG_UNSUPPORTED_DATA.format(obj_type.noun))
-            return
         try:
             v_0 = float(v_0)
             v_n = float(v_n)
@@ -163,24 +157,25 @@ class BaseExtension(InterpreterExtension):
             self.post_feedback(exception.ERROR_MSG_FAN_VALUES)
             return
         v_i = v_0
-        incr = (v_n - v_0) / (len(refs) - 1)
-        for r in refs:
-            self.file.get_by_ref(obj_type, r).data[k] = str(v_i)
+        incr = (v_n - v_0) / (len(objs) - 1)
+        for obj in objs:
+            if type(obj).__base__ is not document.ArbitraryDataObject:
+                self.post_feedback(exception.ERROR_MSG_UNSUPPORTED_DATA.format(obj.noun))
+                continue
+            obj.data[k] = str(v_i)
             v_i += incr
 
-    def _base_label(self, refs, obj_type, label):
+    def _base_label(self, objs, label):
         """Set the label attribute for an object."""
-        for r in refs:
-            obj = self.file.get_by_ref(obj_type, r)
+        for obj in objs:
             obj.label = label
 
-    def _base_levels_query(self, refs, obj_type, nips=True):
+    def _base_levels_query(self, objs, nips=True):
         """See the stored level values of all parameter types. Works with objects that
         use the levels key. Set nips to False to only show intensity values."""
-        for r in refs:
-            obj = self.file.get_by_ref(obj_type, r)
+        for obj in objs:
             if not hasattr(obj, 'levels'):
-                self.post_feedback([obj_type.noun + ' does not support levels query'])
+                self.post_feedback([obj.noun + ' does not support levels query'])
                 continue
             self.post_output([obj.get_text_widget()])
             for level in obj.levels:
@@ -195,165 +190,157 @@ class BaseExtension(InterpreterExtension):
                         [printer.get_generic_ref(fix), ':'] +
                         func.get_text_widget() + [': ', level_str]])
 
-    def _base_remove(self, refs, obj_type):
+    def _base_remove(self, objs):
         """Remove an object from the document."""
-        for r in refs:
-            self.file.remove_object(self.file.get_by_ref(obj_type, r))
+        for obj in objs:
+            self.file.remove_object(obj)
 
-    def _base_set(self, refs, obj_type, k, v=None):
+    def _base_set(self, objs, k, v=None):
         """Set an arbitrary data tag to a value."""
-        if obj_type.__base__ is not document.ArbitraryDataObject:
-            self.post_feedback(exception.ERROR_MSG_UNSUPPORTED_DATA.format(obj_type.noun))
-            return
-        if not v:
-            for r in refs:
-                self.file.get_by_ref(obj_type, r).data.pop(k, None)
-        else:
-            for r in refs:
-                self.file.get_by_ref(obj_type, r).data[k] = v
+        for obj in objs:
+            if type(obj).__base__ is not document.ArbitraryDataObject:
+                self.post_feedback(exception.ERROR_MSG_UNSUPPORTED_DATA.format(obj.noun))
+                return
+            if not v:
+                obj.data.pop(k, None)
+            else:
+                obj.data[k] = v
 
-    def cue_about(self, refs):
+    def cue_about(self, cues):
         """Show stored intensity data for a cue."""
-        return self._base_levels_query(refs, document.Cue, nips=False)
+        return self._base_levels_query(cues, nips=False)
 
-    def cue_clone(self, refs, dest):
+    def cue_clone(self, cues, dest):
         """Clone a cue."""
-        return self._base_clone(refs, document.Cue, dest)
+        return self._base_clone(cues, dest)
 
     def cue_create(self, refs):
         """Create a blank cue."""
         return self._base_create(refs, document.Cue)
 
-    def cue_display(self, refs):
+    def cue_display(self, cues):
         """Show a single line summary of a cue."""
-        return self._base_display(refs, document.Cue)
+        return self._base_display(cues)
 
-    def cue_label(self, refs, label):
+    def cue_label(self, cues, label):
         """Label a cue."""
-        return self._base_label(refs, document.Cue, label)
+        return self._base_label(cues, label)
 
-    def cue_query(self, refs):
+    def cue_query(self, cues):
         """Show stored intensity and non-intensity data for a cue."""
-        return self._base_levels_query(refs, document.Cue)
+        return self._base_levels_query(cues)
 
-    def cue_remove(self, refs):
+    def cue_remove(self, cues):
         """Remove a cue."""
-        return self._base_remove(refs, document.Cue)
+        return self._base_remove(cues)
 
-    def cue_set(self, refs, k, v=None):
+    def cue_set(self, cues, k, v=None):
         """Set an arbitrary data tag in a cue."""
-        return self._base_set(refs, document.Cue, k, v)
+        return self._base_set(cues, k, v)
 
-    def filter_clone(self, refs, dest):
+    def filter_clone(self, filters, dest):
         """Clone a filter."""
-        return self._base_clone(refs, document.Filter, dest)
+        return self._base_clone(filters, dest)
 
     def filter_create(self, refs, key, value):
         """Create a new filter with given parameters."""
         return self._base_create(refs, document.Filter, key=key, value=value)
 
-    def filter_remove(self, refs):
+    def filter_remove(self, filters):
         """Remove a filter."""
-        return self._base_remove(refs, document.Filter)
+        return self._base_remove(filters)
 
-    def fixture_about(self, refs):
+    def fixture_about(self, fixtures):
         """Display data tags and DMX functions of a fixture."""
-        for r in refs:
-            self._base_about([r], document.Fixture)
-            fix = self.file.get_by_ref(document.Fixture, r)
-            if not fix.functions:
+        for obj in fixtures:
+            self._base_about([obj])
+            if not obj.functions:
                 continue
-            self.post_output([[str(len(fix.functions)), ' DMX Functions:']])
-            for func in fix.functions:
+            self.post_output([[str(len(obj.functions)), ' DMX Functions:']])
+            for func in obj.functions:
                 self.post_output([func.get_text_widget()], indentation=1)
 
-    def fixture_clone(self, refs, dest):
+    def fixture_clone(self, fixtures, dest):
         """Clone a fixture to a destination(s)"""
-        return self._base_clone(refs, document.Fixture, dest)
+        return self._base_clone(fixtures, dest)
 
     def fixture_create(self, refs):
         """Create a blank fixture."""
         return self._base_create(refs, document.Fixture)
 
-    def fixture_display(self, refs):
+    def fixture_display(self, fixtures):
         """Show a single line summary of a fixture."""
-        return self._base_display(refs, document.Fixture)
+        return self._base_display(fixtures)
 
-    def fixture_fan(self, refs, k, v_0, v_n):
+    def fixture_fan(self, fixtures, k, v_0, v_n):
         """Set tags across a range of fixtures to a range of values."""
-        return self._base_fan(refs, document.Fixture, k, v_0, v_n)
+        return self._base_fan(fixtures, k, v_0, v_n)
 
-    def fixture_patch(self, refs, univ, addr=None):
+    def fixture_patch(self, fixtures, univ, addr=None):
         """Patch the functions of a fixture in a registry. Omit address 
         to patch automatically from first available address."""
         try:
             addr = int(addr)
         except TypeError:
             pass
-        for r in refs:
-            fix = self.file.get_by_ref(document.Fixture, r)
-            self.file.patch_fixture(fix, int(univ), addr)
+        for obj in fixtures:
+            self.file.patch_fixture(obj, int(univ), addr)
             if addr:
-                addr += fix.dmx_size()
+                addr += obj.dmx_size()
 
-    def fixture_remove(self, refs):
+    def fixture_remove(self, fixtures):
         """Remove a fixture."""
-        self.fixture_unpatch(refs)
-        return self._base_remove(refs, document.Fixture)
+        self.fixture_unpatch(fixtures)
+        return self._base_remove(fixtures)
 
-    def fixture_set(self, refs, k, v=None):
+    def fixture_set(self, fixtures, k, v=None):
         """Set an arbitrary data tag in a fixture."""
-        return self._base_set(refs, document.Fixture, k, v)
+        return self._base_set(fixtures, k, v)
 
-    def fixture_unpatch(self, refs):
+    def fixture_unpatch(self, fixtures):
         """Remove all of a fixture's functions from all registries."""
-        for r in refs:
-            fix = self.file.get_by_ref(document.Fixture, r)
-            self.file.unpatch_fixture_from_all(fix)
+        for obj in fixtures:
+            self.file.unpatch_fixture_from_all(obj)
 
-    def group_about(self, refs):
+    def group_about(self, groups):
         """Display the contents of a group."""
-        for r in refs:
-            grp = self.file.get_by_ref(document.Group, r)
+        for obj in groups:
             self.post_output([
-                grp.get_text_widget(),
-                ', '.join([str(i.ref) for i in grp.fixtures])])
+                obj.get_text_widget(),
+                ', '.join([str(i.ref) for i in obj.fixtures])])
 
-    def group_append_fixture(self, refs, frefs):
+    def group_append_fixture(self, groups, fixtures):
         """Append a fixture to a group list."""
-        for r in refs:
-            group = self.file.get_by_ref(document.Group, r)
-            for fref in clihelper.safe_resolve_dec_references_with_filters(self.file, document.Fixture, frefs):
-                fix = self.file.get_by_ref(document.Fixture, fref)
+        for group in groups:
+            for fix in clihelper.match_objects(fixtures, self.file, document.Fixture):
                 group.append_fixture(fix)
 
-    def group_clone(self, refs, dest):
+    def group_clone(self, groups, dest):
         """Clone a group."""
-        return self._base_clone(refs, document.Group, dest)
+        return self._base_clone(groups, dest)
 
     def group_create(self, refs):
         """Create an empty group."""
         return self._base_create(refs, document.Group)
 
-    def group_display(self, refs):
+    def group_display(self, groups):
         """Show a single line summary of a group."""
-        return self._base_display(refs, document.Group)
+        return self._base_display(groups)
 
-    def group_query(self, refs):
+    def group_query(self, groups):
         """Show the used fixtures in a group, and also give a summary of each fixture."""
-        for r in refs:
-            grp = self.file.get_by_ref(document.Group, r)
+        for grp in groups:
             self.post_output([grp.get_text_widget()])
             for fix in grp.fixtures:
                 self.post_output([fix.get_text_widget()], indentation=1)
 
-    def group_remove(self, refs):
+    def group_remove(self, groups):
         """Remove a group."""
-        return self._base_remove(refs, document.Group)
+        return self._base_remove(groups)
 
-    def group_label(self, refs, label):
+    def group_label(self, groups, label):
         """Set the label of a group."""
-        return self._base_label(refs, document.Group, label)
+        return self._base_label(groups, label)
 
     def metadata_about(self):
         """Show the values of all stored metadata."""
@@ -370,23 +357,23 @@ class BaseExtension(InterpreterExtension):
 
     def palette_all_clone(self, refs, dest):
         """Clone an all palette."""
-        return self._base_clone(refs, document.AllPalette, dest)
+        return self._base_clone(refs, dest)
 
     def palette_beam_clone(self, refs, dest):
         """Clone a beam palette."""
-        return self._base_clone(refs, document.BeamPalette, dest)
+        return self._base_clone(refs, dest)
 
     def palette_colour_clone(self, refs, dest):
         """Clone a colour palette."""
-        return self._base_clone(refs, document.ColourPalette, dest)
+        return self._base_clone(refs, dest)
 
     def palette_focus_clone(self, refs, dest):
         """Clone a focus palette."""
-        return self._base_clone(refs, document.FocusPalette, dest)
+        return self._base_clone(refs, dest)
 
     def palette_intensity_clone(self, refs, dest):
         """Clone an intensity palette."""
-        return self._base_clone(refs, document.IntensityPalette, dest)
+        return self._base_clone(refs, dest)
 
     def palette_all_create(self, refs):
         """Create an empty all palette (preset)."""
@@ -410,88 +397,87 @@ class BaseExtension(InterpreterExtension):
 
     def palette_all_display(self, refs):
         """Show a single line summary of an all palette."""
-        return self._base_display(refs, document.AllPalette)
+        return self._base_display(refs)
 
     def palette_beam_display(self, refs):
         """Show a single line summary of a beam palette."""
-        return self._base_display(refs, document.BeamPalette)
+        return self._base_display(refs)
 
     def palette_colour_display(self, refs):
         """Show a single line summary of a colour palette."""
-        return self._base_display(refs, document.ColourPalette)
+        return self._base_display(refs)
 
     def palette_focus_display(self, refs):
         """Show a single line summary of a focus palette."""
-        return self._base_display(refs, document.FocusPalette)
+        return self._base_display(refs)
 
     def palette_intensity_display(self, refs):
         """Show a single line summary of an intensity palette."""
-        return self._base_display(refs, document.IntensityPalette)
+        return self._base_display(refs)
 
     def palette_all_about(self, refs):
         """Show the stored values in an all palette."""
-        return self._base_levels_query(refs, document.AllPalette)
+        return self._base_levels_query(refs)
 
     def palette_beam_about(self, refs):
         """Show the stored values in a beam palette."""
-        return self._base_levels_query(refs, document.BeamPalette)
+        return self._base_levels_query(refs)
 
     def palette_colour_about(self, refs):
         """Show the stored values in a colour palette."""
-        return self._base_levels_query(refs, document.ColourPalette)
+        return self._base_levels_query(refs)
 
     def palette_focus_about(self, refs):
         """Show the stored values in a focus palette."""
-        return self._base_levels_query(refs, document.FocusPalette)
+        return self._base_levels_query(refs)
 
     def palette_intensity_about(self, refs):
         """Show the stored values in an intensity palette."""
-        return self._base_levels_query(refs, document.IntensityPalette)
+        return self._base_levels_query(refs)
 
     def palette_all_remove(self, refs):
         """Remove an all palette."""
-        return self._base_remove(refs, document.AllPalette)
+        return self._base_remove(refs)
 
     def palette_beam_remove(self, refs):
         """Remove a beam palette."""
-        return self._base_remove(refs, document.BeamPalette)
+        return self._base_remove(refs)
 
     def palette_colour_remove(self, refs):
         """Remove a colour palette."""
-        return self._base_remove(refs, document.ColourPalette)
+        return self._base_remove(refs)
 
     def palette_focus_remove(self, refs):
         """Remove a focus palette."""
-        return self._base_remove(refs, document.FocusPalette)
+        return self._base_remove(refs)
 
     def palette_intensity_remove(self, refs):
         """Remove an intensity palette."""
-        return self._base_remove(refs, document.IntensityPalette)
+        return self._base_remove(refs)
 
     def palette_all_label(self, refs, label):
         """Set the label of an all palette."""
-        return self._base_label(refs, document.AllPalette, label)
+        return self._base_label(refs, label)
 
     def palette_beam_label(self, refs, label):
         """Set the label of a beam palette."""
-        return self._base_label(refs, document.BeamPalette, label)
+        return self._base_label(refs, label)
 
     def palette_colour_label(self, refs, label):
         """Set the label of a colour palette."""
-        return self._base_label(refs, document.ColourPalette, label)
+        return self._base_label(refs, label)
 
     def palette_focus_label(self, refs, label):
         """Set the label of a focus palette."""
-        return self._base_label(refs, document.FocusPalette, label)
+        return self._base_label(refs, label)
 
     def palette_intensity_label(self, refs, label):
         """Set the label of an intensity palette."""
-        return self._base_label(refs, document.IntensityPalette, label)
+        return self._base_label(refs, label)
 
-    def registry_about(self, refs):
+    def registry_about(self, registries):
         """Show a summary of the used addresses in a registry but do not provide any further information."""
-        for r in refs:
-            reg = self.file.get_by_ref(document.Registry, r)
+        for reg in registries:
             self.post_output([reg.get_text_widget()])
             table = []
             current_row = ['   ']
@@ -512,14 +498,13 @@ class BaseExtension(InterpreterExtension):
         """Insert a blank registry."""
         return self._base_create(refs, document.Registry, allow_autoref=False)
 
-    def registry_display(self, refs):
+    def registry_display(self, registries):
         """Display a single-line summary of a registry."""
-        return self._base_display(refs, document.Registry)
+        return self._base_display(registries)
 
-    def registry_query(self, refs):
+    def registry_query(self, registries):
         """Show all used addresses in a registry and the functions they are occupied by."""
-        for r in refs:
-            reg = self.file.get_by_ref(document.Registry, r)
+        for reg in registries:
             self.post_output([reg.get_text_widget()])
             for addr, uuid in sorted(reg.table.items()):
                 func = self.file.get_function_by_uuid(uuid)
@@ -528,17 +513,17 @@ class BaseExtension(InterpreterExtension):
                                   fix.get_text_widget() + [' ('] +
                                   func.get_text_widget() + [')']])
 
-    def registry_remove(self, refs):
+    def registry_remove(self, registries):
         """Remove a registry."""
-        return self._base_remove(refs, document.Registry)
+        return self._base_remove(registries)
 
-    def structure_about(self, refs):
+    def structure_about(self, structures):
         """Show the stored data tags of a structure."""
-        return self._base_about(refs, document.Structure)
+        return self._base_about(structures)
 
-    def structure_clone(self, refs, dest):
+    def structure_clone(self, structures, dest):
         """Clone a structure."""
-        return self._base_clone(refs, document.Structure, dest)
+        return self._base_clone(structures, dest)
 
     def structure_create(self, refs, structure_type=None):
         """Insert a blank structure object."""
@@ -547,23 +532,23 @@ class BaseExtension(InterpreterExtension):
 
     def structure_display(self, refs):
         """Display a single-line summary of a structure."""
-        return self._base_display(refs, document.Structure)
+        return self._base_display(refs)
 
     def structure_fan(self, refs, k, v_0, v_n):
         """Set tags across a range of fixtures to a range of values."""
-        return self._base_fan(refs, document.Structure, k, v_0, v_n)
+        return self._base_fan(refs, k, v_0, v_n)
 
     def structure_label(self, refs, label):
         """Set the label of a structure."""
-        return self._base_label(refs, document.Structure, label)
+        return self._base_label(refs, label)
 
     def structure_remove(self, refs):
         """Remove a structure."""
-        return self._base_remove(refs, document.Structure)
+        return self._base_remove(refs)
 
     def structure_set(self, refs, k, v=None):
         """Set an arbitrary data tag in a structure."""
-        return self._base_set(refs, document.Structure, k, v)
+        return self._base_set(refs, k, v)
 
 
 def register_extension(interpreter):

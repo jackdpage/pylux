@@ -34,6 +34,8 @@ class Document:
                     FILE_NODE_STR_MAP[obj_type](json_object=obj))
             elif obj_type == 'metadata':
                 self.metadata = deepcopy(obj['tags'])
+        # Go through and replace all the group lists of fixture UUIDs
+        # with actual Fixture objects
         for group in self.get_by_type(Group):
             for n, fix in enumerate(group.fixtures):
                 if type(fix) == str:
@@ -227,12 +229,21 @@ class TopLevelObject:
             label = self.label
         return [(self.file_node_str, str(self.ref)), ' ', label]
 
+    def __str__(self):
+        return ' '.join([self.noun, str(self.ref)])
+
     def get_copy(self):
         """Return a copy of this object, with changes to features which
         are required to stay unique."""
         new_instance = deepcopy(self)
         new_instance.uuid = str(uuid4())
         return new_instance
+
+    def get(self, k):
+        """Get the value of a key, if it is a required attribute, otherwise
+        return None."""
+        if k in self.required_attributes:
+            return self.__getattribute__(k)
 
 
 class ArbitraryDataObject(TopLevelObject):
@@ -262,6 +273,14 @@ class ArbitraryDataObject(TopLevelObject):
             json_object[k] = v
         return json_object
 
+    def get(self, k):
+        """Extends the default behaviour of get to also check in the
+        arbitrary data dictionary."""
+        if k in self.required_attributes:
+            return self.__getattribute__(k)
+        else:
+            return self.data.get(k)
+
 
 class Cue(ArbitraryDataObject):
 
@@ -277,6 +296,14 @@ class Cue(ArbitraryDataObject):
         else:
             self.levels = levels
         super().__init__(*args, **kwargs)
+        # In addition to the normal ref, which is just a Decimal and not
+        # necessarily unique, a cue will have a canonical ref which should
+        # be unique. This will be of the form cue_list/ref. If there is
+        # no cue_list attribute, it will fall back to list 1
+        if self.get('cue_list'):
+            self.canonical_ref = str(self.get('cue_list')) + '/' + str(self.ref)
+        else:
+            self.canonical_ref = '1/' + str(self.ref)
 
     def _read_json(self, json_object):
         super()._read_json(json_object)
@@ -292,11 +319,15 @@ class Cue(ArbitraryDataObject):
         return json_object
 
     def get_text_widget(self):
+        if self.get('cue_list') == 1 or not self.get('cue_list'):
+            cue_list_str = ''
+        else:
+            cue_list_str = str(self.get('cue_list')) + '/'
         if not self.label:
             label = UNLABELLED_STRING
         else:
             label = self.label
-        return [(self.file_node_str, str(self.ref)), ' ', label, ' (',
+        return [(self.file_node_str, cue_list_str + str(self.ref)), ' ', label, ' (',
                 str(len(self.levels)), ' levels)']
 
     def function_level(self, function: 'FixtureFunction'):
