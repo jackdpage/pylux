@@ -50,6 +50,15 @@ type ``Fixture`` in the command line for you, to save time typing out the entire
 You can enable and disable autofill by pressing Ctrl+A. This will change the letter
 preceding the command line from an A (indicating autofill is active) to an X.
 
+Getting Help
+------------
+
+At any time you can type ``Program Help`` (shortcut *p* *h*) into the command line to
+get a list of all available commands. Typing the name of a command after Program
+Help will give you the usage for that specific command. For example
+``Program Help Fixture Fan`` to get information about how to use the Fixture Fan
+command.
+
 Syntax
 ------
 
@@ -68,6 +77,11 @@ A range::
 
     1>10
 
+Ranges can also be unbounded in either the min or max direction. Meaning
+up to and including 100 and 100 and above respectively::
+
+    >100
+    >100
 A list of numbers::
 
     1,8,11,15
@@ -92,6 +106,11 @@ You can also apply a filter to the all character::
 
     1[*]
 
+Filters can also be written inline::
+
+    (fixture-type=Dimmer)[*]
+    (label=Blackout)[1>100]
+
 Or combine a filter of everything with unfiltered references too (this means show everything which
 matches filter 1, and also show 8 and 9, regardless of whether they meet the requirements of filter 1
 or not::
@@ -108,3 +127,11 @@ and anything that matches filter 2)::
 
     1[@30,2>7],9,2[*]
 
+When specifying cues, by default, only cues from cue list 1 will be shown. To access
+other cue lists, specify it explicitly. Meaning cues 1 through 100 from cue list 2::
+
+    2/1>100
+
+Or all cues from cue list 7::
+
+    7/0>
