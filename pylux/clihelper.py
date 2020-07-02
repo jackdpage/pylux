@@ -242,13 +242,13 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
         for c in [x for x in conditions if type(x) == RefRange]:
             # A value of None for max indicates that we should only test
             # for above the min value and similarly for the other way round
-            if c.max and c.min:
+            if c.max is not None and c.min is not None:
                 if _passes_all_filters(c.filters, test) and c.min <= ref <= c.max:
                     return True
-            elif c.min and not c.max:
+            elif c.min is not None and c.max is None:
                 if _passes_all_filters(c.filters, test) and c.min <= ref:
                     return True
-            elif c.max and not c.min:
+            elif c.max is not None and c.min is None:
                 if _passes_all_filters(c.filters, test) and ref <= c.max:
                     return True
         for c in [x for x in conditions if type(x) == RefGroup]:
