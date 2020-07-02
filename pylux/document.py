@@ -242,7 +242,7 @@ class TopLevelObject:
     def get(self, k):
         """Get the value of a key, if it is a required attribute, otherwise
         return None."""
-        if k in self.required_attributes:
+        if k in self.__dict__:
             return self.__getattribute__(k)
 
 
@@ -276,7 +276,7 @@ class ArbitraryDataObject(TopLevelObject):
     def get(self, k):
         """Extends the default behaviour of get to also check in the
         arbitrary data dictionary."""
-        if k in self.required_attributes:
+        if k in self.__dict__:
             return self.__getattribute__(k)
         else:
             return self.data.get(k)

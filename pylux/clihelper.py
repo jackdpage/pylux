@@ -123,6 +123,8 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
                             r_max = Decimal(r_max)
                     else:
                         cue_list_filter = None
+                        r_min = Decimal(r_min)
+                        r_max = Decimal(r_max)
                 elif r_min and not r_max:
                     if '/' in r_min and obj_type is not document.Cue:
                         raise exception.ReferenceSyntaxError('Slash symbol should be used for cue identifiers only')
@@ -175,6 +177,22 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
                 _conditions.append(RefPoint([cue_list_filter], condition))
         return _conditions
 
+    # Matches inline filters of the form (k=v)[conditions]. The regex for
+    # filters of the form #[conditions] will also match these if k or v
+    # contains a digit, therefore we need to match and remove these types
+    # of filters before the referenced filters
+    inline_re = re.compile(r'\((.*)=(.*)\)\[(.*?)\]')
+    for fr in re.findall(inline_re, user_input):
+        filter_obj = document.Filter(key=fr[0], value=fr[1].replace('\\', ' '))
+        try:
+            for c in _resolve_condition(fr[2]):
+                c.filters.append(filter_obj)
+                conditions.append(c)
+        except decimal.InvalidOperation:
+            raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
+
+    user_input = re.sub(inline_re, '', user_input)
+
     # Matches filter ranges of the form #[range] where # is the filter ref
     # filtered_ranges is a list of tuples in the form (filter_ref, ranges)
     # for each filter range. The regex provides two groups: the first being
@@ -192,10 +210,12 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
         except decimal.InvalidOperation:
             raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
 
-    # Remove all the filtered ranges from the input, and then search through
-    # normally for the remainder
+    user_input = re.sub(filter_re, '', user_input)
+
+    # All filtered ranges have been removed, so the remaining user input
+    # can just be scanned by the _resolve_condition function normally
     try:
-        for c in _resolve_condition(re.sub(filter_re, '', user_input)):
+        for c in _resolve_condition(user_input):
             conditions.append(c)
     except decimal.InvalidOperation:
         raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
