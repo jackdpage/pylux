@@ -1,6 +1,6 @@
 import urwid
 from pylux import document
-from pylux.lib import autocomplete, exception
+from pylux.lib import autocomplete, exception, keyword
 import sys
 
 
@@ -202,6 +202,10 @@ def main(interpreter):
     palette = generate_palette()
     loop = urwid.MainLoop(urwid.Frame(app.view.main_content, footer=app.view.footer), palette)
     try:
-        loop.run()
+        try:
+            loop.run()
+        except KeyboardInterrupt:
+            interpreter.call_internal((keyword.PROGRAM, keyword.EXIT))
     except exception.ProgramExit:
+        print('Exiting')
         sys.exit()
