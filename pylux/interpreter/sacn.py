@@ -18,7 +18,8 @@ class PacketManager:
         if not selected_packet:
             selected_packet = DmxPacket(univ)
             self.packets.append(selected_packet)
-        selected_packet.chans[addr] = value
+        # Our addresses are 1-index based
+        selected_packet.chans[addr - 1] = value
 
 
 class DmxPacket:
@@ -34,15 +35,19 @@ class SacnExtension(InterpreterExtension):
         super().__init__(*args)
         self.sender = sacn.sACNsender(source_name=self.config['sacn']['source-name'])
 
+    def shutdown(self):
+        self.stop_output()
+        return True
+
     def register_commands(self):
         self.commands.append(RegularCommand((kw.CUE, kw.OUTPUT), self.output_cue))
         self.commands.append(NoRefsCommand((kw.CUE, kw.OUTPUT_STOP), self.stop_output))
 
-    def output_cue(self, refs):
-        if len(refs) > 1:
+    def output_cue(self, cues):
+        if len(cues) > 1:
             self.post_feedback(['Only one cue can be output at a time. ' 
                                 'The first in the selection will be used'])
-        cue = self.file.get_by_ref(document.Cue, refs[0])
+        cue = cues[0]
         packet_manager = PacketManager()
         for level in cue.levels:
             function = self.file.get_function_by_uuid(level.function)
@@ -66,4 +71,4 @@ class SacnExtension(InterpreterExtension):
 
 
 def register_extension(interpreter):
-    SacnExtension(interpreter).register_extension()
+    return SacnExtension(interpreter).register_extension()

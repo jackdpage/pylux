@@ -10,6 +10,7 @@ Documentation for Pylux
     using_metadata
     using_fixtures
     importing_data
+    using_cues
     generating_reports
     generating_plots
 
