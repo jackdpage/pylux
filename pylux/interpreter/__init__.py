@@ -52,6 +52,12 @@ class InterpreterExtension:
     def register_extension(self):
         for command in self.commands:
             self.interpreter.register_command(command)
+        return self
+
+    # Called when the program exits. If any cleanup needs to happen,
+    # do it here. Return True after cleanup complete
+    def shutdown(self):
+        return True
 
 
 class MessageBus:
@@ -77,7 +83,7 @@ class Interpreter:
         self.config = config
         self.commands = []
         self.triggers = {}
-        self.extension = {}
+        self.extensions = []
         self.noref_triggers = {}
         self.register_commands()
 
@@ -109,6 +115,11 @@ class Interpreter:
 
     def program_abort(self):
         """Exit the program immediately without saving changes to disk."""
+        for ext in self.extensions:
+            if ext.shutdown():
+                continue
+            else:
+                self.msg.post_feedback(ext.__name__ + ' prevented shutdown')
         raise exception.ProgramExit
 
     def program_exit(self):
@@ -299,4 +310,5 @@ class Interpreter:
 
     def register_extension(self, name, pkg='pylux.interpreter'):
         module = import_module('.'+name, pkg)
-        module.register_extension(self)
+        extension_class = module.register_extension(self)
+        self.extensions.append(extension_class)

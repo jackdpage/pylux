@@ -146,4 +146,4 @@ class EosExtension(InterpreterExtension):
 
 
 def register_extension(interpreter):
-    EosExtension(interpreter).register_extension()
+    return EosExtension(interpreter).register_extension()

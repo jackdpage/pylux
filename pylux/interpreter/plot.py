@@ -460,4 +460,4 @@ class PlotExtension(InterpreterExtension):
 
 
 def register_extension(interpreter):
-    PlotExtension(interpreter).register_extension()
+    return PlotExtension(interpreter).register_extension()

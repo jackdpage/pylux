@@ -61,4 +61,4 @@ class TemplateExtension(InterpreterExtension):
 
 
 def register_extension(interpreter):
-    TemplateExtension(interpreter).register_extension()
+    return TemplateExtension(interpreter).register_extension()

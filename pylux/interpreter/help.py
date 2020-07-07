@@ -51,4 +51,4 @@ class HelpExtension(InterpreterExtension):
 
 
 def register_extension(interpreter):
-    HelpExtension(interpreter).register_extension()
+    return HelpExtension(interpreter).register_extension()

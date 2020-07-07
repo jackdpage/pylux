@@ -71,4 +71,4 @@ class ReportExtension(InterpreterExtension):
 
 
 def register_extension(interpreter):
-    ReportExtension(interpreter).register_extension()
+    return ReportExtension(interpreter).register_extension()

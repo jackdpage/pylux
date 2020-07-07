@@ -558,4 +558,4 @@ class BaseExtension(InterpreterExtension):
 
 
 def register_extension(interpreter):
-    BaseExtension(interpreter).register_extension()
+    return BaseExtension(interpreter).register_extension()
