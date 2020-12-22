@@ -27,7 +27,10 @@ from pylux.lib import data, exception
 
 def main():
 
-    print('This is Pylux, version '+pkg_resources.require('pylux')[0].version)
+    try:
+        print('This is Pylux, version '+pkg_resources.require('pylux')[0].version)
+    except pkg_resources.DistributionNotFound:
+        print('This is Pylux. Running in local development mode')
     
     config = configparser.ConfigParser()
     # Set optionxform to str to maintain capitalisations in the config file, otherwise
