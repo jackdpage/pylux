@@ -170,25 +170,51 @@ class BaseExtension(InterpreterExtension):
         for obj in objs:
             obj.label = label
 
-    def _base_levels_query(self, objs, nips=True):
+    def _base_levels_query(self, objs, nips=True, track=False):
         """See the stored level values of all parameter types. Works with objects that
-        use the levels key. Set nips to False to only show intensity values."""
+        use the levels key. Set nips to False to only show intensity values. Supply a list of
+        levels-supporting objects as the precedent parameter to have these evaluated first and
+        their levels carried forward to later objects in the list. For example, provide a list
+        of all cues in a cue list to get the tracked values. If a match with the current cue is
+        found in precedent, any later objects in the precedent list will be ignored."""
         for obj in objs:
             if not hasattr(obj, 'levels'):
                 self.post_feedback([obj.noun + ' does not support levels query'])
                 continue
             self.post_output([obj.get_text_widget()])
-            for level in obj.levels:
-                func = self.file.get_function_by_uuid(level.function)
-                fix = self.file.get_function_parent(func)
-                if func.parameter == self.interpreter.config['cli']['dimmer-attribute-name'] or nips:
+            # If the tracking flag is set, create a list of all cues in the cue list of the given cue
+            if track and type(obj) == document.Cue:
+                precedent = self.file.filter_type_by_params(document.Cue, [('cue_list', obj.get('cue_list'))])
+            else:
+                precedent = []
+            # Add the main object to the precedent list so that the break clause can be executed
+            # in case the object itself isn't already on the precedent list
+            precedent.append(obj)
+            tracked_values = {}
+            for preceding_obj in precedent:
+                for level in preceding_obj.levels:
+                    func = self.file.get_function_by_uuid(level.function)
+                    fix = self.file.get_function_parent(func)
+                    tracked_values[func.uuid] = (func, fix, level.value, preceding_obj)
+                # If the object just added was the main object, we do not want to continue with the
+                # rest of the precedent list, so execute the break clause. Because the main object is
+                # always appended to the precedent list, the clause will always be executed eventually,
+                # even if it isn't until the end of the list has been reached
+                if preceding_obj.uuid == obj.uuid:
+                    break
+            for tv in tracked_values.values():
+                if tv[0].parameter == self.interpreter.config['cli']['dimmer-attribute-name'] or nips:
                     level_str = printer.get_pretty_level_string(
-                        str(level.value), doc=self.file,
+                        str(tv[2]), doc=self.file,
                         show_labels=self.interpreter.config['cli'].getboolean('show-reference-labels'),
-                        raw_data=self.interpreter.config['cli'].getboolean('show-raw-data'), function=func)
+                        raw_data=self.interpreter.config['cli'].getboolean('show-raw-data'), function=tv[0])
+                    if tv[3].uuid == obj.uuid:
+                        tracked_str = ['']
+                    else:
+                        tracked_str = [' (=>', printer.get_generic_ref(tv[3]), ')']
                     self.post_output([
-                        [printer.get_generic_ref(fix), ':'] +
-                        func.get_text_widget() + [': ', level_str]])
+                        [printer.get_generic_ref(tv[1]), ':'] +
+                        tv[0].get_text_widget() + [': ', level_str] + tracked_str])
 
     def _base_remove(self, objs):
         """Remove an object from the document."""
@@ -226,15 +252,18 @@ class BaseExtension(InterpreterExtension):
         """Label a cue."""
         return self._base_label(cues, label)
 
-    def cue_query(self, cues, flags=None):
+    def cue_query(self, cues, flags=''):
         """Show stored level data for a cue. Add flag n to only show
-        intensity parameter data."""
-        if not flags:
-            return self._base_levels_query(cues)
+        intensity parameter data. Add flag t to omit tracked values."""
         if 'n' in flags:
-            return self._base_levels_query(cues, nips=False)
+            nips = False
         else:
-            return self._base_levels_query(cues)
+            nips = True
+        if 't' in flags:
+            track = False
+        else:
+            track = True
+        return self._base_levels_query(cues, nips=nips, track=track)
 
     def cue_remove(self, cues):
         """Remove a cue."""

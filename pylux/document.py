@@ -147,6 +147,19 @@ class Document:
             if raw is not None:
                 return raw
 
+    def filter_type_by_params(self, obj_type, params):
+        """Get all objects which satisfy the parameters given by key/value
+        pairs in params"""
+        matches = []
+        for obj in self.get_by_type(obj_type):
+            match = True
+            for param in params:
+                if obj.get(param[0]) != param[1]:
+                    match = False
+            if match:
+                matches.append(obj)
+        return matches
+
 
 class TopLevelObject:
     """Base class for all generic top-level object types. All standard

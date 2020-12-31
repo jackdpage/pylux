@@ -50,6 +50,16 @@ you can set ``show-raw-data`` to True to show the actual numerical data stored
 in the palette. In both these modes, colour coding will be retained so you can
 easily see at a glance which data is palettised and which is absolute.
 
+Values from previous cues in the same cue list will also track forward through cues
+by default. The cue from which each level is tracking will display next to each
+level in the list. This can be disabled by using the ``t`` flag.
+
+By default, all non intensity parameters will be displayed. This can be disabled by
+supplying the ``n`` flag. Flags can be combined together. For example, to query Cue 10
+for intensity data only, and to ignore brought-forward tracked values::
+
+    Cue 10 Query nt
+
 Outputting Cues over sACN
 -------------------------
 
