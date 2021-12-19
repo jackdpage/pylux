@@ -73,6 +73,7 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
 
     obj_list = doc.get_by_type(obj_type)
     conditions = []
+    raw_conditions = []
 
     def _resolve_condition(condition_string):
         """Resolve a condition string into one of the above four key types.
@@ -177,48 +178,95 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
                 _conditions.append(RefPoint([cue_list_filter], condition))
         return _conditions
 
-    # Matches inline filters of the form (k=v)[conditions]. The regex for
-    # filters of the form #[conditions] will also match these if k or v
-    # contains a digit, therefore we need to match and remove these types
-    # of filters before the referenced filters
-    inline_re = re.compile(r'\((.*)=(.*)\)\[(.*?)\]')
-    for fr in re.findall(inline_re, user_input):
-        filter_obj = document.Filter(key=fr[0], value=fr[1].replace('\\', ' '))
+    # Iterate through the user string character-by-character to process into
+    # a list of conditions
+    _buffer = ''
+    _filtered = False
+
+    for char in user_input:
+
+        # If the character is a comma, we must have reached the end of a
+        # condition, unless that comma is within a filtered range, in which
+        # case we should continue until we reach the end of the filtered range
+        if char == ',' and not _filtered:
+            raw_conditions.append(_buffer)
+            _buffer = ''
+            continue
+
+        # For all cases other than the end-of-condition comma, we are going
+        # to want to add the current character to our current condition buffer
+        _buffer += char
+
+        # For the [ and ] characters, set the _filtered flag to on or off
+        # respectively, so we know we are in a filtered range and should
+        # ignore commas from this point on (or pay attention again if this is
+        # closing the filtered range.
+        if char == '[' and not _filtered:
+            _filtered = True
+            continue
+        if char == ']' and _filtered:
+            _filtered = False
+            continue
+
+    # Flush out the buffer at the end of parsing (as the final condition in an
+    # input string will not end in a comma so won't have been added to the
+    # list)
+    if _buffer != '':
+        raw_conditions.append(_buffer)
+
+    # Regular expressions to capture the inline filter type of the form
+    # (k=v)[conditions] and referenced filter type of the form #[conditions].
+    # Must be matched in this order as the referenced filter type will also
+    # match an inline filter type that contains a number in k or v.
+    re_inline_filter = re.compile(r'\((.*)=(.*)\)\[(.*?)\]')
+    re_reference_filter = re.compile(r'(\d*\.?\d*)\[(.*?)\]')
+
+    # Iterate through the raw conditions, find which are filtered conditions,
+    # process and add to the final conditions list
+    for rc in raw_conditions:
+        # If the condition matches the (k=v)[ ... ] format, create a filter
+        # object from that inline filter, apply to each of the condition ranges,
+        # and add to the condition list
+        match_i = re.match(re_inline_filter, rc)
+        if match_i:
+            k = match_i.group(1)
+            v = match_i.group(2).replace('\\', ' ')
+            r = match_i.group(3)
+            filter_obj = document.Filter(key=k, value=v)
+            try:
+                for c in _resolve_condition(r):
+                    c.filters.append(filter_obj)
+                    conditions.append(c)
+            except decimal.InvalidOperation:
+                raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
+            continue
+
+        # If the condition matches the #[ ... ] format, find the referenced
+        # filter in the document, apply to each of the condition ranges, and
+        # add to the condition list
+        match_r = re.fullmatch(re_reference_filter, rc)
+        if match_r:
+            f_ref = match_r.group(1)
+            r = match_r.group(2)
+            filter_obj = doc.get_by_ref(document.Filter, Decimal(f_ref))
+            if not filter_obj:
+                raise exception.ReferenceSyntaxError('Could not find Filter '+f_ref)
+            try:
+                for c in _resolve_condition(r):
+                    c.filters.append(filter_obj)
+                    conditions.append(c)
+            except decimal.InvalidOperation:
+                raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
+            continue
+
+        # If we have got this far in the loop, no filters apply, so just
+        # process the condition using _resolve_condition and add the outcome
+        # to the conditions list
         try:
-            for c in _resolve_condition(fr[2]):
-                c.filters.append(filter_obj)
+            for c in _resolve_condition(rc):
                 conditions.append(c)
         except decimal.InvalidOperation:
             raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
-
-    user_input = re.sub(inline_re, '', user_input)
-
-    # Matches filter ranges of the form #[range] where # is the filter ref
-    # filtered_ranges is a list of tuples in the form (filter_ref, ranges)
-    # for each filter range. The regex provides two groups: the first being
-    # the reference of the filter and the second being the conditions the
-    # filter is being applied to.
-    filter_re = re.compile(r'(\d*\.?\d*)\[(.*?)\]')
-    for fr in re.findall(filter_re, user_input):
-        filter_obj = doc.get_by_ref(document.Filter, Decimal(fr[0]))
-        if not filter_obj:
-            raise exception.ReferenceSyntaxError('Could not find Filter '+fr[0])
-        try:
-            for c in _resolve_condition(fr[1]):
-                c.filters.append(filter_obj)
-                conditions.append(c)
-        except decimal.InvalidOperation:
-            raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
-
-    user_input = re.sub(filter_re, '', user_input)
-
-    # All filtered ranges have been removed, so the remaining user input
-    # can just be scanned by the _resolve_condition function normally
-    try:
-        for c in _resolve_condition(user_input):
-            conditions.append(c)
-    except decimal.InvalidOperation:
-        raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
 
     # Now we have all the conditions neatly organised in a list, we just
     # iterate over the object list we got earlier and check which objects
@@ -230,37 +278,39 @@ def match_objects(user_input, doc=None, obj_type=None, precision=1):
         return obj_list
 
     def _is_match(test):
-        """Checks an object against all conditions and returns True if it
-        matches any of them."""
+        """Checks an object against all conditions and returns the index of
+         the condition it matches, if it matches any of them."""
         ref = Decimal(test.ref)
-        for c in [x for x in conditions if type(x) == RefCatch]:
-            if _passes_all_filters(c.filters, test):
-                return True
-        for c in [x for x in conditions if type(x) == RefPoint]:
-            if _passes_all_filters(c.filters, test) and ref == c.point:
-                return True
-        for c in [x for x in conditions if type(x) == RefRange]:
-            # A value of None for max indicates that we should only test
-            # for above the min value and similarly for the other way round
-            if c.max is not None and c.min is not None:
-                if _passes_all_filters(c.filters, test) and c.min <= ref <= c.max:
-                    return True
-            elif c.min is not None and c.max is None:
-                if _passes_all_filters(c.filters, test) and c.min <= ref:
-                    return True
-            elif c.max is not None and c.min is None:
-                if _passes_all_filters(c.filters, test) and ref <= c.max:
-                    return True
-        for c in [x for x in conditions if type(x) == RefGroup]:
-            if _passes_all_filters(c.filters, test) and test in c.group.fixtures:
-                return True
+        for c in conditions:
+            if type(c) == RefCatch:
+                if _passes_all_filters(c.filters, test):
+                    return conditions.index(c)
+            if type(c) == RefPoint:
+                if _passes_all_filters(c.filters, test) and ref == c.point:
+                    return conditions.index(c)
+            if type(c) == RefRange:
+                if c.max is not None and c.min is not None:
+                    if _passes_all_filters(c.filters, test) and c.min <= ref <= c.max:
+                        return conditions.index(c)
+                elif c.min is not None and c.max is None:
+                    if _passes_all_filters(c.filters, test) and c.min <= ref:
+                        return conditions.index(c)
+                elif c.max is not None and c.min is None:
+                    if _passes_all_filters(c.filters, test) and ref <= c.max:
+                        return conditions.index(c)
+            if type(c) == RefGroup:
+                if _passes_all_filters(c.filters, test) and test in c.group.fixtures:
+                    return conditions.index(c)
         return False
 
-    matched = []
+    matched = [[] for i in range(len(conditions))]
     for obj in obj_list:
-        if _is_match(obj):
-            matched.append(obj)
+        pos = _is_match(obj)
+        if pos is not False:
+            matched[pos].append(obj)
 
+    # Flattens nested lists into one ordered list
+    matched = [i for j in matched for i in j]
     return matched
 
 
