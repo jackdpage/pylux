@@ -15,43 +15,59 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ast import literal_eval
 import argparse
 import configparser
 import importlib
 import os.path
 import pkg_resources
-from pylux import document, _ROOT
+from pylux import document, interpreter
+from pylux.lib import data, exception
 
 
 def main():
 
-    print('This is Pylux, version '+pkg_resources.require('pylux')[0].version)
+    try:
+        print('This is Pylux, version '+pkg_resources.require('pylux')[0].version)
+    except pkg_resources.DistributionNotFound:
+        print('This is Pylux. Running in local development mode')
     
     config = configparser.ConfigParser()
-    config.read([os.path.join(_ROOT, 'default.conf')])
+    # Set optionxform to str to maintain capitalisations in the config file, otherwise
+    # everything is converted to lowercase. We need to retain capitals for some
+    # cases such as the keys of the autocomplete options
+    config.optionxform = str
+    config.read([os.path.join(data.LOCATIONS[i], 'config.ini') for i in reversed(data.PRIORITY)])
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-f', '--file', default=config['main']['default-file'])
     arg_parser.add_argument('-i', '--interface', default=config['main']['default-interface'])
     args = arg_parser.parse_args()
 
-    # If the specified file or autosave file doesn't exist, create a blank json document there
+    # If the specified file or autosave file doesn't exist, create a blank
+    # document there
     if not os.path.isfile(args.file):
-        document.write_to_file([], args.file)
-
+        print('Creating new file at '+args.file)
+        with open(args.file, 'w') as f:
+            f.write('[]')
     config['main']['load_file'] = args.file
-    init_globals = {'FILE': args.file, 'CONFIG': config}
-
-    try:
-        print('Launching {0} interface'.format(args.interface))
+    print('Opening document at '+args.file)
+    file = document.Document(load_path=args.file)
+    print('Initialising command interpreter')
+    server = interpreter.Interpreter(file, config)
+    for extension in literal_eval(config['interpreter']['default-extensions']):
         try:
-            interface_module = importlib.import_module('.'+args.interface, package='pylux.interface')
-        except ModuleNotFoundError:
-            print('One or more dependencies for {0} were missing. Reverting to fallback interface...'.format(args.interface))
-            interface_module = importlib.import_module('.fallback', package='pylux.interface')
+            server.register_extension(extension)
+            print('Enabled {0} extension'.format(extension))
+        except (exception.DependencyError, ModuleNotFoundError):
+            print('Could not enable {0} extension due to missing ' 
+                  'dependencies'.format(extension))
+    try:
+        interface_module = importlib.import_module('.'+args.interface, package='pylux.interface')
+        print('Launching {0} interface'.format(args.interface))
     except ModuleNotFoundError:
-        print('Couldn\'t source {0} interface. Reverting to fallback interface...'.format(args.interface))
+        print('Could not load {0} interface. Reverting to fallback'.format(args.interface))
         interface_module = importlib.import_module('.fallback', package='pylux.interface')
-    interface_module.main(init_globals)
+    interface_module.main(server)
 
 
 if __name__ == '__main__':

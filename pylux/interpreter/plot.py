@@ -1,19 +1,21 @@
 from pylux.interpreter import InterpreterExtension, NoRefsCommand
-from pylux import document, reference
+from pylux import document, reference, clihelper
 from pylux.lib import data, tagger, plothelper
 import xml.etree.ElementTree as ET
 import os
 from ast import literal_eval
+import decimal
+import pylux.lib.keyword as kw
 
 
 class LightingPlot:
 
-    def __init__(self, plot, options):
-        self.fixtures = document.get_by_type(plot, 'fixture')
+    def __init__(self, doc, options):
+        self.fixtures = doc.get_by_type(document.Fixture)
         self.fixtures = self.get_hung_fixtures()
-        self.meta = document.get_by_type(plot, 'metadata')
+        self.meta = doc.metadata
         self.options = options
-        self.plot_file = plot
+        self.plot_file = doc
 
     def get_hung_fixtures(self):
         """Return a list of the fixtures that are used.
@@ -27,7 +29,7 @@ class LightingPlot:
         """
         hung_fixtures = []
         for fixture in self.fixtures:
-            if 'posX' in fixture and 'posY' in fixture:
+            if 'posX' in fixture.data and 'posY' in fixture.data:
                 hung_fixtures.append(fixture)
         return hung_fixtures
 
@@ -42,11 +44,11 @@ class LightingPlot:
         fixture_types = {}
         plotted = self.get_plotted_fixtures()
         for f in plotted:
-            if f['fixture-type'] not in fixture_types:
-                if 'symbol' in f:
-                    fixture_types[f['fixture-type']] = f['symbol']
+            if f.data['fixture-type'] not in fixture_types:
+                if 'symbol' in f.data:
+                    fixture_types[f.data['fixture-type']] = f.data['symbol']
                 else:
-                    fixture_types[f['fixture-type']] = self.options['fallback-symbol']
+                    fixture_types[f.data['fixture-type']] = self.options['fallback-symbol']
         return fixture_types
 
     def get_page_dimensions(self):
@@ -80,8 +82,8 @@ class LightingPlot:
         y_values = [0]
         for fixture in self.get_hung_fixtures():
             get_mm = lambda field: float(field) * 1000
-            x_values.append(get_mm(fixture['posX']))
-            y_values.append(get_mm(fixture['posY']))
+            x_values.append(get_mm(fixture.data['posX']))
+            y_values.append(get_mm(fixture.data['posY']))
         x_range = max(x_values) - min(x_values)
         y_range = max(y_values) - min(y_values)
         return (x_range, y_range)
@@ -226,11 +228,15 @@ class LightingPlot:
         page_dims = self.get_page_dimensions()
         margin = float(self.options['margin'])
         left_border = page_dims[0] - margin - sidebar_width
-        sidebar_box = ET.SubElement(sidebar, 'path')
-        sidebar_box.set('d', 'M ' + str(left_border) + ' ' + str(margin) +
-                        ' L ' + str(left_border) + ' ' + str(page_dims[1] - margin))
-        sidebar_box.set('stroke', 'black')
-        sidebar_box.set('stroke-width', str(self.options['line-weight-heavy']))
+        sidebar.append(ET.Element('rect', attrib={
+            'x': str(left_border),
+            'y': str(margin),
+            'width': str(sidebar_width),
+            'height': str(page_dims[1] - 2 * margin),
+            'stroke': 'black',
+            'fill': 'white',
+            'stroke-width': str(self.options['line-weight-heavy'])
+        }))
         # Create title text within HTML foreignObject element (to support text wrapping)
         html_cont = ET.SubElement(sidebar, 'foreignObject')
         html_cont.set('width', str(self.get_internal_sidebar_width()))
@@ -248,9 +254,9 @@ class LightingPlot:
         # Note this will not add any headings, only the title text themselves. Add headings
         # using CSS ::before selector in the external style document
         for t in literal_eval(self.options['titles']):
-            if t in document.get_parent_metadata_object(self.plot_file)['tags']:
+            if t in self.meta:
                 element = ET.SubElement(div, 'p')
-                element.text = document.get_metadata(self.plot_file, t)
+                element.text = self.meta[t]
                 element.set('xmlns', 'http://www.w3.org/1999/xhtml')
                 element.set('class', 'title-'+t)
 
@@ -274,8 +280,8 @@ class LightingPlot:
     def fixture_will_fit(self, fixture):
         """See if a fixture will fit in the physical contstraints of the plot."""
         constraints = self.get_physical_constraints()
-        x = float(fixture['posX']) * 1000
-        y = float(fixture['posY']) * 1000
+        x = float(fixture.data['posX']) * 1000
+        y = float(fixture.data['posY']) * 1000
 
         if constraints[0] <= x <= constraints[1] and constraints[2] <= y <= constraints[3]:
             return True
@@ -323,7 +329,7 @@ class LightingPlot:
         if 'symbol' not in fixture:
             return self.options['fallback-symbol']
         else:
-            return fixture['symbol']
+            return fixture.data['symbol']
 
     def get_symbol_width(self, symbol):
         """Get actual scaled width of the symbol based on east and west handles"""
@@ -374,16 +380,20 @@ class LightingPlot:
         self.lighting_plot = self.get_empty_plot()
         canvas = plothelper.Canvas(self.options)
         root = self.lighting_plot.getroot()
+        visualised_fixtures = [x.ref for x in clihelper.match_objects(
+            self.options['output-fixture-filter'], self.plot_file, document.Fixture)]
         if self.options.getboolean('page-border'):
             root.append(plothelper.PageBorderComponent(canvas).plot_component)
         try:
             root.append(plothelper.BackgroundImageComponent(canvas).plot_component)
         except FileNotFoundError:
             pass
+        if self.options.getboolean('visualise-output'):
+            root.append(plothelper.FilterIncidencePlane(canvas).plot_component)
         root.append(plothelper.CentreLineComponent(canvas).plot_component)
         root.append(plothelper.PlasterLineComponent(canvas).plot_component)
         if self.options.getboolean('draw-structures'):
-            for structure in document.get_by_type(self.plot_file, 'structure'):
+            for structure in self.plot_file.get_by_type(document.Structure):
                 root.append(plothelper.StructureComponent(canvas, structure).plot_component)
         # We have to iterate through the fixtures to create the component list, before adding anything
         # to the actual plot. This is to allow the hitbox plot to be created so that notation and other
@@ -394,18 +404,26 @@ class LightingPlot:
                 tagger.tag_fixture_all_doc_independent(fixture)
                 fixture_components.append(plothelper.FixtureComponent(fixture, canvas))
         for fixture_component in fixture_components:
+            if self.options.getboolean('visualise-output') and \
+                    decimal.Decimal(fixture_component.fixture.ref) in visualised_fixtures:
+                canvas.lighting_filter.add_filter(fixture_component)
             if self.options.getboolean('show-beams'):
                 root.append(plothelper.FixtureBeamComponent(fixture_component, canvas).plot_component)
             if self.options.getboolean('show-focus-point'):
                 root.append(plothelper.FixtureFocusPointComponent(fixture_component, canvas).plot_component)
             root.append(plothelper.FixtureNotationBlockComponent(fixture_component, canvas).plot_component)
             root.append(fixture_component.plot_component)
-            root.append(plothelper.FixtureAdditionalTextComponent(fixture_component, canvas).plot_component)
+            if self.options.getboolean('show-additional-data'):
+                root.append(plothelper.FixtureAdditionalTextComponent(fixture_component, canvas).plot_component)
             if self.options.getboolean('show-hitboxes'):
                 for hitbox in canvas.hitbox_plot.components:
                     root.append(hitbox.visualisation)
+        if self.options.getboolean('visualise-output'):
+            root.append(canvas.lighting_filter.plot_component)
         if self.options.getboolean('show-scale-rule'):
             root.append(plothelper.RulerComponent(canvas).plot_component)
+        if self.options.getboolean('forced-masking'):
+            root.append(plothelper.PageMaskingComponent(canvas).plot_component)
         if self.options['title-block'] != 'None':
             root.append(self.get_title_block())
 
@@ -418,10 +436,10 @@ class PlotExtension(InterpreterExtension):
         self.plot = None
 
     def register_commands(self):
-        self.commands.append(NoRefsCommand(('Plot', 'About'), self.plot_about))
-        self.commands.append(NoRefsCommand(('Plot', 'Create'), self.plot_create))
-        self.commands.append(NoRefsCommand(('Plot', 'Set'), self.plot_set))
-        self.commands.append(NoRefsCommand(('Plot', 'Write'), self.plot_write))
+        self.commands.append(NoRefsCommand((kw.PLOT, kw.ABOUT), self.plot_about))
+        self.commands.append(NoRefsCommand((kw.PLOT, kw.CREATE), self.plot_create))
+        self.commands.append(NoRefsCommand((kw.PLOT, kw.SET), self.plot_set))
+        self.commands.append(NoRefsCommand((kw.PLOT, kw.WRITE), self.plot_write))
 
     def plot_create(self):
         self.plot = LightingPlot(self.interpreter.file, self.options)
@@ -439,8 +457,8 @@ class PlotExtension(InterpreterExtension):
         self.options[k] = v
 
     def plot_about(self):
-        self.interpreter.msg.post_output([k + ': ' + self.options[k] for k in self.options])
+        self.post_output([k + ': ' + self.options[k] for k in self.options])
 
 
 def register_extension(interpreter):
-    PlotExtension(interpreter).register_extension()
+    return PlotExtension(interpreter).register_extension()

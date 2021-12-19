@@ -37,6 +37,10 @@ Rendered at 1:50 on A3
 
 .. image:: https://i.ibb.co/DKQRLSD/plota3.png
 
+Visualisation enabled, titles and extra symbols disabled
+
+.. image:: https://i.ibb.co/q0WdRnm/with-viz.png
+
 Documentation
 -------------
 

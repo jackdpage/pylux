@@ -1,8 +1,10 @@
-from pylux import clihelper, document, _ROOT
-from pylux.lib import exception
+from pylux import clihelper, document
+from pylux.lib import exception, data
 from importlib import import_module
 import os.path
 import inspect
+import pylux.lib.keyword as kw
+from collections import OrderedDict
 
 
 class RegularCommand:
@@ -10,15 +12,17 @@ class RegularCommand:
         self.trigger = syntax
         self.function = function
         self.check_refs = check_refs
-        # Parmeters are any function vars after the first one (refs) up to the number of arguments
-        if function.__code__.co_argcount > 2:
-            self.parameters = [i for i in function.__code__.co_varnames[2:function.__code__.co_argcount] if i]
-            self.opt_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is not v.empty]
-            self.req_params = [i for i in self.parameters if i not in self.opt_params]
-        else:
-            self.parameters = []
-            self.opt_params = []
-            self.req_params = []
+        # Get the parameters of the function through live inspection and
+        # turn it into a static ordered dict. Then pop out the first entry
+        # (which will be refs, which is not considered a
+        # parameter for a RegularCommand. popitem(False) removes the first
+        # from the OrderedDict
+        parameters = OrderedDict(inspect.signature(function).parameters)
+
+        parameters.popitem(False)
+        self.parameters = [k for k, v in parameters.items()]
+        self.opt_params = [k for k, v in parameters.items() if v.default is not v.empty]
+        self.req_params = [k for k, v in parameters.items() if v.default is v.empty]
 
 
 class NoRefsCommand:
@@ -26,19 +30,19 @@ class NoRefsCommand:
         self.trigger = syntax
         self.function = function
         # This is the same as the RegularCommand, except we are expecting one fewer arguments due to the lack of refs
-        if function.__code__.co_argcount > 1:
-            self.parameters = [i for i in function.__code__.co_varnames[1:function.__code__.co_argcount] if i]
-            self.opt_params = [k for k, v in inspect.signature(function).parameters.items() if v.default is not v.empty]
-            self.req_params = [i for i in self.parameters if i not in self.opt_params]
-        else:
-            self.parameters = []
-            self.opt_params = []
-            self.req_params = []
+        parameters = OrderedDict(inspect.signature(function).parameters)
+        self.parameters = [k for k, v in parameters.items()]
+        self.opt_params = [k for k, v in parameters.items() if v.default is not v.empty]
+        self.req_params = [k for k, v in parameters.items() if v.default is v.empty]
 
 
 class InterpreterExtension:
-    def __init__(self, interpreter):
+    def __init__(self, interpreter: 'Interpreter'):
         self.interpreter = interpreter
+        self.file = interpreter.file
+        self.post_feedback = interpreter.msg.post_feedback
+        self.post_output = interpreter.msg.post_output
+        self.config = interpreter.config
         self.commands = []
         self.register_commands()
 
@@ -48,43 +52,88 @@ class InterpreterExtension:
     def register_extension(self):
         for command in self.commands:
             self.interpreter.register_command(command)
+        return self
+
+    # Called when the program exits. If any cleanup needs to happen,
+    # do it here. Return True after cleanup complete
+    def shutdown(self):
+        return True
+
+
+class MessageBus:
+    def __init__(self):
+        self.clients = []
+
+    def post_feedback(self, msg):
+        for client in self.clients:
+            client.post_feedback(msg)
+
+    def post_output(self, msg, **kwargs):
+        for client in self.clients:
+            client.post_output(msg, **kwargs)
+
+    def subscribe_client(self, client):
+        self.clients.append(client)
 
 
 class Interpreter:
-    def __init__(self, file, message_bus, config):
+    def __init__(self, file: 'document.Document', config):
         self.file = file
-        self.msg = message_bus
+        self.msg = MessageBus()
         self.config = config
         self.commands = []
         self.triggers = {}
+        self.extensions = []
         self.noref_triggers = {}
         self.register_commands()
 
+    def subscribe_client(self, client):
+        """Subscribe a client to the message bus of this interpreter instance.
+        The client class must have both a post_feedback and post_output
+        method in order to handle responses."""
+        self.msg.subscribe_client(client)
+
     def register_commands(self):
-        self.register_command(NoRefsCommand(('File', 'Write'), self.file_write))
-        self.register_command(NoRefsCommand(('File', 'WriteTo'), self.file_writeto))
-        self.register_command(NoRefsCommand(('Program', 'Quit'), self.program_abort))
-        self.register_command(NoRefsCommand(('Program', 'WriteAndQuit'), self.program_exit))
-        self.register_command(NoRefsCommand(('Program', 'ReloadConfig'), self.reload_config))
+        self.register_command(NoRefsCommand((kw.FILE, kw.WRITE), self.file_write))
+        self.register_command(NoRefsCommand((kw.FILE, kw.WRITE_TO), self.file_writeto))
+        self.register_command(NoRefsCommand((kw.PROGRAM, kw.EXIT), self.program_abort))
+        self.register_command(NoRefsCommand((kw.PROGRAM, kw.WRITE_EXIT), self.program_exit))
+        self.register_command(NoRefsCommand((kw.PROGRAM, kw.RELOAD_CONFIG), self.reload_config))
 
     def file_write(self):
-        document.write_to_file(self.file, self.config['main']['load_file'])
+        """Save changes to the default write location. If no write location has been
+        set since opening the program, this will be the same as the load location."""
+        self.file.write_file(self.config['main']['load_file'])
         self.msg.post_feedback('Saved to '+self.config['main']['load_file'])
 
     def file_writeto(self, location):
+        """Change the default write location and then save the file there. Any future
+        saves using File Write will also save to this location."""
         self.config['main']['load_file'] = location
         self.msg.post_feedback('Set default save location to '+location)
         self.file_write()
 
     def program_abort(self):
+        """Exit the program immediately without saving changes to disk."""
+        for ext in self.extensions:
+            if ext.shutdown():
+                continue
+            else:
+                self.msg.post_feedback(ext.__name__ + ' prevented shutdown')
         raise exception.ProgramExit
 
     def program_exit(self):
+        """Save changes to the default write location, then exit the program."""
         self.file_write()
         self.program_abort()
 
     def reload_config(self):
-        self.config.read([os.path.join(_ROOT, 'default.conf')])
+        """Refresh the configuration by reloading all configuration files.
+        Configuration files named config.ini will be loaded in the following order, with latter files
+        being preferred to earlier files where options clash:
+            built-in defaults => /usr/share/pylux => ~/.pylux => ./content
+        Settings changed on a per-file basis will not be affected."""
+        self.config.read([os.path.join(data.LOCATIONS[i], 'config.ini') for i in reversed(data.PRIORITY)])
 
     def _get_init_keywords(self):
         """Get all the keywords which could be the first keyword of a command."""
@@ -112,13 +161,33 @@ class Interpreter:
                 keywords.append(t[1])
         return keywords
 
-    def get_expected_input(self, partial_command):
+    def _get_completed_noun(self, partial_noun):
+        """Given the start of a valid noun, return the list of completed nouns
+        it could be."""
+        potential = []
+        # At the moment, the best way of getting a list of all potential
+        # nouns is to look for items in the Noun dict with str values.
+        # This is going to change because this is an awful method
+        for noun in kw.NOUNS:
+            if noun.startswith(partial_noun):
+                potential.append(noun.lstrip(partial_noun))
+        return potential
+
+    def get_expected_input(self, partial_command, check_partial=False):
         """Return a list of expected next keywords based on a partial command and the registered commands."""
-        n = len(partial_command.split())
+        keywords = partial_command.split()
+        n = len(keywords)
         if n == 0:
             return self._get_init_keywords()
         elif n == 1:
-            return self._get_noref_keyword_2(partial_command.split()[0])
+            # This checks if the the first keyword is an entire valid noun, or just
+            # a partial one. In the case of a valid noun, we can send the verb list
+            # for NoRef commands. For a partial noun, we can send the potential
+            # complete nouns
+            if keywords[0] in kw.NOUNS:
+                return self._get_noref_keyword_2(keywords[0])
+            elif check_partial:
+                return self._get_completed_noun(keywords[0])
         elif n == 2:
             return self._get_ref_keyword_2(partial_command.split()[0])
         else:
@@ -184,8 +253,16 @@ class Interpreter:
                 action = keywords[2]
                 trigger = (obj, action)
                 command = self.triggers[trigger]
+                # If the check_refs flag is true, the refs argument (arg2) is a
+                # list of Python objects representing the matched document objects.
+                # If the check_refs flag is false, the refs argument is a list of
+                # Decimals matched in the given range.
                 if command.check_refs:
-                    refs = clihelper.safe_resolve_dec_references_with_filters(self.file, obj.lower(), keywords[1])
+                    try:
+                        refs = clihelper.match_objects(keywords[1], self.file, document.COMMAND_STR_MAP[obj])
+                    except exception.ReferenceSyntaxError as e:
+                        self.msg.post_feedback('Syntax error: '+e.message)
+                        return
                     if not refs:
                         self.msg.post_feedback('Error: No valid objects in given range')
                         return
@@ -217,6 +294,13 @@ class Interpreter:
         else:
             self.command_failed(posted_command)
 
+    def call_internal(self, trigger, *args):
+        """Call a command from another extension."""
+        if trigger in self.triggers:
+            self.triggers[trigger].function(*args)
+        elif trigger in self.noref_triggers:
+            self.noref_triggers[trigger].function(*args)
+
     def register_command(self, command):
         self.commands.append(command)
         if command.__class__ == RegularCommand:
@@ -226,4 +310,5 @@ class Interpreter:
 
     def register_extension(self, name, pkg='pylux.interpreter'):
         module = import_module('.'+name, pkg)
-        module.register_extension(self)
+        extension_class = module.register_extension(self)
+        self.extensions.append(extension_class)

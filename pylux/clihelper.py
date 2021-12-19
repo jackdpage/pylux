@@ -17,157 +17,301 @@
 
 from pylux.lib import printer
 from pylux import document
+from pylux.lib import exception
 import decimal
+from decimal import Decimal
 import re
+from collections import namedtuple
 
 
 DECIMAL_PRECISION = decimal.Decimal('0.001')
 
 
-def safe_resolve_dec_references_with_filters(doc, obj_type, user_input):
-    """The safest most complete reference parser. Only return references of
-    objects which exist in the document. Support for arbitrary decimal
-    precision due to lookup nature of parsing. Support for filters across
-    any range of inputs. Supports all keywords and symbols.
+# Tuple types for each of the fundamental types supported by the syntax
+# filters is a list of filter objects to be applied to everything within
+# that range/point/catchall
+RefRange = namedtuple('RefRange', 'filters min max')
+RefPoint = namedtuple('RefPoint', 'filters point')
+RefCatch = namedtuple('RefCatch', 'filters')
+RefGroup = namedtuple('RefGroup', 'filters group')
+
+
+def _passes_filter(filt, obj):
+    """Generic function for determining if an object satisfies a filter."""
+    if filt is None:
+        return True
+    if str(obj.get(filt.key)) == str(filt.value):
+        return True
+    else:
+        return False
+
+
+def _passes_all_filters(filter_list, obj):
+    if not filter_list:
+        return True
+    for i in filter_list:
+        if not _passes_filter(i, obj):
+            return False
+    return True
+
+
+def match_objects(user_input, doc=None, obj_type=None, precision=1):
+    """Return a list of objects which satisfy the user_input conditions
+    given. Supports all syntax.
     Complete syntax:
-    - comma separation for lists of ranges or single numbers
+    - comma separation for conditions
     - > symbol for ranges of numbers
-    - future: ! symbol for removing a number or range of number
-    - #[] for applying a filter to a range, single number, or any combination
-      thereof. Where # is the number of the filter to apply.
+    - #[] for applying a filter to a list of conditions
     - * symbol for specifying all objects of the appropriate type.
     - * can also be used in filters e.g. 2[*],!2>4 is all objects of the
       given type that satisfy filter 2, and excluding objects 2 through 4
-      (including all objects with decimal references in this range)"""
+      (including all objects with decimal references in this range)
+    - @ to specify a group
+    - #/ to indicate cue list # (default cue list 1)"""
+    if not doc or not obj_type:
+        return resolve_references(user_input, precision=precision)
 
-    obj_list = document.get_by_type(doc, obj_type)
-    ranges = []
-    points = []
-    groups = []
-    group_members = []
-    catchalls = []
-    calculated_refs = []
-    # Matches filter ranges of the form #[range] where # is the filter ref
-    # filtered_ranges is a list of tuples in the form (filter_ref, ranges)
-    # for each filter range.
-    filter_re = re.compile(r'(\d*\.?\d*)\[(.*?)\]')
-    for fr in re.findall(filter_re, user_input):
-        for r in fr[1].split(','):
-            if '>' in r:
-                ranges.append((fr[0], decimal.Decimal(r.split('>')[0]), decimal.Decimal(r.split('>')[1])))
-            elif r == '*':
-                catchalls.append(fr[0])
-            elif '@' in r:
-                groups.append((fr[0], decimal.Decimal(r.split('@')[1])))
-            else:
-                points.append((fr[0], decimal.Decimal(r)))
-    # Remove all the filtered ranges from the input, and then search through
-    # normally for the remainder
-    for r in re.sub(filter_re, '', user_input).split(','):
-        if '>' in r:
-            ranges.append((0, decimal.Decimal(r.split('>')[0]), decimal.Decimal(r.split('>')[1])))
-        elif r == '*':
-            catchalls.append(0)
-        elif '@' in r:
-            groups.append((0, decimal.Decimal(r.split('@')[1])))
-        else:
-            try:
-                points.append((0, decimal.Decimal(r)))
-            except decimal.InvalidOperation:
-                pass
-    # Turn the groups into a list of fixture refs, but only if the type is fixture.
-    # Filters applied to groups are also checked at this point.
-    if obj_type == 'fixture':
-        for g in groups:
-            if g[0]:
-                filt = document.get_by_ref(doc, 'filter', g[0])
-            else:
-                filt = None
-            group = document.get_by_ref(doc, 'group', g[1])
-            for fix_uuid in group['fixtures']:
-                fix = document.get_by_uuid(doc, fix_uuid)
-                if filt:
-                    try:
-                        if fix[filt['k']] == filt['v']:
-                            group_members.append(decimal.Decimal(fix['ref']))
-                    except KeyError:
-                        pass
+    obj_list = doc.get_by_type(obj_type)
+    conditions = []
+    raw_conditions = []
+
+    def _resolve_condition(condition_string):
+        """Resolve a condition string into one of the above four key types.
+        Note that this is just the string for the condition, and not the filter
+        part, if applicable. However, this function can still add filters in the
+        form of cue list filters.
+        Accepts a comma-separated condition list as condition_string"""
+        _conditions = []
+        for condition in condition_string.split(','):
+            if not condition:
+                continue
+            if condition == '*':
+                _conditions.append(RefCatch([]))
+            elif '>' in condition:
+                r_min = condition.split('>')[0]
+                r_max = condition.split('>')[1]
+                # There are three main conditions we need to account for with a
+                # range condition:
+                #  - there exists both a min and max. In which case we need to check
+                #    (if this is a cue) that the cue list given for the min and max
+                #    values matches. If no cue list is given for max, it is assumed
+                #    to be the same as the min. If no cue list is given for min, it
+                #    is assumed to be 1. Also in this case, we just convert the min
+                #    and max values to decimal and put them straight in the RefRange
+                #  - there exists a min and not a max. In which case the cue list is
+                #    taken from the min value, or defaulted to 1. We convert the min
+                #    value to a decimal but pass None as the max value to RefRange.
+                #  - there exists a max and not a min. This is basically the same as
+                #    the previous case
+                #  - If there is neither a max or a min (i.e. the user has just typed
+                #    a > character, then we raise a Syntax Error.
+                if r_min and r_max:
+                    if '/' in r_min and obj_type is not document.Cue:
+                        raise exception.ReferenceSyntaxError('Slash symbol should be used for cue identifiers only')
+                    elif obj_type is document.Cue:
+                        if '/' in r_min:
+                            active_cue_list = r_min.split('/')[0]
+                            r_min = Decimal(r_min.split('/')[1])
+                        else:
+                            active_cue_list = '1'
+                            r_min = Decimal(r_min)
+                        cue_list_filter = document.Filter(key='cue_list', value=active_cue_list)
+                        if '/' in r_max:
+                            if r_max.split('/')[0] != active_cue_list:
+                                raise exception.ReferenceSyntaxError('Cannot specify a range spanning multiple cue lists')
+                            r_max = Decimal(r_max.split('/')[1])
+                        else:
+                            r_max = Decimal(r_max)
+                    else:
+                        cue_list_filter = None
+                        r_min = Decimal(r_min)
+                        r_max = Decimal(r_max)
+                elif r_min and not r_max:
+                    if '/' in r_min and obj_type is not document.Cue:
+                        raise exception.ReferenceSyntaxError('Slash symbol should be used for cue identifiers only')
+                    elif obj_type is document.Cue:
+                        if '/' in r_min:
+                            active_cue_list = r_min.split('/')[0]
+                            r_min = Decimal(r_min.split('/')[1])
+                        else:
+                            active_cue_list = '1'
+                            r_min = Decimal(r_min)
+                        cue_list_filter = document.Filter(key='cue_list', value=active_cue_list)
+                    else:
+                        cue_list_filter = None
+                        r_min = Decimal(r_min)
+                    r_max = None
+                elif r_max and not r_min:
+                    if '/' in r_max and obj_type is not document.Cue:
+                        raise exception.ReferenceSyntaxError('Slash symbol should be used for cue identifiers only')
+                    elif obj_type is document.Cue:
+                        if '/' in r_max:
+                            active_cue_list = r_max.split('/')[0]
+                            r_max = Decimal(r_max.split('/')[1])
+                        else:
+                            active_cue_list = '1'
+                            r_max = Decimal(r_max)
+                        cue_list_filter = document.Filter(key='cue_list', value=active_cue_list)
+                    else:
+                        cue_list_filter = None
+                        r_max = Decimal(r_max)
+                    r_min = None
                 else:
-                    group_members.append(decimal.Decimal(fix['ref']))
-    # That's all the prep done, now check which of the objects in our all objects
-    # list satisfies the ranges and points we've created.
-    for obj in obj_list:
-        ref = decimal.Decimal(obj['ref'])
-        if 0 in catchalls:
-            calculated_refs.append(ref)
+                    raise exception.ReferenceSyntaxError('Invalid range syntax')
+
+                _conditions.append(RefRange([cue_list_filter], r_min, r_max))
+            # If the object type isn't Fixture, groups cannot be used. Instead
+            # of throwing a syntax error, we will just quietly ignore them
+            # and carry on.
+            elif '@' in condition and obj_type is document.Fixture:
+                group = doc.get_by_ref(document.Group, decimal.Decimal(condition.split('@')[1]))
+                _conditions.append(RefGroup([], group))
+            else:
+                if '/' in condition and obj_type is document.Cue:
+                    cue_list_filter = document.Filter(key='cue_list', value=Decimal(condition.split('/')[0]))
+                    condition = condition.split('/')[1]
+                elif obj_type is document.Cue:
+                    cue_list_filter = document.Filter(key='cue_list', value='1')
+                else:
+                    cue_list_filter = None
+                condition = decimal.Decimal(condition)
+                _conditions.append(RefPoint([cue_list_filter], condition))
+        return _conditions
+
+    # Iterate through the user string character-by-character to process into
+    # a list of conditions
+    _buffer = ''
+    _filtered = False
+
+    for char in user_input:
+
+        # If the character is a comma, we must have reached the end of a
+        # condition, unless that comma is within a filtered range, in which
+        # case we should continue until we reach the end of the filtered range
+        if char == ',' and not _filtered:
+            raw_conditions.append(_buffer)
+            _buffer = ''
             continue
-        elif len(catchalls):
-            for i in catchalls:
-                if i:
-                    filt = document.get_by_ref(doc, 'filter', i)
-                    try:
-                        if obj[filt['k']] == filt['v']:
-                            calculated_refs.append(ref)
-                            continue
-                    except KeyError:
-                        pass
-        if ref in group_members:
-            calculated_refs.append(ref)
+
+        # For all cases other than the end-of-condition comma, we are going
+        # to want to add the current character to our current condition buffer
+        _buffer += char
+
+        # For the [ and ] characters, set the _filtered flag to on or off
+        # respectively, so we know we are in a filtered range and should
+        # ignore commas from this point on (or pay attention again if this is
+        # closing the filtered range.
+        if char == '[' and not _filtered:
+            _filtered = True
             continue
-        for r in ranges:
-            if r[0]:
-                filt = document.get_by_ref(doc, 'filter', r[0])
-                try:
-                    if r[1] <= ref <= r[2] and obj[filt['k']] == filt['v']:
-                        calculated_refs.append(ref)
-                        break
-                except KeyError:
-                    pass
-            elif r[1] <= ref <= r[2]:
-                calculated_refs.append(ref)
-                break
-        for p in points:
-            if p[0]:
-                filt = document.get_by_ref(doc, 'filter', p[0])
-                try:
-                    if p[1] == ref and obj[filt['k']] == filt['v']:
-                        calculated_refs.append(ref)
-                        break
-                except KeyError:
-                    pass
-            elif p[1] == ref:
-                calculated_refs.append(ref)
-                break
+        if char == ']' and _filtered:
+            _filtered = False
+            continue
 
-    return calculated_refs
+    # Flush out the buffer at the end of parsing (as the final condition in an
+    # input string will not end in a comma so won't have been added to the
+    # list)
+    if _buffer != '':
+        raw_conditions.append(_buffer)
 
+    # Regular expressions to capture the inline filter type of the form
+    # (k=v)[conditions] and referenced filter type of the form #[conditions].
+    # Must be matched in this order as the referenced filter type will also
+    # match an inline filter type that contains a number in k or v.
+    re_inline_filter = re.compile(r'\((.*)=(.*)\)\[(.*?)\]')
+    re_reference_filter = re.compile(r'(\d*\.?\d*)\[(.*?)\]')
 
-def safe_resolve_dec_references(doc, type, user_input):
-    """Parse decimal reference input.
+    # Iterate through the raw conditions, find which are filtered conditions,
+    # process and add to the final conditions list
+    for rc in raw_conditions:
+        # If the condition matches the (k=v)[ ... ] format, create a filter
+        # object from that inline filter, apply to each of the condition ranges,
+        # and add to the condition list
+        match_i = re.match(re_inline_filter, rc)
+        if match_i:
+            k = match_i.group(1)
+            v = match_i.group(2).replace('\\', ' ')
+            r = match_i.group(3)
+            filter_obj = document.Filter(key=k, value=v)
+            try:
+                for c in _resolve_condition(r):
+                    c.filters.append(filter_obj)
+                    conditions.append(c)
+            except decimal.InvalidOperation:
+                raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
+            continue
 
-    Takes the user input string as a list of comma-separated values, the values
-    being either individual references or ranges of references represented by a
-    colon. Resloves this collection of references into a list of valid
-    string representations of decimals. Checks that each of these references
-    actually represents an object in the show file, and returns the resulting
-    list."""
-    calculated_refs = []
-    split_input = user_input.split(',')
-    ranges = [(decimal.Decimal(i.split('>')[0]), decimal.Decimal(i.split('>')[1])) for i in split_input if '>' in i]
-    points = [decimal.Decimal(i) for i in split_input if i.isdigit()]
-    obj_list = document.get_by_type(doc, type)
+        # If the condition matches the #[ ... ] format, find the referenced
+        # filter in the document, apply to each of the condition ranges, and
+        # add to the condition list
+        match_r = re.fullmatch(re_reference_filter, rc)
+        if match_r:
+            f_ref = match_r.group(1)
+            r = match_r.group(2)
+            filter_obj = doc.get_by_ref(document.Filter, Decimal(f_ref))
+            if not filter_obj:
+                raise exception.ReferenceSyntaxError('Could not find Filter '+f_ref)
+            try:
+                for c in _resolve_condition(r):
+                    c.filters.append(filter_obj)
+                    conditions.append(c)
+            except decimal.InvalidOperation:
+                raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
+            continue
+
+        # If we have got this far in the loop, no filters apply, so just
+        # process the condition using _resolve_condition and add the outcome
+        # to the conditions list
+        try:
+            for c in _resolve_condition(rc):
+                conditions.append(c)
+        except decimal.InvalidOperation:
+            raise exception.ReferenceSyntaxError('Condition could not be interpreted as a number')
+
+    # Now we have all the conditions neatly organised in a list, we just
+    # iterate over the object list we got earlier and check which objects
+    # match one of the specified conditions.
+
+    # First of all, if there's a catchall with no filter, we can just return
+    # the entire object list straight away and not bother with any of this.
+    if RefCatch([]) in conditions:
+        return obj_list
+
+    def _is_match(test):
+        """Checks an object against all conditions and returns the index of
+         the condition it matches, if it matches any of them."""
+        ref = Decimal(test.ref)
+        for c in conditions:
+            if type(c) == RefCatch:
+                if _passes_all_filters(c.filters, test):
+                    return conditions.index(c)
+            if type(c) == RefPoint:
+                if _passes_all_filters(c.filters, test) and ref == c.point:
+                    return conditions.index(c)
+            if type(c) == RefRange:
+                if c.max is not None and c.min is not None:
+                    if _passes_all_filters(c.filters, test) and c.min <= ref <= c.max:
+                        return conditions.index(c)
+                elif c.min is not None and c.max is None:
+                    if _passes_all_filters(c.filters, test) and c.min <= ref:
+                        return conditions.index(c)
+                elif c.max is not None and c.min is None:
+                    if _passes_all_filters(c.filters, test) and ref <= c.max:
+                        return conditions.index(c)
+            if type(c) == RefGroup:
+                if _passes_all_filters(c.filters, test) and test in c.group.fixtures:
+                    return conditions.index(c)
+        return False
+
+    matched = [[] for i in range(len(conditions))]
     for obj in obj_list:
-        ref = decimal.Decimal(obj['ref'])
-        for r in ranges:
-            if r[0] <= ref <= r[1]:
-                calculated_refs.append(ref)
-                break
-        for p in points:
-            if p == ref:
-                calculated_refs.append(ref)
-                break
+        pos = _is_match(obj)
+        if pos is not False:
+            matched[pos].append(obj)
 
-    return calculated_refs
+    # Flattens nested lists into one ordered list
+    matched = [i for j in matched for i in j]
+    return matched
 
 
 def resolve_references(user_input, precision=1):
@@ -178,12 +322,6 @@ def resolve_references(user_input, precision=1):
     return objects. Parse comma separated values such as a,b,c 
     and greater-than sign separated ranges such as a>b, or a combination of
     the two such as a,b>c,d>e,f.
-
-    Args:
-        user_input: the input string that the user entered.
-
-    Returns:
-        A list containing a list of integers.
     """
     reference_list = []
     if len(user_input) > 0:
@@ -198,13 +336,14 @@ def resolve_references(user_input, precision=1):
             else:
                 reference_list.append(decimal.Decimal(input_item))
         reference_list.sort()
-    return [str(i) for i in reference_list]
+    return reference_list
 
 
 def resolve_dec_references(user_input):
     """Decimal version of the above."""
     return resolve_references(user_input, precision=DECIMAL_PRECISION)
 
+
 def refsort(objs):
     """Sort a list of objects by their reference number"""
-    return sorted(objs, key=lambda i: decimal.Decimal(i['ref']))
+    return sorted(objs, key=lambda i: decimal.Decimal(i.ref))

@@ -53,6 +53,11 @@ Page Layout
     Measured in millimeters. Default ``10``.
 ``page-border``
     Draw a black border around the page. This is drawn inside the margin. Default ``True``.
+``forced-masking``
+    When enabled, a white box is drawn over the margin area. On a normal plot this
+    will have no visual effect so there is usually no reason to change this unless
+    you are experiencing issues. When visualisation is enabled it prevents beam
+    pools spilling into the margin area. Default ``True``.
 
 Drawing Options
 ^^^^^^^^^^^^^^^
@@ -147,6 +152,40 @@ Additional Component Settings
     Similar to the ``beam-source-colour`` option, if enabled, focus points will be rendered
     according to the colour of the gel in the source fixture. Default ``False``.
 
+Visualiser Settings
+^^^^^^^^^^^^^^^^^^^
+``visualise-output``
+    When enabled, the output of fixtures can be rendered semi-realistically using SVG filters and
+    specular lighting. Note that these filters will be highly intensive on the browser used to
+    view the output, so it is recommended to only visualise the output of a few fixtures at a time.
+    Visualisation output only displays correctly in Chromium-based browsers such as Google Chrome
+    or newer versions of Microsoft Edge. Default ``False``.
+``output-fixture-filter``
+    Provide a range of fixtures which will be included in the output that is visualised. This field
+    accepts any of the normal range and filter operators that can be used to specify fixtures on the
+    command line, including groups. Default ``*``.
+``incidence-plane-colour``
+    The colour of the floor surface onto which lights are projected in the visualisation. To obtain a
+    white floor, do not set this colour to white, instead use ``render-incidence-plane``.
+    Accepts any standard HTML colours or hex codes. Default ``#222``.
+``render-incidence-plane``
+    If disabled, visualisations will be rendered onto the white background of the plot, rather than a
+    coloured floor surface. This is better for printing but can make the rendering more difficult to
+    see. Default ``True``.
+``surface-reflectivity``
+    The ratio of reflection of beams on the incident surface. Represents the specular constant in the
+    lighting model. Default ``1.0``.
+``colour-beam-pools``
+    When enabled, visualised beam pools will be coloured appropriately according to the fixture`s
+    colour tag. Disable to project pure white beam pools. Pure white pools will not show up when
+    ``render-incidence-plane`` is disabled. Default ``True``.
+``default-beam-angle``
+    If a fixture does not have a beam_angle tag, use this as a fallback angle when rendering beam pools.
+    Measured in degrees. Default ``15``.
+``default-beam-focus``
+    Affects the intensity of the beam pool by adjusting the focus of the specular lighting. Represents
+    the specular exponent in the lighting model. Default ``4``.
+
 Title Block Format
 ^^^^^^^^^^^^^^^^^^
 
@@ -212,5 +251,6 @@ Debug Settings
 ``show-fixture-hitboxes``
     If enabled, the internal hitbox that the program uses for collision detection will be
     rendered in the plot. Useful for debugging purposes and not much else. Default ``False``.
-``hitbox-colour``
-    The colour to render the aforementioned hitboxes in. Default ``red``.
+``hitbox-colour``, ``line-weight-hitbox``
+    Change the render colour and thickness of the debug hitboxes. Line weight measured
+    in millimeters. Defaults ``red``, ``0.1``.

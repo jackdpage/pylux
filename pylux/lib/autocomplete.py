@@ -1,11 +1,16 @@
-from pylux.lib.constant import CONTEXT_KEYS
+from pylux.document import COMMAND_STR_MAP
+import pylux.lib.keyword as kw
 
 
 class Keymapper:
 
     def __init__(self, interpreter, config):
         self.interpreter = interpreter
-        self.keys = config['autocomplete']
+        self.keys = {}
+        for k, v in config['autocomplete'].items():
+            if k in kw.__dict__:
+                self.keys[kw.__dict__[k]] = v
+
         self.enabled = True
 
     def _generate_keymap(self, tuple_list, pre='', post=' '):
@@ -27,7 +32,7 @@ class Keymapper:
         # Double-type an object type to switch context to that
         if n == 1:
             k1 = fragment.split()[0]
-            if k1 in CONTEXT_KEYS:
+            if k1 in COMMAND_STR_MAP:
                 relevant_keys.append((k1, self.keys[k1]))
 
         # We need to add on a pre-space to the keyword if it is appearing after the
